@@ -1,1 +1,2 @@
 What is a purely functional language - AMR SABRY
+Type Inference with constrained Types - Martin Sulzmann, Martin Odersky, Martin Wehr
