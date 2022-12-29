@@ -1,6 +1,7 @@
 \documentclass[12pt,a4paper]{article}
 \usepackage[italian]{babel}
 \usepackage{newlfont}
+\usepackage{listings}
 
 \textwidth=450pt\oddsidemargin=0pt
 
@@ -87,10 +88,58 @@ di programmazione \textit{funzionale} è piuttosto lasca e non vi è una vera e 
 tant'è che il termine viene spesso utilizzato (e, talvolta, abusato) per indicare un linguaggio avente alcune
 particolari specifiche attribuibili al paradigma di programmazione funzionale. langgg può essere quindi considerato
 funzionale poiché, semplicemente, ha numerose caratteristiche proprie del paradigma funzionale, quali: tipi di dati
-algebrici, pattern matching, funzioni di ordine superiore, immutabilità, etc.. Per quanto riguarda la nozione di
-\textit{purità}, nel paradigma funzionale viene fatta spesso la distinzione
+algebrici, pattern matching, funzioni di ordine superiore, immutabilità, polimorfismo parametrico etc.. Per quanto
+riguarda la nozione di \textit{purità}, nel paradigma funzionale viene fatta spesso la distinzione
 tra linguaggi puri e impuri; anche qui, non vi sono vere e proprie definizioni e la questione è spesso oggetto di
-controversie. Una proposta di definizione è stata da Amr Sabry in "\textit{What is a purely functional language?}"... %cfh
+controversie. Una proposta di definizione è stata fornita da Amr Sabry in "\textit{What is a purely functional
+language?}": la purità ha a che fare con il passaggio dei parametri, in particolare, un linguaggio L può essere
+considerato puro se, dato un qualsiasi programma p scritto in L, le funzioni di p sono dei "\textit{mapping}" puri
+dai valori in input ai valori in output, indipendentemente dal tipo di passaggio dei parametri.
+\item[Type-system statico con type-inference] langgg è un linguaggio con type-system statico, inoltre, la fase di
+type-checking garantisce la proprietà di type-safety. Il linguaggio permette anche di omettere le indicazioni di
+tipo (type-hinting) nella definizione di simboli; in caso non vi sia type-hinting per la definizione di un simbolo,
+il compilatore inferirà il tipo "più generale possibile" per il simbolo.
+\item["Everything is an expression"] tutti i costrutti all'interno di langgg possono essere considerati espressioni
+prive di side-effects; non vi sono costrutti di controllo o costrutti che modificano variabili di stato esterne
+al contesto locale. I costrutti principali sono:
+    \begin{enumerate}
+    \item definizioni di: tipi, variabili, proprietà (che corrispondono alle type-classes di Haskell), istanze di
+    proprietà, alias di tipi, firme di simboli; le definizioni di simboli hanno le seguenti grammatiche:
+    \begin{lstlisting}
+      S :=
+          let var args = E
+
+     MS :=
+          let var MPM
+    \end{lstlisting}
+    \item espressioni date dalla seguente grammatica:
+    \begin{lstlisting}
+      E :=
+          var
+          datacon
+          literal
+          E E
+          lam args -> E
+          lam MPM
+          S in E
+          MS in E
+          match E with PM
+
+     PM :=
+          ME -> E | ... | ME -> E
+
+    MPM :=
+          | ME ... ME = E | ... | ME ... ME = E
+
+     ME :=
+          var
+          _
+          literal
+          datacon ME ... ME
+          
+    \end{lstlisting}
+    \end{enumerate}
+
 \end{description}
 
 \section{Il compilatore}
