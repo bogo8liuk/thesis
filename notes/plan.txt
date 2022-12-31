@@ -28,6 +28,7 @@ nel dettaglio dei vari check>
 
 <type inference: presentazione di hindley-milner>
 <estensione di hm con i predicati>
+<dispatch statico dei simboli>
 
 SVILUPPI FUTURI
 
