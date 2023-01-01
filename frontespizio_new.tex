@@ -138,7 +138,28 @@ al contesto locale. I costrutti principali sono:
           datacon ME ... ME
           
     \end{lstlisting}
+    \item un costrutto, valutato a compile-time, per definire una "categoria" di operatori. Le categorie di operatori
+    hanno degli identificatori per poterle nominare, inoltre definiscono le seguenti proprietà:
+        \begin{enumerate}
+        \item una lista di operatori appartenenti alla proprietà. Sono compresi gli identificatori di variabili (gli
+        operatori stessi sono identificatori di variabili) che possono essere utilizzati con la sintassi degli operatori;
+        \item una lista di categorie di operatori i quali avranno meno precedenza degli operatori della categoria
+        corrente;
+        \item una lista di categorie di operatori i quali avranno più precedenza degli operatori della categoria
+        corrente;
+        \item la fissità degli operatori.
+        \end{enumerate}
+        %TODO: aggiungi pezzo di codice per mostrare il costrutto
     \end{enumerate}
+\item[Polimorfismo parametrico] %TODO
+\item[Polimorfismo ad hoc] attraverso il meccanismo delle type-classes (all'interno del linguaggio vengono chiamate
+proprietà), è possibile creare funzioni polimorfe che possono essere applicate ad argomenti di tipi differenti e, a
+seconda dei tipi degli argomenti, viene "selezionata" la giusta implementazione. Ogni proprietà può avere uno, ma anche
+più tipi associati; inoltre, i tipi associati alle proprietà possono essere anche variabili di tipo.
+\item[Tipi di dati algebrici] langgg supporta anche i tipi di dati algebrici (che sono l'unico modo per definire nuovi
+tipi). Con essi, vi è anche la nozione di \textit{data constructor}, ovvero un costrutto dotato di tipo che può essere
+accompagnato da dati. Per eseguire operazioni con i tipi di dati algebrici vi è il costrutto del pattern matching
+(cfr. grammatica delle espressioni) che permette di destrutturare un data constructor dai suoi dati associati.
 
 \end{description}
 
