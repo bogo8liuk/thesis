@@ -151,15 +151,34 @@ al contesto locale. I costrutti principali sono:
         \end{enumerate}
         %TODO: aggiungi pezzo di codice per mostrare il costrutto
     \end{enumerate}
-\item[Polimorfismo parametrico] %TODO
-\item[Polimorfismo ad hoc] attraverso il meccanismo delle type-classes (all'interno del linguaggio vengono chiamate
-proprietà), è possibile creare funzioni polimorfe che possono essere applicate ad argomenti di tipi differenti e, a
-seconda dei tipi degli argomenti, viene "selezionata" la giusta implementazione. Ogni proprietà può avere uno, ma anche
-più tipi associati; inoltre, i tipi associati alle proprietà possono essere anche variabili di tipo.
 \item[Tipi di dati algebrici] langgg supporta anche i tipi di dati algebrici (che sono l'unico modo per definire nuovi
 tipi). Con essi, vi è anche la nozione di \textit{data constructor}, ovvero un costrutto dotato di tipo che può essere
 accompagnato da dati. Per eseguire operazioni con i tipi di dati algebrici vi è il costrutto del pattern matching
 (cfr. grammatica delle espressioni) che permette di destrutturare un data constructor dai suoi dati associati.
+\item[Polimorfismo parametrico] il sistema di tipi del linguaggio supporta le variabili di tipo. Questo tipo di
+polimorfismo permette di avere singoli algoritmi per una moltitudine di tipi.
+\item[Kind] Il linguaggio ha la nozione di \testit{kind} e permette la manipolazione di tipi di kind differenti.
+Quindi, data la seguente definizione di tipo:
+\begin{lstlisting}
+type M a b = DataCon1 a | DataCon2 b | DataCon3 a Char
+\end{lstlisting}
+dove \textit{a} e \textit{b} sono variabili di tipo, è possibile, ad esempio, avere tipi della forma:
+\begin{lstlisting}
+M Int Char
+M a b
+M String
+M x
+M
+\end{lstlisting}
+\`E possibile altresì avere un tipo della forma:
+\begin{lstlisting}
+m Int
+\end{lstlisting}
+dove \textit{m} è una variabile di tipo a cui viene applicata il tipo \textit{Int}.
+\item[Polimorfismo ad hoc] attraverso il meccanismo delle type-classes (all'interno del linguaggio vengono chiamate
+proprietà), è possibile creare funzioni polimorfe che possono essere applicate ad argomenti di tipi differenti e, a
+seconda dei tipi degli argomenti, viene "selezionata" la giusta implementazione. Ogni proprietà può avere uno, ma anche
+più tipi associati; inoltre, i tipi associati alle proprietà possono essere anche variabili di tipo.
 
 \end{description}
 
