@@ -79,6 +79,19 @@ Corso di Laurea in Nome corso di Laurea }}
 \subsection{Il linguaggio}
 
 \subsection{Haskell come modello}
+Il compilatore è stato sviluppato mediante il linguaggio \textit{Haskell}, anch'esso linguaggio di programmazione funzionale.
+Inoltre, il linguaggio target di langgg è \textit{Core}, un formalismo fortemente basato su \textit{System F}, una
+variante tipata del lambda-calcolo che introduce un meccanismo di quantificazione universale sui tipi. Core, inoltre,
+viene utilizzato da GHC (compilatore Haskell) come rappresentazione intermedia di Haskell. All'interno di questo
+contesto, GHC espone delle API che permettono al cliente di utilizzare le funzionalità del compilatore; è quindi
+possibile creare e manipolare programmi Core mediante le API, le quali sono state scritte in Haskell. Per quest'ultimo
+motivo, Haskell è stato scelto come linguaggio di implementazione del compilatore di langgg, tuttavia, nel contesto
+del progetto, Haskell ha anche un altro importante ruolo: alcune delle sue funzionalità sono state, direttamente
+o indirettamente, fonte di ispirazione per il design di langgg. Nel prossimo paragrafo vengono presentate le principali
+caratteristiche di langgg ed è possibile ritrovare la maggior parte di essere anche in Haskell. Un altro linguaggio
+che è stato fonte di ispirazione, ma con minore impatto, è \textit{OCaml}, linguaggio multi-paradigma (funzionale non
+puro), soprattutto per la sintassi di langgg e per il costrutto delle polymorphic variants (cfr. paragrafo sugli
+sviluppi futuri).
 
 \subsection{Caratteristiche del linguaggio}
 Tra le principali caratteristiche del linguaggio vi sono:
