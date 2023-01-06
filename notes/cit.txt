@@ -1,2 +1,3 @@
 What is a purely functional language - AMR SABRY
 Type Inference with constrained Types - Martin Sulzmann, Martin Odersky, Martin Wehr
+Dive into GHC: Targeting Core - Stephen diehl https://www.stephendiehl.com/posts/ghc_03.html
