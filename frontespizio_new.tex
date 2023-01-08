@@ -220,13 +220,25 @@ più tipi associati; inoltre, i tipi associati alle proprietà possono essere an
 \draw [arrow] (typeInf) -- (CoreGen);
 \node (backend) [process, below of=CoreGen] {Backend};
 \draw [arrow] (CoreGen) -- (backend);
+\node (exe) [process, below of=backend] {Eseguibile};
+\draw [arrow] (backend) -- (exe);
 \node (desugar) [process, right of=prepare, xshift=5cm] {Desugaring};
-\draw [arrow] (checker) -- (desugar);
-\draw [arrow] (typedBuilder) -- (desugar);
-\draw [arrow] (prepare) -- (desugar);
-\draw [arrow] (typeInf) -- (desugar);
-\draw [arrow] (CoreGen) -- (desugar);
+\draw [arrow] (desugar) -- (checker);
+\draw [arrow] (desugar) -- (typedBuilder);
+\draw [arrow] (desugar) -- (prepare);
+\draw [arrow] (desugar) -- (typeInf);
+\draw [arrow] (desugar) -- (CoreGen);
 \end{tikzpicture}
+
+La struttura del compilatore è sequenziale, con eccezione fatta per la fase di \texit{desugaring}. Quest'ultima si
+occupa di rimuovere il cosiddetto "zucchero sintattico" dalle strutture dati - che mantengono le informazioni del
+programma - che, durante le varie fasi di compilazione, possono subire semplificazioni. Talvolta, alcune semplificazioni
+vengono posticipate il più possibile per permettere al compilatore di restituire in output messaggi d'errore comprensibili
+per l'utente. Un esempio ne è la trasformazione che subiscono le strutture dati che rappresentano il costrutto del
+pattern matching. Il modulo che si occupa del desugaring si presenta come una libreria che espone delle API che agiscono
+sulle strutture dati del compilatore. \`E compito del compilatore fare le chiamate al modulo di desugaring. Di seguito,
+vi è una più ampia e precisa descrizione delle singole fasi di compilazione, con enfasi particolare sugli algoritmi
+più interessanti utilizzati per risolvere i singoli sottoproblemi e su come le varie fasi interagiscono tra loro.
 
 \begin{tikzpicture}[node distance=2cm]
 \node (src) [object] {Codice sorgente};
