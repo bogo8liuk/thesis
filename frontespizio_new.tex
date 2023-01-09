@@ -3,6 +3,8 @@
 \usepackage{newlfont}
 \usepackage{listings}
 \usepackage{tikz}
+\usepackage{enumitem}
+\usepackage{hyperref}
 
 \textwidth=450pt\oddsidemargin=0pt
 
@@ -86,7 +88,7 @@ Il compilatore è stato sviluppato mediante il linguaggio \textit{Haskell}, anch
 Inoltre, il linguaggio target di langgg è \textit{Core}, un formalismo fortemente basato su \textit{System F}, una
 variante tipata del lambda-calcolo che introduce un meccanismo di quantificazione universale sui tipi. Core, inoltre,
 viene utilizzato da GHC (compilatore Haskell) come rappresentazione intermedia di Haskell. All'interno di questo
-contesto, GHC espone delle API che permettono al cliente di utilizzare le funzionalità del compilatore; è quindi
+contesto, GHC espone delle API che permettono al cliente di utilizzare le funzionalità del compilatore (cfr. [2]); è quindi
 possibile creare e manipolare programmi Core mediante le API, le quali sono state scritte in Haskell. Per quest'ultimo
 motivo, Haskell è stato scelto come linguaggio di implementazione del compilatore di langgg, tuttavia, nel contesto
 del progetto, Haskell ha anche un altro importante ruolo: alcune delle sue funzionalità sono state, direttamente
@@ -107,8 +109,8 @@ funzionale poiché, semplicemente, ha numerose caratteristiche proprie del parad
 algebrici, pattern matching, funzioni di ordine superiore, immutabilità, polimorfismo parametrico etc.. Per quanto
 riguarda la nozione di \textit{purità}, nel paradigma funzionale viene fatta spesso la distinzione
 tra linguaggi puri e impuri; anche qui, non vi sono vere e proprie definizioni e la questione è spesso oggetto di
-controversie. Una proposta di definizione è stata fornita da Amr Sabry in "\textit{What is a purely functional
-language?}": la purità ha a che fare con il passaggio dei parametri, in particolare, un linguaggio L può essere
+controversie. Una proposta di definizione è stata fornita da Amr Sabry in [1]: la purità ha a che fare con il passaggio
+dei parametri, in particolare, un linguaggio L può essere
 considerato puro se, dato un qualsiasi programma p scritto in L, le funzioni di p sono dei "\textit{mapping}" puri
 dai valori in input ai valori in output, indipendentemente dal tipo di passaggio dei parametri.
 \item[Type-system statico con type-inference] langgg è un linguaggio con type-system statico, inoltre, la fase di
@@ -222,7 +224,7 @@ più tipi associati; inoltre, i tipi associati alle proprietà possono essere an
 \draw [arrow] (CoreGen) -- (backend);
 \node (exe) [process, below of=backend] {Eseguibile};
 \draw [arrow] (backend) -- (exe);
-\node (desugar) [process, right of=prepare, xshift=5cm] {Desugaring};
+\node (desugar) [process, right of=prepare, xshift=7cm] {Desugaring};
 \draw [arrow] (desugar) -- (checker);
 \draw [arrow] (desugar) -- (typedBuilder);
 \draw [arrow] (desugar) -- (prepare);
@@ -252,5 +254,17 @@ più interessanti utilizzati per risolvere i singoli sottoproblemi e su come le 
 \draw [arrow] (rawastNames) -- node[anchor=west] {Check numero degli argomenti} (rawastArgs);
 \node (rawastAlias) [object, below of=rawastArgs] {Albero di sintassi astratta};
 \end{tikzpicture}
+
+\section*{Bibliografia}
+\begin{enumerate}[label={[\arabic*]}]
+    %[1]
+    \item Amr Sabry - What is a purely functional language? - in: Journal of Functional Programming, Volume 8, Issue 1,
+    January 1998, pp. 1 - 22
+    %[2]
+    \item Martin Sulzmann, Martin Odersky, Martin Wehr - Type Inference with Constrained Types - in: Theory and Practice
+    of Object Systems · January 1999
+    %[3]
+    \item Stephen Diehl - Dive into GHC: Targeting Core - url: \url{https://www.stephendiehl.com/posts/ghc_03.html}
+\end{enumerate}
 
 \end{document}
