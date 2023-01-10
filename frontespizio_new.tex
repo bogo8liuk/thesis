@@ -6,6 +6,10 @@
 \usepackage{enumitem}
 \usepackage{hyperref}
 
+\lstset{language=Haskell
+    , basicstyle={\small\ttfamily}
+}
+
 \textwidth=450pt\oddsidemargin=0pt
 
 \begin{document}
@@ -156,8 +160,9 @@ al contesto locale. I costrutti principali sono:
           datacon ME ... ME
           
     \end{lstlisting}
-    \item un costrutto, valutato a compile-time, per definire una "categoria" di operatori. Le categorie di operatori
-    hanno degli identificatori per poterle nominare, inoltre definiscono le seguenti proprietà:
+    \item un costrutto, valutato a compile-time (cfr. parsing degli operatori), per definire una "categoria" di
+    operatori. Le categorie di operatori hanno degli identificatori per poterle nominare, inoltre definiscono le
+    seguenti proprietà:
         \begin{enumerate}
         \item una lista di operatori appartenenti alla proprietà. Sono compresi gli identificatori di variabili (gli
         operatori stessi sono identificatori di variabili) che possono essere utilizzati con la sintassi degli operatori;
@@ -242,6 +247,27 @@ sulle strutture dati del compilatore. \`E compito del compilatore fare le chiama
 vi è una più ampia e precisa descrizione delle singole fasi di compilazione, con enfasi particolare sugli algoritmi
 più interessanti utilizzati per risolvere i singoli sottoproblemi e su come le varie fasi interagiscono tra loro.
 
+\subsection{L'albero di sintassi astratta}
+Nella prima parte del compilatore viene eseguito il parsing del sorgente.
+Questa operazione produce quindi l'albero di sintassi astratta (AST). Il codice che gestisce i "token" dell'AST è
+all'interno del modulo \texttt{Compiler.Ast.Tree}; l'entry point dell'albero è dato dal token \texttt{Program}, il
+quale, come nodi figli, ha delle \texttt{Declaration} che rappresentano i vari costrutti del linguaggio.
+
+\begin{lstlisting}
+newtype Program a = Program [Declaration a]
+
+data Declaration a =
+      ADT (AlgebraicDataType a)
+    | AliasADT (AliasAlgebraicDataType a)
+    | Intf (Interface a)
+    | Ins (Instance a)
+    | Sig (Signature a)
+    | Let (SymbolDeclaration a)
+    | LetMulti (MultiSymbolDeclaration a)
+\end{lstlisting}
+
+Di seguito vi è lo schema della prima parte del compilatore:
+
 \begin{tikzpicture}[node distance=2cm]
 \node (src) [object] {Codice sorgente};
 \node (rawast) [object, below of=src] {Albero di sintassi astratta};
@@ -253,7 +279,44 @@ più interessanti utilizzati per risolvere i singoli sottoproblemi e su come le 
 \node (rawastArgs) [object, below of=rawastNames] {Albero di sintassi astratta};
 \draw [arrow] (rawastNames) -- node[anchor=west] {Check numero degli argomenti} (rawastArgs);
 \node (rawastAlias) [object, below of=rawastArgs] {Albero di sintassi astratta};
+\draw [arrow] (rawastArgs) -- node[anchor=west] {Sostituzione degli alias di tipo} (rawastAlias);
+\node (desugar) [object, right of=rawastAlias, xshift=7cm] {Desugaring};
+\draw [arrow] (desugar) -- (rawastAlias);
 \end{tikzpicture}
+
+\subsubsection{Il parser}
+Il parser è la prima componente del compilatore (dopo la lettura del sorgente). \`E stato scritto mediante la libreria
+open-source \texttt{Parsec} [4], la quale si basa sul concetto di parser combinator monadico. Il codice risiede nel
+modulo \texttt{Compiler.Syntax} ed ha una struttura gerarchica: parte definendo i combinators di "pezzi" primitivi dei
+token dell'AST (\texttt{Compiler.Syntax.Lib.SimpleParser}), dopodiché, nel modulo \texttt{Compiler.Syntax.Grammar} vi
+è il parsing vero e proprio dei token dell'AST e, infine, vi è l'entry point del parser, ovvero
+\texttt{Compiler.Syntax.Parser}. \`E bene notare che all'interno del modulo \texttt{Compiler.Syntax.Lib.SimpleParser}
+non sono visibili le API dell'AST, in quanto esso si occupa soltanto del parsing dei costrutti del linguaggio e non
+della generazione dei token.
+
+\subsubsection{Parsing degli operatori}
+langgg permette di definire operatori che vengono trattati come simboli di variabili (funzioni). In questo contesto,
+il linguaggio espone all'utente un costrutto particolare che permettere di definire le proprietà degli eventuali
+operatori. Questo costrutto viene valutato durante il parsing e definisce una categoria di operatori, ecco un esempio:
+
+\begin{lstlisting}
+OPERATORS_CATEGORY {#
+    name : Application ;
+    operators : |>, <|, `applyTo ;
+    lesser than : Comparison, Numeric ;
+    greater than : Functor ;
+    fixity : InfixRight ;
+#}
+\end{lstlisting}
+
+Il primo "campo" è il nome della categoria ed è utile per poter identificare la categoria, infatti, il terzo e il
+quarto campo definiscono rispetto a quali categorie gli attuali operatori hanno precedenza. Il secondo campo definisce
+l'insieme di operatori che fanno parte della categoria. Infine, l'ultimo campo è una costante e definisce la fissità
+degli operatori: infissa senza associazione, infissa con associazione a sinistra, infissa con associazione a destra,
+postfissa o prefissa. La versione infissa è solo per gli operatori binari, mentre postfissa e prefissa solo per gli
+operatori unari. Si può notare che nella lista di operatori vi è anche un simbolo di variabile preceduto dal simbolo
+di backtick; questo è possibile, in quanto langgg permette di utilizzare i simboli di variabili come operatori
+facendoli precedere dal carattere backtick.
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
@@ -265,6 +328,8 @@ più interessanti utilizzati per risolvere i singoli sottoproblemi e su come le 
     of Object Systems · January 1999
     %[3]
     \item Stephen Diehl - Dive into GHC: Targeting Core - url: \url{https://www.stephendiehl.com/posts/ghc_03.html}
+    %[4]
+    \item libreria Parsec - url: \url{https://hackage.haskell.org/package/parsec}
 \end{enumerate}
 
 \end{document}
