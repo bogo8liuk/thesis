@@ -20,6 +20,8 @@ nel dettaglio dei vari check>
 
 <prima fase di desugaring: alias, signatures>
 
+<da ast a tables, spiegare a grandi linee la gestione, confronto con ghc che non usa l'approccio a tabelle>
+
 <spiegazione dei constraints, quindi check dei constraints>
 
 <kind-inference, presentazione dell'algoritmo, delle strutture dati utilizzate e della gestione delle kind variables>
