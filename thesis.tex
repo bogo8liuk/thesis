@@ -6,8 +6,9 @@
 \usepackage{enumitem}
 \usepackage{hyperref}
 
-\lstset{language=Haskell
-    , basicstyle={\small\ttfamily}
+\lstset{
+    language=Haskell,
+    basicstyle={\small\ttfamily}
 }
 
 \textwidth=450pt\oddsidemargin=0pt
@@ -289,7 +290,7 @@ Il parser è la prima componente del compilatore (dopo la lettura del sorgente).
 open-source \texttt{Parsec} [4], la quale si basa sul concetto di parser combinator monadico. Il codice risiede nel
 modulo \texttt{Compiler.Syntax} ed ha una struttura gerarchica: parte definendo i combinators di "pezzi" primitivi dei
 token dell'AST (\texttt{Compiler.Syntax.Lib.SimpleParser}), dopodiché, nel modulo \texttt{Compiler.Syntax.Grammar} vi
-è il parsing vero e proprio dei token dell'AST e, infine, vi è l'entry point del parser, ovvero
+è la generazione vera e propria dei token dell'AST e, infine, vi è l'entry point del parser, ovvero
 \texttt{Compiler.Syntax.Parser}. \`E bene notare che all'interno del modulo \texttt{Compiler.Syntax.Lib.SimpleParser}
 non sono visibili le API dell'AST, in quanto esso si occupa soltanto del parsing dei costrutti del linguaggio e non
 della generazione dei token.
@@ -317,6 +318,30 @@ postfissa o prefissa. La versione infissa è solo per gli operatori binari, ment
 operatori unari. Si può notare che nella lista di operatori vi è anche un simbolo di variabile preceduto dal simbolo
 di backtick; questo è possibile, in quanto langgg permette di utilizzare i simboli di variabili come operatori
 facendoli precedere dal carattere backtick.
+%TODO: explain algorithm
+
+\subsubsection{Check dei nomi}
+Dopo la fase di parsing e dell'aggiunta di token built-in del linguaggio (ad esempio, alcuni operatori aritmetici),
+viene effettuato il controllo di esistenza di ogni tipo di simbolo: nomi di tipo, nomi di variabili, nomi di proprietà,
+etc.. Questo tipo di check è molto importante in quanto fasi successive del compilatore basano le loro computazioni
+sull'ipotesi che tutti i simboli sono stati definiti. Il codice risiede nel modulo \texttt{Compiler.Args}.
+
+\subsubsection{Check degli argomenti}
+Il controllo degli argomenti viene effettuato, a differenza del check dei nomi che viene eseguito su ogni tipo di nome,
+solo sui nomi di tipo, di alias e di proprietà. In particolare, devono valere le seguenti condizioni:
+\begin{enumerate}
+    \item $\forall$ occorrenza di nome di tipo =: \textit{name}:
+        \[ \#args(name) \leq \#args(def(name)) \]
+    \item $\forall$ occorrenza di nome di alias di tipo =: \textit{name}:
+        \[ \#args(name) = \#args(def(name)) \]
+    \item $\forall$ occorrenza di nome di proprietà =: \textit{name}:
+        \[ \#args(name) = \#args(def(name)) \]
+\end{enumerate}
+dove \textit{def} è la funzione che ritorna la definizione di un token nell'AST, \textit{args} è la funzione che calcola
+gli argomenti di un token e il simbolo \textit{\#} è la funzione che calcola la cardinalità di un insieme. La condizione
+(1) è meno stringente di (2) e di (3), in quanto l'utente può "manipolare" non solo tipi, ma anche funzioni di tipi,
+anche conosciute come \textit{type constructor}. La condizione (2) è fondamentale per la prossima fase del compilatore.
+Il codice risiede nel modulo \texttt{Compiler.Desugar.Args}.
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
