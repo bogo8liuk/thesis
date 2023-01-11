@@ -317,29 +317,70 @@ degli operatori: infissa senza associazione, infissa con associazione a sinistra
 postfissa o prefissa. La versione infissa è solo per gli operatori binari, mentre postfissa e prefissa solo per gli
 operatori unari. Si può notare che nella lista di operatori vi è anche un simbolo di variabile preceduto dal simbolo
 di backtick; questo è possibile, in quanto langgg permette di utilizzare i simboli di variabili come operatori
-facendoli precedere dal carattere backtick.
-%TODO: explain algorithm
+facendoli precedere dal carattere backtick. La valutazione di questo costrutto è interamente integrata nel parser ed
+è obbligatorio per l'utente definire le categorie degli operatori all'inizio del sorgente. La libreria \texttt{Parsec}
+offre delle API anche per il parsing degli operatori; l'algoritmo di gestione delle categorie si occupa di costruire
+una tabella di operatori, implementata semplicemente come una lista di liste, ordinando i gruppi (di categorie) in
+base alla loro precedenza. Le informazioni sulle categorie vengono estrapolate dal parsing del costrutto e vengono
+passate successivamente all'algoritmo di ordinamento delle categorie. Quest'ultimo si può ridurre all'inserimento
+di un elemento in una lista di liste:
+
+\begin{lstlisting}
+insert(x, ll):
+    match ll with
+        [] -> [[x]]
+        (l :: lt) ->
+            if any x' in l. x' < x        // Condizione d'inserimento (1)
+            then
+                if areAmbigous(x, ll)
+                then fail
+                else [x] :: l :: lt
+            else if all x' in l. x' == x  // Condizione d'inserimento (2)
+            then subInsert(x, l) :: lt
+            else l :: insert(x, lt)
+\end{lstlisting}
+
+L'algoritmo scorre la lista finché non:
+\begin{enumerate}
+    \item trova una sottolista \textit{l} in cui esiste almeno un elemento minore di \textit{x}; in questo caso, controlla
+    eventuali ambiguità delle categorie, poiché l'utente potrebbe aver definito categorie tali che la nozione di
+    ordinamento tra loro non è transitiva. La funzione \texttt{areAmbigous} nel pezzo di pseudocodice si occupa
+    di eseguire questo controllo. Se non esistono ambiguità tra le categorie, allora viene creata una nuova lista
+    singoletto contenente \textit{x} che viene inserita davanti alla sottolista \textit{l}
+    \item trova una sottolista \textit{l} in cui tutti gli elementi sono uguali a \textit{x}; in questo caso, \texttt{x}
+    viene inserito in \textit{l}.
+\end{enumerate}
+In tutti gli altri casi, la corrente sottolista \textit{l} contiene almeno un elemento $ x' $ tale che
+$ x' > x $, quindi l'inserimento non può ancora avvenire. Quando la tabella è completa, essa viene passata alla
+funzione \texttt{buildExpressionParser} della libreria \texttt{Parsec} che si occupa di costruire il parser per le
+espressioni.
 
 \subsubsection{Check dei nomi}
 Dopo la fase di parsing e dell'aggiunta di token built-in del linguaggio (ad esempio, alcuni operatori aritmetici),
 viene effettuato il controllo di esistenza di ogni tipo di simbolo: nomi di tipo, nomi di variabili, nomi di proprietà,
-etc.. Questo tipo di check è molto importante in quanto fasi successive del compilatore basano le loro computazioni
+etc.. Perciò deve valere la seguente condizione:
+    \[ \forall name \in AST. \exists def(name) \]
+dove \textit{def} è la funzione che ritorna la definizione di un token dell'AST.
+Questo tipo di check è molto importante in quanto fasi successive del compilatore basano le loro computazioni
 sull'ipotesi che tutti i simboli sono stati definiti. Il codice risiede nel modulo \texttt{Compiler.Args}.
 
 \subsubsection{Check degli argomenti}
 Il controllo degli argomenti viene effettuato, a differenza del check dei nomi che viene eseguito su ogni tipo di nome,
 solo sui nomi di tipo, di alias e di proprietà. In particolare, devono valere le seguenti condizioni:
+\[ \forall name \in AST. \]
 \begin{enumerate}
-    \item $\forall$ occorrenza di nome di tipo =: \textit{name}:
-        \[ \#args(name) \leq \#args(def(name)) \]
-    \item $\forall$ occorrenza di nome di alias di tipo =: \textit{name}:
-        \[ \#args(name) = \#args(def(name)) \]
-    \item $\forall$ occorrenza di nome di proprietà =: \textit{name}:
-        \[ \#args(name) = \#args(def(name)) \]
+    \item:
+        \[ isTypeName(name) \Longrightarrow \# args(name) \leq \#args(def(name)) \]
+    \item:
+        \[ isAliasName(name) \Longrightarrow \#args(name) = \#args(def(name)) \]
+    \item:
+        \[ isPropertyName(name) \Longrightarrow \#args(name) = \#args(def(name)) \]
 \end{enumerate}
-dove \textit{def} è la funzione che ritorna la definizione di un token nell'AST, \textit{args} è la funzione che calcola
-gli argomenti di un token e il simbolo \textit{\#} è la funzione che calcola la cardinalità di un insieme. La condizione
-(1) è meno stringente di (2) e di (3), in quanto l'utente può "manipolare" non solo tipi, ma anche funzioni di tipi,
+dove \textit{isTypeName}, \textit{isAliasName}, \textit{isPropertyName} sono le funzioni che ritornano \textit{true}
+se il nome in input è, rispettivamente, un nome di tipo, un nome di alias, un nome di proprietà, \textit{false} altrimenti,
+\textit{args} è la funzione che calcola gli argomenti di un token e il simbolo \textit{\#} è la funzione che calcola
+la cardinalità di un insieme. La condizione (1) è meno stringente di (2) e di (3),
+in quanto l'utente può "manipolare" non solo tipi, ma anche funzioni di tipi,
 anche conosciute come \textit{type constructor}. La condizione (2) è fondamentale per la prossima fase del compilatore.
 Il codice risiede nel modulo \texttt{Compiler.Desugar.Args}.
 
