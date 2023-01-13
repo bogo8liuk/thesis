@@ -387,6 +387,31 @@ in quanto l'utente può "manipolare" non solo tipi, ma anche funzioni di tipi,
 anche conosciute come \textit{type constructor}. La condizione (2) è fondamentale per la prossima fase del compilatore.
 Il codice risiede nel modulo \texttt{Compiler.Desugar.Args}.
 
+\subsubsection{Eliminazione degli alias di tipo}
+langgg offre un costrutto che permette all'utente di definire alias di tipi. Ecco un esempio:
+
+\begin{lstlisting}
+alias CharAnd x = Tuple2 Char x
+\end{lstlisting}
+
+Questo tipo di costrutto viene completamente valutato in fase di compilazione: ogni occorrenza di nome di alias viene
+trattata come una vera e propria macro, quindi viene sostituita con il tipo associato all'alias. Il modulo di Desugaring
+si occupa di questo task (\texttt{Compiler.Desugar.Alias}).
+Come si nota nell'esempio, gli alias ammettono argomenti (variabili di tipo) che vengono passati alla funzione di tipo.
+Il linguaggio ammette anche alias di alias, tuttavia, ciò può portare a \textit{cicli} di alias, come ad esempio:
+
+\begin{lstlisting}
+alias A = B
+alias B = C
+alias C = A
+\end{lstlisting}
+
+Per questo motivo, l'algoritmo di sostituzione degli alias implementa anche la "cycle detection". Inoltre, nella
+sostituzione è fondamentale che valga la condizione sugli alias nel check degli argomenti (cfr. check degli argomenti):
+    \[ \forall name \in AST. isAliasName(name) \Longrightarrow \#args(name) = \#args(def(name)) \]
+Se la sopracitata condizione non fosse vera, non sarebbe possibile effettuare l'unificazione nella kind-inference (cfr.
+kind-inference).
+
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
     %[1]
