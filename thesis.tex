@@ -434,6 +434,29 @@ si può notare che il costruttore \texttt{MultiSymTok} prenda in input un token 
 \texttt{Desugar.Sigs} è di eliminare dall'AST i costrutti \texttt{Signature} che rappresentano, appunto, le firme delle
 variabili e aggiungere la loro informazione sul tipo come type-hinting delle definizioni delle variabili.
 
+\subsection{Generazione dei token "tipati"}
+Dopo la generazione dell'albero di sintassi astratta e alcune fasi di desugaring, questa seconda macro componente del
+compilatore si occupa della generazione dei token "tipati". Questi ultimi prendono questa nomea in quanto, a questo
+livello, compaiono le nozioni di tipo e di kind del linguaggio.
+
+%TODO: schema struttura
+
+\subsubsection{Approccio a tabelle}
+A differenza della prima macro componente del compilatore, dove l'unica struttura dati di primo livello era l'AST, in
+questo caso vi sono molteplici strutture dati di primo livello. Innanzitutto, nel modulo \texttt{Ast.Typed}, vi sono
+le definizioni di tutti i token tipati e le operazioni su di essi; proprio in questo modulo compaiono:
+\begin{enumerate}
+    \item le nozioni che riguardano i tipi del linguaggio:
+    \begin{lstlisting}
+data LangKind               --kind
+data LangVarType            --variabile di tipo
+data LangHigherType         --mono-tipo
+data LangSpecConstraint     --"constraint" o predicato
+data LangQualType           --mono-tipo qualificato
+data LangTypeScheme         --poli-tipo o schema di tipo
+    \end{lstlisting}
+\end{enumerate}
+
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
     %[1]
