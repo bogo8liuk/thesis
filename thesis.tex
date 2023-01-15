@@ -478,6 +478,15 @@ data LangSpecConstraint     --"constraint" o predicato
 data LangQualType           --mono-tipo qualificato
 data LangTypeScheme         --poli-tipo o schema di tipo
     \end{lstlisting}
+    \item i token tipati che costituiscono un programma:
+    \begin{lstlisting}
+data NotedVar            --variabili
+data NotedVal            --valori: letterali e data constructor
+data NotedMatchExpr      --espressioni per il pattern match
+data NotedExpr           --expressioni
+    \end{lstlisting}
+    \item operazioni che riguardano la manipolazione dei tipi quali unificazione, test di specificità, specializzazione,
+    instanziazione, generalizzazione. Inoltre, vi sono le funzioni e le strutture dati per gestire il dispatch statico.
 \end{enumerate}
 
 \section*{Bibliografia}
