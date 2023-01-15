@@ -11,6 +11,12 @@
     basicstyle={\small\ttfamily}
 }
 
+\tikzstyle{process} =
+    [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=white!30]
+\tikzstyle{object} =
+    [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=white!30]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+
 \textwidth=450pt\oddsidemargin=0pt
 
 \begin{document}
@@ -207,9 +213,6 @@ più tipi associati; inoltre, i tipi associati alle proprietà possono essere an
 \end{description}
 
 \section{Il compilatore}
-\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=white!30]
-\tikzstyle{object} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=white!30]
-\tikzstyle{arrow} = [thick,->,>=stealth]
 
 \subsection{La struttura}
 \begin{tikzpicture}[node distance=2cm]
@@ -439,7 +442,27 @@ Dopo la generazione dell'albero di sintassi astratta e alcune fasi di desugaring
 compilatore si occupa della generazione dei token "tipati". Questi ultimi prendono questa nomea in quanto, a questo
 livello, compaiono le nozioni di tipo e di kind del linguaggio.
 
-%TODO: schema struttura
+\begin{tikzpicture}[node distance=2cm]
+\node (desast) [object] {AST "dezuccherato"};
+\node (desastContsCheck) [object, below of=desast] {AST "dezuccherato"};
+\draw [arrow] (desast) -- node[anchor=east] {Check dei constraints} (desastContsCheck);
+\node (typesTable) [object, below of=desastContsCheck] {Tabella dei tipi};
+\draw [arrow] (desastContsCheck) -- node[anchor=east] {Kind-inference} (typesTable);
+\node (consTable) [object, below of=typesTable] {Tabella dei costrutturi};
+\draw [arrow] (typesTable) -- node[anchor=east] {Costruzione dei data constructor} (consTable);
+\node (contsTable) [object, below of=consTable] {Tabella dei constraints o predicati};
+\draw [arrow] (consTable) -- node[anchor=east] {Costruzione dei constraints} (contsTable);
+\node (instances) [object, below of=contsTable] {Tabelle di: metodi di proprietà; metodi di istanza; istanze};
+\draw [arrow] (contsTable) -- node[anchor=east] {Valutazione delle istanze di proprietà} (instances);
+\node (bindings) [object, below of=instances] {Bindings dell'AST pronti per la type-inference};
+\draw [arrow] (instances) -- node[anchor=east] {"Preparazione" alla type-inference} (bindings);
+\node (tyBindings) [object, below of=bindings] {Bindings tipati};
+\draw [arrow] (bindings) -- node[anchor=east] {type-inference} (tyBindings);
+\node (desugar) [object, right of=bindings, xshift=6cm] {Desugaring};
+\draw [arrow] (desugar) -- (instances);
+\draw [arrow] (desugar) -- (bindings);
+\draw [arrow] (desugar) -- (tyBindings);
+\end{tikzpicture}
 
 \subsubsection{Approccio a tabelle}
 A differenza della prima macro componente del compilatore, dove l'unica struttura dati di primo livello era l'AST, in
