@@ -472,22 +472,79 @@ le definizioni di tutti i token tipati e le operazioni su di essi; proprio in qu
     \item le nozioni che riguardano i tipi del linguaggio:
     \begin{lstlisting}
 data LangKind               --kind
-data LangVarType            --variabile di tipo
-data LangHigherType         --mono-tipo
-data LangSpecConstraint     --"constraint" o predicato
-data LangQualType           --mono-tipo qualificato
-data LangTypeScheme         --poli-tipo o schema di tipo
+data LangVarType a          --variabile di tipo
+data LangHigherType a       --mono-tipo
+data LangSpecConstraint a   --"constraint" o predicato
+data LangQualType a         --mono-tipo qualificato
+data LangTypeScheme a       --poli-tipo o schema di tipo
     \end{lstlisting}
     \item i token tipati che costituiscono un programma:
     \begin{lstlisting}
-data NotedVar            --variabili
-data NotedVal            --valori: letterali e data constructor
-data NotedMatchExpr      --espressioni per il pattern match
-data NotedExpr           --expressioni
+data NotedVar a           --variabili
+data NotedVal a           --valori: letterali e data constructor
+data NotedMatchExpr a     --espressioni per il pattern match
+data NotedExpr a          --expressioni
     \end{lstlisting}
     \item operazioni che riguardano la manipolazione dei tipi quali unificazione, test di specificità, specializzazione,
     instanziazione, generalizzazione. Inoltre, vi sono le funzioni e le strutture dati per gestire il dispatch statico.
 \end{enumerate}
+Nonostante la presenza di token tipati, non esiste una corrispondente versione tipata dell'AST con un unico entry point,
+bensì le informazioni che riguardano un programma vengono memorizzate in "tabelle" (cfr. modulo \texttt{Types.Tables}):
+\begin{lstlisting}
+newtype TypesTable a          --tabella dei "modelli" di tipi
+newtype DataConsTable a       --tabella dei data constructor
+newtype ConstraintsTable a    --tabella dei "modelli" di constraints
+newtype InstsTable a          --tabella dei bindings delle istanze
+newtype PropMethodsTable a    --tabella dei metodi di proprieta'
+newtype ImplTable a           --tabella delle istanze
+data    TypedProgram a        --tabella dei bindings tipati
+\end{lstlisting}
+Vedremo nel dettaglio ogni tabella nelle descrizioni delle varie fasi del compilatore. Tuttavia, è necessaria una nota
+su \texttt{TypesTable} e \texttt{ConstraintsTable}. Come si legge dai commenti, esse sono tabelle per memorizzare dei
+"modelli". Tali modelli sono necessari alla costruzione dei tipi e dei predicati all'interno di un programma. Ad esempio,
+date le seguenti definizioni in langgg:
+\begin{lstlisting}
+type Box a = Boxing a
+property Stateful m =
+    val getState : m a -> a
+;;
+\end{lstlisting}
+Verranno creati dei token (presenti in \texttt{Ast.Typed}) dei tipi:
+\begin{lstlisting}
+data LangNewType a            --"modello" di tipo o type constructor
+data LangNewConstraint a      --"modello" di constraint
+\end{lstlisting}
+che rappresenteranno rispettivamente il modello per tipi \texttt{Box} e il modello per constraints \texttt{Stateful} e che
+verranno memorizzati nelle suddette tabelle.
+
+Sempre nel modulo \texttt{Types.Tables}, viene definito anche il cosiddetto "binding tipato":
+\begin{lstlisting}
+type BindingSingleton a = (NotedVar a, [NotedVar a], NotedExpr a)
+data TypedBinding a =
+      TyNonRec (BindingSingleton a)
+    | TyRec [BindingSingleton a]
+\end{lstlisting}
+Osservando l'implementazione di \texttt{TypedBinding}, si nota come esistano due tipi di binding. Il primo è per i binding
+non ricorsivi, mentre il secondo è per i binding che sono mutualmente ricorsivi fra loro (cfr. type-inference).
+
+\subparagraph{Confronto con GHC}
+Come è stato detto precedentemente, l'approccio del compilatore è quello di costruire tabelle man mano che le informazioni
+vengono inferite dall'AST. GHC (the Glasgow Haskell Compiler) utilizza un approccio differente, in quanto non utilizza
+alcuna "symbol table", bensì ogni token tipato (di GHC) nella compilazione di un programma Haskell da parte di GHC può
+textit{puntare} ad altri token tipati [5]. Si crea così un grafo di strutture dati tipate. Ad esempio, GHC, per gestire
+le entità di type constructor e data constructor, utilizza rispettivamente i token \texttt{TyCon} e \texttt{DataCon} (si
+ricordi che GHC è scritto in Haskell):
+\begin{lstlisting}
+data TyCon
+data DataCon
+\end{lstlisting}
+Ogni token di tipo \texttt{TyCon} punterà a una lista di \texttt{DataCon} che, a loro volta, conterranno la referenza
+al loro costruttore di tipo. Come puntualizza Edward Y. Zang nell'introduzione dell'articolo [6],
+uno svantaggio di questo approccio è che il grafo è immutabile e quindi, per poter
+aggiornare i nodi del grafo è necessario ricostruire il grafo da zero. Tuttavia, questo problema è mitigato, in quanto
+gli aggiornamenti del grafo sono parecchio rari, inoltre, man mano che GHC ottiene informazioni dal programma Haskell,
+accrescerà il grafo senza aggiornare i nodi preesistenti; in questo modo, non vi è alcuna necessità di costruire il
+grafo da zero.
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
@@ -501,6 +558,12 @@ data NotedExpr           --expressioni
     \item Stephen Diehl - Dive into GHC: Targeting Core - url: \url{https://www.stephendiehl.com/posts/ghc_03.html}
     %[4]
     \item libreria Parsec - url: \url{https://hackage.haskell.org/package/parsec}
+    %[5]
+    \item Data types for Haskell entities - url:
+    \url{https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/compiler/entity-types}
+    %[6]
+    \item Edward Y. Zang - Backpack without symbol tables - in: May 11, 2016 - url:
+    \url{http://web.mit.edu/~ezyang/Public/backpack-symbol-tables.pdf}
 \end{enumerate}
 
 \end{document}
