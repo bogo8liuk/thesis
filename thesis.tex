@@ -251,7 +251,7 @@ sulle strutture dati del compilatore. \`E compito del compilatore fare le chiama
 vi è una più ampia e precisa descrizione delle singole fasi di compilazione, con enfasi particolare sugli algoritmi
 più interessanti utilizzati per risolvere i singoli sottoproblemi e su come le varie fasi interagiscono tra loro.
 
-\subsection{L'albero di sintassi astratta}
+\section{L'albero di sintassi astratta}
 Nella prima parte del compilatore viene eseguito il parsing del sorgente.
 Questa operazione produce quindi l'albero di sintassi astratta (AST). Il codice che gestisce i "token" dell'AST è
 all'interno del modulo \texttt{Compiler.Ast.Tree}; l'entry point dell'albero è dato dal token \texttt{Program}, il
@@ -288,7 +288,7 @@ Di seguito vi è lo schema della prima parte del compilatore:
 \draw [arrow] (desugar) -- (rawastAlias);
 \end{tikzpicture}
 
-\subsubsection{Il parser}
+\subsection{Il parser}
 Il parser è la prima componente del compilatore (dopo la lettura del sorgente). \`E stato scritto mediante la libreria
 open-source \texttt{Parsec} [4], la quale si basa sul concetto di parser combinator monadico. Il codice risiede nel
 modulo \texttt{Compiler.Syntax} ed ha una struttura gerarchica: parte definendo i combinators di "pezzi" primitivi dei
@@ -298,7 +298,7 @@ token dell'AST (\texttt{Compiler.Syntax.Lib.SimpleParser}), dopodiché, nel modu
 non sono visibili le API dell'AST, in quanto esso si occupa soltanto del parsing dei costrutti del linguaggio e non
 della generazione dei token.
 
-\subparagraph{Parsing degli operatori}
+\subsubsection{Parsing degli operatori}
 langgg permette di definire operatori che vengono trattati come simboli di variabili (funzioni). In questo contesto,
 il linguaggio espone all'utente un costrutto particolare che permettere di definire le proprietà degli eventuali
 operatori. Questo costrutto viene valutato durante il parsing e definisce una categoria di operatori, ecco un esempio:
@@ -361,7 +361,7 @@ $ x' > x $, quindi l'inserimento non può ancora avvenire. Quando la tabella è 
 funzione \texttt{buildExpressionParser} della libreria \texttt{Parsec} che si occupa di costruire il parser per le
 espressioni.
 
-\subsubsection{Check dei nomi}
+\subsection{Check dei nomi}
 Dopo la fase di parsing e dell'aggiunta di token built-in del linguaggio (ad esempio, alcuni operatori aritmetici),
 viene effettuato il controllo di esistenza di ogni tipo di simbolo: nomi di tipo, nomi di variabili, nomi di proprietà,
 etc.. Perciò deve valere la seguente condizione:
@@ -370,7 +370,7 @@ dove \textit{def} è la funzione che ritorna la definizione di un token dell'AST
 Questo tipo di check è molto importante in quanto fasi successive del compilatore basano le loro computazioni
 sull'ipotesi che tutti i simboli sono stati definiti. Il codice risiede nel modulo \texttt{Compiler.Args}.
 
-\subsubsection{Check degli argomenti}
+\subsection{Check degli argomenti}
 Il controllo degli argomenti viene effettuato, a differenza del check dei nomi che viene eseguito su ogni tipo di nome,
 solo sui nomi di tipo, di alias e di proprietà. In particolare, devono valere le seguenti condizioni:
 \[ \forall name \in AST. \]
@@ -390,7 +390,7 @@ in quanto l'utente può "manipolare" non solo tipi, ma anche funzioni di tipi,
 anche conosciute come \textit{type constructor}. La condizione (2) è fondamentale per la prossima fase del compilatore.
 Il codice risiede nel modulo \texttt{Compiler.Desugar.Args}.
 
-\subsubsection{Eliminazione degli alias di tipo}
+\subsection{Eliminazione degli alias di tipo}
 langgg offre un costrutto che permette all'utente di definire alias di tipi. Ecco un esempio:
 
 \begin{lstlisting}
@@ -415,7 +415,7 @@ sostituzione è fondamentale che valga la condizione sugli alias nel check degli
 Se la sopracitata condizione non fosse vera, non sarebbe possibile effettuare l'unificazione nella kind-inference (cfr.
 kind-inference).
 
-\subsubsection{Eliminazione delle firme di funzioni}
+\subsection{Eliminazione delle firme di funzioni}
 langgg espone un costrutto, detto \textit{signature} (in italiano "firma"), che permette di indicare il tipo di un
 binding. Ad esempio:
 
@@ -437,7 +437,7 @@ si può notare che il costruttore \texttt{MultiSymTok} prenda in input un token 
 \texttt{Desugar.Sigs} è di eliminare dall'AST i costrutti \texttt{Signature} che rappresentano, appunto, le firme delle
 variabili e aggiungere la loro informazione sul tipo come type-hinting delle definizioni delle variabili.
 
-\subsection{Generazione dei token "tipati"}
+\section{Generazione dei token "tipati"}
 Dopo la generazione dell'albero di sintassi astratta e alcune fasi di desugaring, questa seconda macro componente del
 compilatore si occupa della generazione dei token "tipati". Questi ultimi prendono questa nomea in quanto, a questo
 livello, compaiono le nozioni di tipo e di kind del linguaggio.
@@ -464,7 +464,7 @@ livello, compaiono le nozioni di tipo e di kind del linguaggio.
 \draw [arrow] (desugar) -- (tyBindings);
 \end{tikzpicture}
 
-\subsubsection{Approccio a tabelle}
+\subsection{Approccio a tabelle}
 A differenza della prima macro componente del compilatore, dove l'unica struttura dati di primo livello era l'AST, in
 questo caso vi sono molteplici strutture dati di primo livello. Innanzitutto, nel modulo \texttt{Ast.Typed}, vi sono
 le definizioni di tutti i token tipati e le operazioni su di essi; proprio in questo modulo compaiono:
@@ -527,7 +527,7 @@ data TypedBinding a =
 Osservando l'implementazione di \texttt{TypedBinding}, si nota come esistano due tipi di binding. Il primo è per i binding
 non ricorsivi, mentre il secondo è per i binding che sono mutualmente ricorsivi fra loro (cfr. type-inference).
 
-\subparagraph{Confronto con GHC}
+\subsubsection{Confronto con GHC}
 Come è stato detto precedentemente, l'approccio del compilatore è quello di costruire tabelle man mano che le informazioni
 vengono inferite dall'AST. GHC (the Glasgow Haskell Compiler) utilizza un approccio differente, in quanto non utilizza
 alcuna "symbol table", bensì ogni token tipato (di GHC) nella compilazione di un programma Haskell da parte di GHC può
@@ -545,6 +545,35 @@ aggiornare i nodi del grafo è necessario ricostruire il grafo da zero. Tuttavia
 gli aggiornamenti del grafo sono parecchio rari, inoltre, man mano che GHC ottiene informazioni dal programma Haskell,
 accrescerà il grafo senza aggiornare i nodi preesistenti; in questo modo, non vi è alcuna necessità di costruire il
 grafo da zero.
+
+\subsection{Polimorfismo ad hoc}
+langgg supporta il polimorfismo ad hoc esponendo costrutti chiamati \textit{proprietà}, le quali sono concettualmente
+molto simili alle \textit{type classes} di Haskell. Ecco un esempio di definizione di proprietà in langgg:
+\begin{lstlisting}
+property Stream s t =
+    val new : t -> s t
+    val yield : t -> s t -> s t
+    val consume : s t -> Tuple2 (s t) t
+;;
+\end{lstlisting}
+Questo pezzo di codice produce idealmente tre token corrispondenti ai metodi \texttt{new}, \texttt{yield} e \texttt{consume},
+i quali possono essere istanziati attraverso il meccanismo delle istanze che verrà presentato prossimamente. I tre
+token appena costruiti avranno le seguenti firme:
+\begin{lstlisting}
+val new : Stream s t => t -> s t
+val yield : Stream s t => t -> s t -> s t
+val consume : Stream s t => s t -> Tuple2 (s t) t
+\end{lstlisting}
+Si noti come le firme effettive non siano le stesse di quelle date dall'utente, le quali risultano incomplete.
+All'inizio della dicitura dei tipi effettivi, si può notare un \textit{constraint} o \textit{predicato} seguito da una
+freccia, la quale è intesa come implicazione. I tipi dei metodi di proprietà avranno quindi la forma:
+\[ Pred(\overline{\alpha}) \Longrightarrow ty(\overline{\alpha}) \]
+dove \textit{Pred} è un predicato e \textit{ty} è una funzione di tipo.
+Il polimorfismo ad hoc viene, dunque, supportato attraverso i predicati, i quali rappresentano delle ipotesi aggiuntive
+sui tipi. L'istanziazione di una proprietà consiste nel dichiarare dei tipi che %TODO
+
+\subsection{Kind-inference}
+%TODO
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
