@@ -667,14 +667,52 @@ dove $ \overline{\alpha} $ sono variabili di tipo distinte e $ TyCon $ è un cos
 mostrato quali vincoli che riguardano i constraints e le istanze possono essere rilassati e con quali conseguenze.
 
 \subparagraph{Constraints sulle istanze}
-Come è possibile definire proprietà che hanno dei predicati, l'utente ha anche la facoltà di definire istanze con uno
-o più predicati, ad esempio:
+L'utente ha anche la facoltà di definire istanze con uno o più predicati, ad esempio:
 \begin{lstlisting}
 instance Monad m => Stream m String =
     <implementazioni>
 ;;
 \end{lstlisting}
+questo tipo di definizione genererà metodi di istanza con le seguenti firme:
+\begin{lstlisting}
+val new : Monad m => String -> m String
+val yield : Monad m => String -> m String -> m String
+val consume : Monad m => m String -> (m String, String)
+\end{lstlisting}
+Il constraint sull'istanza viene quindi applicato al tipo dei metodi di istanza.
 
+\subsubsection{Condizioni sui constraint}
+I constraint rappresentano un modo per "restringere" i possibili tipi che possono istanziare una o più variabili di
+tipo. I tipi nelle firme delle variabili (nonché i type-hinting) possono possedere zero o più constraint; lo stesso
+vale, come viene mostrato nei paragrafi precedenti, anche per le proprietà e per le istanze. Esistono, però, dei
+vincoli sulla forma dei constraint. Come viene mostrato in [8] e [9], esistono condizioni (di Paterson) sufficienti
+affinché l'algoritmo di risoluzione delle istanze di Haskell termini. Prima di presentarle, diamo alcune notazioni:
+\newline Dato un costrutto $ K $ in cui compaiono dei constraints $ C \Rightarrow D $, definiamo
+\begin{itemize}
+    \item $ C $ come \textit{Contesto} del costrutto $ K $;
+    \item $ H $ come \textit{Testa} del costrutto $ K $.
+\end{itemize}
+Ora presentiamo le condizioni di Paterson:
+\begin{itemize}
+    \item il contesto \textit{C} di una dichiarazione di type-class può menzionare solamente variabili di tipo e
+    le variabili di tipo sono distinte in ogni singolo constraint in \textit{C};
+    \item Per ogni dichiarazione di istanza $ C \Rightarrow TyCl \; t_1 ... t_n $, nessuna variabile di tipo ha
+    più occorrenze nel contesto $ C $ rispetto alla testa $ TyCl \; t_1 ... t_n $.
+    \item Per ogni dichiarazione di istanza $ C \Rightarrow TyCl \; t_1 ... t_n $, ogni constraint nel contesto
+    $ C $ ha meno costruttori e variabili di tipo (presi insieme e contando le ripetizioni) rispetto alla testa
+    $ TyCl \; t_1 ... t_n $.
+    \item Per ogni due dichiarazioni di istanze $ C \Rightarrow TyCl \; t_1 ... t_n $,
+    $ C' \Rightarrow TyCl \; t_1' ... t_n' $, non deve esistere una sostituzione $ \varphi $ tale che:
+    $ \varphi(t_1) = \varphi(t_1') $, ..., $ \varphi(t_n) = \varphi(t_n') $.
+\end{itemize}
+Informalmente, l'obiettivo è avere sempre dei contesti più "piccoli" rispetto alle teste. La politica di langgg è
+simile e applica i seguenti vincoli:
+\begin{enumerate}
+    \item $ \forall \; constraint =: c.\; \exists \; tyvar =: v.\; v \in c $
+    \item $ \forall \; instance =: c \Rightarrow h.\; \forall \; tyvar =: v.\; v \in instance \Longrightarrow
+    occ(v, c) \leq occ(v, h) $
+    \item $ \forall \; instance =: c \Rightarrow h.\; countWrapVars(c) < countWrapVars(h) $
+\end{enumerate}
 
 \subsection{Kind-inference}
 %TODO
@@ -700,6 +738,12 @@ instance Monad m => Stream m String =
     %[7]
     \item Haskell Flexible Instances extension - url:
     \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/instances.html#extension-FlexibleInstances}
+    %[8]
+    \item Haskell instance resolution termination conditions - url:
+    \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/instances.html#instance-termination-rules}
+    %[9]
+    \item Martin Sulzmann, Gregory J. Duck, Simon Peyton-Jones, Peter J. Stuckey - Understanding Functional Dependencies
+    via Constraint Handling Rules - in: Journal of Functional Programming, Volume 17, Issue 1, January 2007, pp. 83 - 129
 \end{enumerate}
 
 \end{document}
