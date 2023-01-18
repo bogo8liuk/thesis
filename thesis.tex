@@ -550,27 +550,66 @@ grafo da zero.
 langgg supporta il polimorfismo ad hoc esponendo costrutti chiamati \textit{proprietà}, le quali sono concettualmente
 molto simili alle \textit{type classes} di Haskell. Ecco un esempio di definizione di proprietà in langgg:
 \begin{lstlisting}
-property Stream s t =
-    val new : t -> s t
-    val yield : t -> s t -> s t
-    val consume : s t -> Tuple2 (s t) t
+property Eq a =
+    val (==) : a -> a -> Bool
+    val (/=) : a -> a -> Bool
 ;;
 \end{lstlisting}
-Questo pezzo di codice produce idealmente tre token corrispondenti ai metodi \texttt{new}, \texttt{yield} e \texttt{consume},
-i quali possono essere istanziati attraverso il meccanismo delle istanze che verrà presentato prossimamente. I tre
-token appena costruiti avranno le seguenti firme:
+Questo pezzo di codice produce idealmente due token corrispondenti ai metodi \texttt{(==)} e \texttt{(/=)},
+i quali possono essere istanziati attraverso il meccanismo delle istanze che verrà presentato prossimamente. I token
+appena costruiti avranno le seguenti firme:
 \begin{lstlisting}
-val new : Stream s t => t -> s t
-val yield : Stream s t => t -> s t -> s t
-val consume : Stream s t => s t -> Tuple2 (s t) t
+val (==) : Eq a => a -> a -> Bool
+val (/=) : Eq a => a -> a -> Bool
 \end{lstlisting}
 Si noti come le firme effettive non siano le stesse di quelle date dall'utente, le quali risultano incomplete.
 All'inizio della dicitura dei tipi effettivi, si può notare un \textit{constraint} o \textit{predicato} seguito da una
 freccia, la quale è intesa come implicazione. I tipi dei metodi di proprietà avranno quindi la forma:
-\[ Pred(\overline{\alpha}) \Longrightarrow ty(\overline{\alpha}) \]
+    \[ Pred(\overline{\alpha}) \Longrightarrow ty(\overline{\alpha}) \]
 dove \textit{Pred} è un predicato e \textit{ty} è una funzione di tipo.
 Il polimorfismo ad hoc viene, dunque, supportato attraverso i predicati, i quali rappresentano delle ipotesi aggiuntive
-sui tipi. L'istanziazione di una proprietà consiste nel dichiarare dei tipi che %TODO
+sui tipi. L'istanziazione di una proprietà consiste nel dichiarare dei tipi che fungeranno da "caso particolare" per i
+metodi di proprietà (i "modelli"), ad esempio, riprendendo la proprietà \texttt{Eq} del precedente pezzo di codice
+, in langgg possiamo definire un'istanza del tipo:
+\begin{lstlisting}
+instance Eq Char where
+    <implementazioni>
+;;
+\end{lstlisting}
+I dettagli implementativi al momento sono omessi. In ogni caso, i metodi di istanza avranno le seguenti firme:
+\begin{lstlisting}
+val (==) : Char -> Char -> Bool
+val (/=) : Char -> Char -> Bool
+\end{lstlisting}
+Si può notare come il predicato su \texttt{Eq} non esiste più.
+
+\subsubsection{Estensioni del polimorfismo ad hoc}
+Il meccanismo di polimorfismo ad hoc precedentemente presentato incontra numerose estensioni in langgg, alcune delle
+quali impongono condizioni aggiuntive sul programma.
+
+\subparagraph{Numero arbitrario di argomenti delle proprietà}
+Nell'esempio con \texttt{Eq}, la proprietà possedeva soltanto un argomento, tuttavia, è possibile definire proprietà
+con un numero arbitrario (ma fissato alla definizione) di argomenti ad esempio:
+\begin{lstlisting}
+property Stream s t =
+    val new : t -> s t
+    val yield : t -> s t -> s t
+    val consume : s t -> (s t, t)
+;;
+\end{lstlisting}
+Si noti che \texttt{Stream} ha 2 argomenti.
+
+\subparagraph{Constraints sulle proprietà}
+\`E possibile definire in langgg una proprietà della forma:
+\begin{lstlisting}
+property C1 a Char => C2 a =
+    <metodi>
+;;
+\end{lstlisting}
+Questo tipo di definizione consiste nell'aggiungere il predicato \texttt{C1 a} alla proprietà \texttt{C2 a}.
+Semanticamente, questo impone la seguente condizione sul programma:
+    \[ \forall type . \exists inst(C2, type) \Longrightarrow \exists inst(C1, type, Char) \]
+dove $ inst(C, \overline{t}) $ è, banalmente, l'instanza con nome di proprietà $ C $ e tipi $ \overline{t} $.
 
 \subsection{Kind-inference}
 %TODO
