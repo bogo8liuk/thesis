@@ -609,7 +609,72 @@ property C1 a Char => C2 a =
 Questo tipo di definizione consiste nell'aggiungere il predicato \texttt{C1 a} alla proprietà \texttt{C2 a}.
 Semanticamente, questo impone la seguente condizione sul programma:
     \[ \forall type . \exists inst(C2, type) \Longrightarrow \exists inst(C1, type, Char) \]
-dove $ inst(C, \overline{t}) $ è, banalmente, l'instanza con nome di proprietà $ C $ e tipi $ \overline{t} $.
+dove $ inst(C, \overline{t}) $ è, banalmente, l'instanza con nome di proprietà $ C $ e tipi $ \overline{t} $. \`E
+possibile aggiungere più di un predicato alla stessa proprietà.
+
+\subparagraph{Polimorfismo higher-kinded}
+Riprendiamo il precedente esempio con \texttt{Stream}:
+\begin{lstlisting}
+property Stream s t =
+    val new : t -> s t
+    val yield : t -> s t -> s t
+    val consume : s t -> (s t, t)
+;;
+\end{lstlisting}
+Gli argomenti di una proprietà sono sempre variabili di tipo. Come è già stato menzionato in precedenza, langgg supporta
+tipi di kind arbitrari; gli argomenti delle proprietà non fanno eccezione da questo punto di vista, infatti, nell'esempio
+si può notare come la variabile \textit{s} abbia kind (utilizzando la rappresentazione dei kind di Haskell):
+    \[ * \mapsto * \]
+mentre la variabile \textit{t} ha kind:
+   \[ * \]
+
+\subparagraph{Argomenti arbitrari delle istanze}
+Gli argomenti di un'istanza possono essere tipi di forma arbitraria, ad esempio:
+\begin{lstlisting}
+property C x y =
+    <metodi>
+;;
+
+instance C a (Tuple3 a (T b) (m b)) =
+    <implementazioni>
+;;
+\end{lstlisting}
+Confrontando il precedente codice langgg con il seguente codice Haskell che può considerarsi quanto meno concettualmente
+equivalente:
+\begin{lstlisting}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
+class C x y where
+    <metodi>
+
+instance C a (a, T b, m b) where
+    <implementazioni>
+\end{lstlisting}
+si ha che, compilando questo programma Haskell soltanto con l'estensione all'inizio del codice, si incorrerà nel
+seguente messaggio d'errore da parte del compilatore:
+\begin{lstlisting}
+Illegal instance declaration for 'C a (a, T b, m b)'
+(All instance types must be of the form (T a1 ... an)
+where a1 ... an are *distinct type variables*,
+and each type variable appears at most once in the instance head.
+Use FlexibleInstances if you want to disable this.)
+\end{lstlisting}
+Come suggerisce l'ultima riga del messaggio d'errore, per definire un'istanza del genere in un programma Haskell è
+necessario utilizzare l'estensione \texttt{FlexibleInstances} [7]. In langgg, a differenza di Haskell, quel tipo di instanza
+è accettato di default. Il seguente vincolo sulla forma dei tipi riportato nel messaggio d'errore viene dunque rilassato:
+    \[ TyCon(\overline{\alpha}) \]
+dove $ \overline{\alpha} $ sono variabili di tipo distinte e $ TyCon $ è un costruttore di tipo. In seguito, verrà
+mostrato quali vincoli che riguardano i constraints e le istanze possono essere rilassati e con quali conseguenze.
+
+\subparagraph{Constraints sulle istanze}
+Come è possibile definire proprietà che hanno dei predicati, l'utente ha anche la facoltà di definire istanze con uno
+o più predicati, ad esempio:
+\begin{lstlisting}
+instance Monad m => Stream m String =
+    <implementazioni>
+;;
+\end{lstlisting}
+
 
 \subsection{Kind-inference}
 %TODO
@@ -632,6 +697,9 @@ dove $ inst(C, \overline{t}) $ è, banalmente, l'instanza con nome di proprietà
     %[6]
     \item Edward Y. Zang - Backpack without symbol tables - in: May 11, 2016 - url:
     \url{http://web.mit.edu/~ezyang/Public/backpack-symbol-tables.pdf}
+    %[7]
+    \item Haskell Flexible Instances extension - url:
+    \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/instances.html#extension-FlexibleInstances}
 \end{enumerate}
 
 \end{document}
