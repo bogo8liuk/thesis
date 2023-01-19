@@ -187,8 +187,8 @@ accompagnato da dati. Per eseguire operazioni con i tipi di dati algebrici vi è
 (cfr. grammatica delle espressioni) che permette di destrutturare un data constructor dai suoi dati associati.
 \item[Polimorfismo parametrico] il sistema di tipi del linguaggio supporta le variabili di tipo. Questo tipo di
 polimorfismo permette di avere singoli algoritmi per una moltitudine di tipi.
-\item[Kind] Il linguaggio ha la nozione di \textit{kind} e permette la manipolazione di tipi di kind differenti.
-Quindi, data la seguente definizione di tipo:
+\item[Kind] Il linguaggio permette la manipolazione di \textit{funzioni di tipi}, introducendo la nozione di
+\textit{kind} (cfr. sezione sul sistema di tipi). Quindi, data la seguente definizione di tipo:
 \begin{lstlisting}
 type M a b = DataCon1 a | DataCon2 b | DataCon3 a Char
 \end{lstlisting}
@@ -388,7 +388,7 @@ se il nome in input è, rispettivamente, un nome di tipo, un nome di alias, un n
 la cardinalità di un insieme. La condizione (1) è meno stringente di (2) e di (3),
 in quanto l'utente può "manipolare" non solo tipi, ma anche funzioni di tipi,
 anche conosciute come \textit{type constructor}. La condizione (2) è fondamentale per la prossima fase del compilatore.
-Il codice risiede nel modulo \texttt{Compiler.Desugar.Args}.
+Il codice risiede nel modulo \texttt{Compiler.Args}.
 
 \subsection{Eliminazione degli alias di tipo}
 langgg offre un costrutto che permette all'utente di definire alias di tipi. Ecco un esempio:
@@ -466,8 +466,8 @@ livello, compaiono le nozioni di tipo e di kind del linguaggio.
 
 \subsection{Approccio a tabelle}
 A differenza della prima macro componente del compilatore, dove l'unica struttura dati di primo livello era l'AST, in
-questo caso vi sono molteplici strutture dati di primo livello. Innanzitutto, nel modulo \texttt{Ast.Typed}, vi sono
-le definizioni di tutti i token tipati e le operazioni su di essi; proprio in questo modulo compaiono:
+questo caso vi sono molteplici strutture dati di primo livello. Innanzitutto, nel modulo \texttt{Compiler.Ast.Typed},
+vi sono le definizioni di tutti i token tipati e le operazioni su di essi; proprio in questo modulo compaiono:
 \begin{enumerate}
     \item le nozioni che riguardano i tipi del linguaggio:
     \begin{lstlisting}
@@ -489,7 +489,8 @@ data NotedExpr a          --expressioni
     instanziazione, generalizzazione. Inoltre, vi sono le funzioni e le strutture dati per gestire il dispatch statico.
 \end{enumerate}
 Nonostante la presenza di token tipati, non esiste una corrispondente versione tipata dell'AST con un unico entry point,
-bensì le informazioni che riguardano un programma vengono memorizzate in "tabelle" (cfr. modulo \texttt{Types.Tables}):
+bensì le informazioni che riguardano un programma vengono memorizzate in "tabelle" (cfr. modulo
+\texttt{Compiler.Types.Tables}):
 \begin{lstlisting}
 newtype TypesTable a          --tabella dei "modelli" di tipi
 newtype DataConsTable a       --tabella dei data constructor
@@ -509,7 +510,7 @@ property Stateful m =
     val getState : m a -> a
 ;;
 \end{lstlisting}
-Verranno creati dei token (presenti in \texttt{Ast.Typed}) dei tipi:
+Verranno creati dei token (presenti in \texttt{Compiler.Ast.Typed}) dei tipi:
 \begin{lstlisting}
 data LangNewType a            --"modello" di tipo o type constructor
 data LangNewConstraint a      --"modello" di constraint
@@ -517,7 +518,7 @@ data LangNewConstraint a      --"modello" di constraint
 che rappresenteranno rispettivamente il modello per tipi \texttt{Box} e il modello per constraints \texttt{Stateful} e che
 verranno memorizzati nelle suddette tabelle.
 
-Sempre nel modulo \texttt{Types.Tables}, viene definito anche il cosiddetto "binding tipato":
+Sempre nel modulo \texttt{Compiler.Types.Tables}, viene definito anche il cosiddetto "binding tipato":
 \begin{lstlisting}
 type BindingSingleton a = (NotedVar a, [NotedVar a], NotedExpr a)
 data TypedBinding a =
@@ -546,6 +547,47 @@ gli aggiornamenti del grafo sono parecchio rari, inoltre, man mano che GHC ottie
 accrescerà il grafo senza aggiornare i nodi preesistenti; in questo modo, non vi è alcuna necessità di costruire il
 grafo da zero.
 
+\subsection{Il sistema di tipi}
+In questo paragrafo, verrà presentato il sistema di tipi di langgg. Come è stato già menzionato in precedenza, il
+linguaggio supporta il polimorfismo ad hoc e il polimorfismo parametrico; quest'ultimo viene implementato attraverso
+il concetto di variabile di tipo, la quale può essere considerata come un "placeholder" per i tipi.
+
+\subsubsection{Mono-tipo}
+Di seguito, viene definito il concetto di \textit{mono-tipo}:
+\[ MT \; := \; \alpha \; | \; T \; | \; MT \; MT \; | \; MT \mapsto MT \]
+dove $ \alpha $ è una variabile di tipo e $ T $ è un costruttore di tipo. Come si può dedurre dalla definizione stessa,
+non si deve confondere
+il concetto di mono-tipo con quello di tipo \textit{monomorfo}, infatti i mono-tipi, a differenza dei tipi monomorfi,
+ammettono le variabili di tipo. L'ultimo caso è il tipo \textit{funzione}; nella sezione sull'inferenza di tipo verrà
+mostrato il motivo per il quale è fondamentale garantire la presenza del tipo funzione all'interno del type-system.
+
+\subsubsection{Tipi higher-kinded}
+langgg permette all'utente di utilizzare \textit{funzioni di tipo} (o \textit{costruttori di tipo}). A questo scopo,
+viene introdotta la nozione di \textit{kind}, il quale rappresenta un'informazione aggiuntiva per i tipi. Informalmente,
+dato un type-system \textit{TS}, un kind-system \textit{KS} si può vedere come un type-system di livello "superiore"
+a \textit{TS}. Ora diamo una definizione più precisa di kind:
+\[ K \; := \; \kappa \; | \; * \; | \; K \mapsto K \]
+dove $ \kappa $ è una variabile di kind e $ * $ è la costante primitiva di kind (detta anche "tipo"), il quale
+rappresenta tutti quei tipi che non hanno bisogno di parametri di tipi. Ecco alcuni esempi:
+\begin{itemize}
+    \item $ * \mapsto * $ è il kind delle funzioni di tipo unarie;
+    \item $ (* \mapsto *) \mapsto * \mapsto * $ è il kind delle funzioni di tipo binarie che prendono in input una
+    funzione di tipo unaria e un tipo e ritornano un altro tipo.
+    \item $ \kappa_1 \mapsto \kappa_2 $ è il kind delle funzioni unarie che prendono in input una funzione di tipo
+    di kind $ \kappa_1 $ e ritorna un'altra funzione di tipo di kind $ \kappa_2 $.
+\end{itemize}
+Data la presenza di tipi \textit{higher-kinded} all'interno di langgg, è doveroso fare un'ulteriore precisazione che
+riguarda i mono-tipi: alla definizione di mono-tipo deve essere aggiunta la condizione sulla correttezza dei kind.
+Ad esempio, dato il tipo:
+\[ t_1 \mapsto t_2 \]
+sapendo che il kind del costruttore di tipo funzione è $ * \mapsto * \mapsto * $, è necessario, affinché il suddetto
+kind venga rispettato, che il kind di $ t_1 $ e $ t_2 $ sia $ * $.
+
+\subsubsection{Predicati e tipi qualificati}
+%TODO
+\subsubsection{Schemi di tipi}
+%TODO
+
 \subsection{Polimorfismo ad hoc}
 langgg supporta il polimorfismo ad hoc esponendo costrutti chiamati \textit{proprietà}, le quali sono concettualmente
 molto simili alle \textit{type classes} di Haskell. Ecco un esempio di definizione di proprietà in langgg:
@@ -565,8 +607,8 @@ val (/=) : Eq a => a -> a -> Bool
 Si noti come le firme effettive non siano le stesse di quelle date dall'utente, le quali risultano incomplete.
 All'inizio della dicitura dei tipi effettivi, si può notare un \textit{constraint} o \textit{predicato} seguito da una
 freccia, la quale è intesa come implicazione. I tipi dei metodi di proprietà avranno quindi la forma:
-    \[ Pred(\overline{\alpha}) \Longrightarrow ty(\overline{\alpha}) \]
-dove \textit{Pred} è un predicato e \textit{ty} è una funzione di tipo.
+    \[ Pred(\overline{\alpha}) \Rightarrow ty(\overline{\alpha}) \]
+dove \textit{Pred} è un predicato e \textit{ty} è un tipo qualunque sulle variabili $ \overline{\alpha} $.
 Il polimorfismo ad hoc viene, dunque, supportato attraverso i predicati, i quali rappresentano delle ipotesi aggiuntive
 sui tipi. L'istanziazione di una proprietà consiste nel dichiarare dei tipi che fungeranno da "caso particolare" per i
 metodi di proprietà (i "modelli"), ad esempio, riprendendo la proprietà \texttt{Eq} del precedente pezzo di codice
@@ -708,14 +750,26 @@ Ora presentiamo le condizioni di Paterson:
 Informalmente, l'obiettivo è avere sempre dei contesti più "piccoli" rispetto alle teste. La politica di langgg è
 simile e applica i seguenti vincoli:
 \begin{enumerate}
-    \item $ \forall \; constraint =: c.\; \exists \; tyvar =: v.\; v \in c $
-    \item $ \forall \; instance =: c \Rightarrow h.\; \forall \; tyvar =: v.\; v \in instance \Longrightarrow
-    occ(v, c) \leq occ(v, h) $
-    \item $ \forall \; instance =: c \Rightarrow h.\; countWrapVars(c) < countWrapVars(h) $
+    \item Per ogni constraint $ c $, $ c $ deve contenere almeno una variabile di tipo, ovvero:
+    \[ \forall \; constraint =: c.\; \exists \; tyvar =: v.\; v \in c \]
+    \item Per ogni istanza $ ctx \Rightarrow h $, il numero di occorrenze di ogni singola variabile $ v $ nel contesto
+    $ ctx $ deve essere minore o uguale rispetto al numero di occorrenze di $ v $ nella testa $ h $, ovvero:
+    \[ \forall \; instance =: (ctx \Rightarrow h).\; \forall \; tyvar =: v.\; v \in instance
+    \Longrightarrow occ(v, ctx) \leq occ(v, h) \]
+    \item Per ogni istanza $ ctx \Rightarrow h $, le variabili di tipo di $ ctx $ devono essere innestate in meno
+    costruttori di tipo rispetto alle variabili di tipo di $ h $ (contando le variabili tutte insieme), ovvero: \newline
+    \[ \forall \; instance =: (ctx \Rightarrow h).\; countWrapVars(ctx) < countWrapVars(h) \]
 \end{enumerate}
+dove $ occ(v, k) $ è la funzione che conta le occorrenze della variabile di tipo $ v $ nel costrutto $ k $ e
+$ countWrapVars(k) $ è la funzione che conta in quanti costruttori di tipo nel costrutto $ k $ sono innestate le
+variabili di tipo (sommando il risultato per tutte le variabili di tipo incontrate). Il codice che implementa questi
+controlli risiede nel modulo \texttt{Compiler.Constraints.Check}.
 
 \subsection{Kind-inference}
 %TODO
+
+\subsection{Data constructors}
+Una delle tabelle di simboli che appare nel modulo \texttt{Compiler.Types.Table} è \texttt{DataConsTable}.
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
