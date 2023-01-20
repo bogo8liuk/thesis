@@ -179,7 +179,6 @@ al contesto locale. I costrutti principali sono:
         corrente;
         \item la fissità degli operatori.
         \end{enumerate}
-        %TODO: aggiungi pezzo di codice per mostrare il costrutto
     \end{enumerate}
 \item[Tipi di dati algebrici] langgg supporta anche i tipi di dati algebrici (che sono l'unico modo per definire nuovi
 tipi). Con essi, vi è anche la nozione di \textit{data constructor}, ovvero un costrutto dotato di tipo che può essere
@@ -583,8 +582,34 @@ Ad esempio, dato il tipo:
 sapendo che il kind del costruttore di tipo funzione è $ * \mapsto * \mapsto * $, è necessario, affinché il suddetto
 kind venga rispettato, che il kind di $ t_1 $ e $ t_2 $ sia $ * $.
 
-\subsubsection{Predicati e tipi qualificati}
-%TODO
+\subsubsection{Subtyping: predicati e tipi qualificati}
+La nozione di mono-tipo ammette le variabili di tipo, le quali fungono da placeholder per qualsiasi tipo dello stesso
+kind della variabile. Tuttavia, solamente con la nozione di mono-tipo non è possibile fare asserzioni sulle variabili
+di tipi, se non, appunto, che sono placeholder adatti a qualsiasi tipo. langgg supporta anche una nozione di sottotipo.
+Prendiamo, ad esempio, la seguente variabile di tipo:
+\[ \alpha : * \]
+la notazione $ : * $ serve, in questo caso, per rendere esplicito il kind della variabile. $ \alpha $ è un placeholder
+adatto a tipi quali, ad esempio, \texttt{Int}, \texttt{List b} oppure \texttt{List Char} poiché hanno tutti kind $ * $.
+Potrebbe essere "comodo" fare asserzioni su $ \alpha $, ad esempio, si può asserire che $ \alpha $ è un placeholder
+valido per tutti quei tipi $ S $ che sono sottotipi di un certo tipo $ T $. Una definizione lasca di sottotipo è la
+seguente: se $ S $ è sottotipo di $ T $ (scriviamo $ S \leq T $), allora ogni termine di $ S $ può essere utilizzato
+in maniera \textit{safe} in ogni \textit{contesto} in cui un termine di $ T $ è richiesto, dove le definizioni di
+\textit{safe} e \textit{contesto} sono dipendenti dal formalismo.
+Aggiungiamo una notazione per descrivere questa nozione:
+\[ \alpha \leq T . \; \alpha \]
+Possiamo quindi "restringere" i possibili tipi adatti a "riempire" il placeholder rappresentato da $ \alpha $. Più in
+generale, possiamo considerare $ \alpha \leq T $ come un predicato $ P $ su $ \alpha $. Utilizzeremo, quindi, la seguente
+notazione:
+\[ P(\alpha) \Rightarrow \alpha \]
+Ora abbiamo una sintassi per descrivere \textit{predicati} o \textit{constraint} sulle variabili di tipo. Tale
+comportamento si può estendere a qualsiasi forma di tipo, non solo alle variabili di tipo, ma per farlo è necessario
+prima definire la sintassi dei predicati. In langgg, un predicato o constraint ha la seguente forma:
+\[ C := P \; MT_1 \; ... \; MT_n \]
+dove $ P $ è il nome di una proprietà (cfr. polimorfismo ad hoc). Ora possiamo quindi definire un'estensione dei
+mono-tipi, in modo che su questi ultimi si possano aggiungere delle ipotesi. Per una definizione più generale possibile,
+ammettiamo che su un mono-tipo si possa applicare un numero arbitrario di predicati:
+\[ QT := C_1, ..., C_n \Rightarrow MT \]
+Questa appena data è la nozione di \textit{tipo qualificato}.
 \subsubsection{Schemi di tipi}
 %TODO
 
@@ -611,8 +636,8 @@ freccia, la quale è intesa come implicazione. I tipi dei metodi di proprietà a
 dove \textit{Pred} è un predicato e \textit{ty} è un tipo qualunque sulle variabili $ \overline{\alpha} $.
 Il polimorfismo ad hoc viene, dunque, supportato attraverso i predicati, i quali rappresentano delle ipotesi aggiuntive
 sui tipi. L'istanziazione di una proprietà consiste nel dichiarare dei tipi che fungeranno da "caso particolare" per i
-metodi di proprietà (i "modelli"), ad esempio, riprendendo la proprietà \texttt{Eq} del precedente pezzo di codice
-, in langgg possiamo definire un'istanza del tipo:
+metodi di proprietà (i "modelli"), ad esempio, riprendendo la proprietà \texttt{Eq} del precedente pezzo di codice,
+in langgg possiamo definire un'istanza del tipo:
 \begin{lstlisting}
 instance Eq Char where
     <implementazioni>
