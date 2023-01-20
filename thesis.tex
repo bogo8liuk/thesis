@@ -559,6 +559,22 @@ non si deve confondere
 il concetto di mono-tipo con quello di tipo \textit{monomorfo}, infatti i mono-tipi, a differenza dei tipi monomorfi,
 ammettono le variabili di tipo. L'ultimo caso è il tipo \textit{funzione}; nella sezione sull'inferenza di tipo verrà
 mostrato il motivo per il quale è fondamentale garantire la presenza del tipo funzione all'interno del type-system.
+Nel compilatore, la definizione di mono-tipo si trova nel modulo \texttt{Compiler.Ast.Typed}:
+\begin{lstlisting}
+data LangHigherType a =
+      LTy (LangType a)
+    | HApp [LangHigherType a] a
+\end{lstlisting}
+dove \texttt{LangType} rappresenta tutti i tipi che possono essere definiti in langgg. Si noti come vi è un secondo
+caso (\texttt{HApp}), il quale rappresenta il tipo funzione. Il costruttore \texttt{HApp} prende in input una lista
+di mono-tipi, tuttavia il tipo funzione può avere al massimo due argomenti, perciò il modulo \texttt{Compiler.Ast.Typed}
+si occupa internamente di rifiutare qualsiasi valore con costruttore \texttt{HApp} che abbia più di due argomenti.
+La causa per la quale non vi è un numero fissato di argomenti è la presenza delle funzioni di tipo, infatti,
+in questo modo, è possibile esprimere senza difficoltà, all'interno del compilatore, tipi come:
+\begin{itemize}
+\item \texttt{(->) a}
+\item \texttt{(->)}
+\end{itemize}
 
 \subsubsection{Tipi higher-kinded}
 langgg permette all'utente di utilizzare \textit{funzioni di tipo} (o \textit{costruttori di tipo}). A questo scopo,
@@ -581,6 +597,7 @@ Ad esempio, dato il tipo:
 \[ t_1 \mapsto t_2 \]
 sapendo che il kind del costruttore di tipo funzione è $ * \mapsto * \mapsto * $, è necessario, affinché il suddetto
 kind venga rispettato, che il kind di $ t_1 $ e $ t_2 $ sia $ * $.
+%TODO: definizione di kind nel codice
 
 \subsubsection{Subtyping: predicati e tipi qualificati}
 La nozione di mono-tipo ammette le variabili di tipo, le quali fungono da placeholder per qualsiasi tipo dello stesso
@@ -608,10 +625,34 @@ prima definire la sintassi dei predicati. In langgg, un predicato o constraint h
 dove $ P $ è il nome di una proprietà (cfr. polimorfismo ad hoc). Ora possiamo quindi definire un'estensione dei
 mono-tipi, in modo che su questi ultimi si possano aggiungere delle ipotesi. Per una definizione più generale possibile,
 ammettiamo che su un mono-tipo si possa applicare un numero arbitrario di predicati:
-\[ QT := C_1, ..., C_n \Rightarrow MT \]
-Questa appena data è la nozione di \textit{tipo qualificato}.
+\[ QT := MT \; | \; C \Rightarrow QT \]
+Questa appena data è la nozione di \textit{tipo qualificato}. La definizione si trova nel modulo
+\texttt{Compiler.Ast.Typed}:
+\begin{lstlisting}
+data LangQualType a = Qual [LangSpecConstraint a] (LangHigherType a)
+\end{lstlisting}
+
 \subsubsection{Schemi di tipi}
-%TODO
+Finora abbiamo trattato mono-tipi e tipi qualificati, tuttavia, la sola presenza delle variabili di tipo non è sufficiente
+a costruire tipi "polimorfi". Si consideri il seguente esempio:
+\[ map : (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
+In questo caso, il tipo della funzione $ map $ non è polimorfo, in quanto le variabili di tipo $ \alpha $ e $ \beta $
+rappresentano un tipo fissato non ancora conosciuto. Per ottenere il polimorfismo, è necessario introdurre i
+dei quantificatori, ad esempio, possiamo rifinire il tipo di $ map $ nel modo seguente:
+\[ map : \forall \alpha, \beta . \; (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
+A differenza di prima, in cui $ map $ aveva un tipo prefissato, qui può avere molteplici tipi. Ora diamo la definizione
+di \textit{schema di tipo} o \textit{poli-tipo} in langgg:
+\[ PT := QT \; | \; \forall \alpha. \; PT \]
+Questa definizione lascia spazio alla presenza di \textit{variabili libere}, in quanto non necessariamente tutte le
+variabili di tipo che compaiono in un tipo qualificato sono legate a un quantificatore. Le variabili libere vengono
+trattate come costanti. Si noti come i quantificatori possono apparire solamente alla testa di un tipo, ad esempio, il
+seguente tipo non è accettato in langgg:
+\[ \forall \alpha . \; (\forall \alpha . \; \alpha \mapsto \alpha) \mapsto \alpha \]
+%TODO: System F
+La definizione di schema di tipo in langgg si trova nel modulo \texttt{Compiler.Ast.Typed}:
+\begin{lstlisting}
+data LangTypeScheme a = Forall [LangVarType a] (LangQualType a)
+\end{lstlisting}
 
 \subsection{Polimorfismo ad hoc}
 langgg supporta il polimorfismo ad hoc esponendo costrutti chiamati \textit{proprietà}, le quali sono concettualmente
