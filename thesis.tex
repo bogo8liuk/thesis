@@ -511,8 +511,8 @@ property Stateful m =
 \end{lstlisting}
 Verranno creati dei token (presenti in \texttt{Compiler.Ast.Typed}) dei tipi:
 \begin{lstlisting}
-data LangNewType a            --"modello" di tipo o type constructor
-data LangNewConstraint a      --"modello" di constraint
+data LangNewType a            --type constructor
+data LangNewConstraint a      --constraint constructor
 \end{lstlisting}
 che rappresenteranno rispettivamente il modello per tipi \texttt{Box} e il modello per constraints \texttt{Stateful} e che
 verranno memorizzati nelle suddette tabelle.
@@ -798,7 +798,7 @@ val consume : Monad m => m String -> (m String, String)
 Il constraint sull'istanza viene quindi applicato al tipo dei metodi di istanza.
 
 \subsubsection{Condizioni sui constraint}
-I constraint rappresentano un modo per "restringere" i possibili tipi che possono istanziare una o più variabili di
+I constraints rappresentano un modo per "restringere" i possibili tipi che possono istanziare una o più variabili di
 tipo. I tipi nelle firme delle variabili (nonché i type-hinting) possono possedere zero o più constraint; lo stesso
 vale, come viene mostrato nei paragrafi precedenti, anche per le proprietà e per le istanze. Esistono, però, dei
 vincoli sulla forma dei constraint. Come viene mostrato in [8] e [9], esistono condizioni (di Paterson) sufficienti
@@ -847,7 +847,7 @@ Una delle tabelle di simboli che appare nel modulo \texttt{Compiler.Types.Table}
 vengono salvati i \textit{data constructor} associati ai loro tipi. I costruttori - che nell'AST vengono rappresentati
 dal token \texttt{ADTConstructor} - vengono trasformati nel token \texttt{NotedVal} presente nel modulo
 \texttt{Compiler.Ast.Typed} che consiste nella seguente coppia:
-\[ < dataConRep, ty > \]
+\[ < dataConRep, type > \]
 dove $ dataConRep $ è la rappresentazione sotto forma di stringa del data constructor, mentre $ ty $ è il tipo del
 costruttore. Per quanto riguarda il tipo del costruttore, prendiamo in considerazione il seguente esempio di codice
 langgg:
@@ -856,7 +856,27 @@ type Foo x y = Bar Int (M x) y
 \end{lstlisting}
 In questa definizione di tipo di dato algebrico, vi è un solo costruttore: \texttt{Bar}. Il suo tipo è il seguente:
 \[ \forall x, y. \; Int \mapsto M \; x \mapsto y \mapsto Foo \; x \; y \]
-Il tipo di ritorno è sempre denotato dalla definizione del tipo di dato.
+Il tipo di ritorno è sempre dato dalla definizione del tipo. Il modulo che si occupa di trasformare i token
+\texttt{ADTConstructor} in \texttt{NotedVal} e aggiungerli nella tabella \texttt{DataConsTable} è
+\texttt{Compiler.Types.Builder.Cons}.
+
+\subsection{Constraint constructors}
+Dopo il check sui constraints e la generazione di data constructors, il compilatore si occupa di generare i cosiddetti
+"\textit{constraint constructors}", ovvero token che fungono da modelli per la costruzione di predicati. Il modulo
+che li genera è \texttt{Compiler.Types.Tables}; esso prende in input i token dell'AST che rappresentano le proprietà
+(\texttt{Interface}) e da essi costruisce i token tipati \texttt{LangNewConstraint} e li inserisce nella tabella
+\texttt{ConstraintsTable}. \`E compito di questo modulo controllare che le classi non formino cicli tra loro, ad
+esempio, il seguente programma viene rifiutato dal compilatore:
+\begin{lstlisting}
+property Bar (M a) Int => Foo a =
+    <metodi>
+;;
+
+property Foo (K x Char) => Bar x y =
+    <metodi>
+;;
+\end{lstlisting}
+Si noti come i vincoli sui constraints vengano tutti rispettati.
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
