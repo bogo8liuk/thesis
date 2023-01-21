@@ -653,6 +653,14 @@ La definizione di schema di tipo in langgg si trova nel modulo \texttt{Compiler.
 \begin{lstlisting}
 data LangTypeScheme a = Forall [LangVarType a] (LangQualType a)
 \end{lstlisting}
+La politica sulla sintassi degli schemi di tipi di langgg è omettere il quantificatore $ \forall $. Per questo, ogni qual
+volta vi è un costrutto di type-hinting (firme comprese), il tipo viene considerato come uno schema di tipo in cui tutte
+le variabili di tipo che compaiono vengono legate a un quantificatore, ad esempio:
+\begin{lstlisting}
+val map : (a -> b) -> List a -> List b
+\end{lstlisting}
+in questo caso la funzione \texttt{map} avrà il seguente tipo:
+\[ map : \forall \alpha, \beta . \; (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
 
 \subsection{Polimorfismo ad hoc}
 langgg supporta il polimorfismo ad hoc esponendo costrutti chiamati \textit{proprietà}, le quali sono concettualmente
@@ -835,7 +843,20 @@ controlli risiede nel modulo \texttt{Compiler.Constraints.Check}.
 %TODO
 
 \subsection{Data constructors}
-Una delle tabelle di simboli che appare nel modulo \texttt{Compiler.Types.Table} è \texttt{DataConsTable}.
+Una delle tabelle di simboli che appare nel modulo \texttt{Compiler.Types.Table} è \texttt{DataConsTable}. In essa
+vengono salvati i \textit{data constructor} associati ai loro tipi. I costruttori - che nell'AST vengono rappresentati
+dal token \texttt{ADTConstructor} - vengono trasformati nel token \texttt{NotedVal} presente nel modulo
+\texttt{Compiler.Ast.Typed} che consiste nella seguente coppia:
+\[ < dataConRep, ty > \]
+dove $ dataConRep $ è la rappresentazione sotto forma di stringa del data constructor, mentre $ ty $ è il tipo del
+costruttore. Per quanto riguarda il tipo del costruttore, prendiamo in considerazione il seguente esempio di codice
+langgg:
+\begin{lstlisting}
+type Foo x y = Bar Int (M x) y
+\end{lstlisting}
+In questa definizione di tipo di dato algebrico, vi è un solo costruttore: \texttt{Bar}. Il suo tipo è il seguente:
+\[ \forall x, y. \; Int \mapsto M \; x \mapsto y \mapsto Foo \; x \; y \]
+Il tipo di ritorno è sempre denotato dalla definizione del tipo di dato.
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
