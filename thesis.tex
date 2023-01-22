@@ -724,7 +724,7 @@ property C1 a Char => C2 a =
 \end{lstlisting}
 Questo tipo di definizione consiste nell'aggiungere il predicato \texttt{C1 a} alla proprietà \texttt{C2 a}.
 Semanticamente, questo impone la seguente condizione sul programma:
-    \[ \forall type . \exists inst(C2, type) \Longrightarrow \exists inst(C1, type, Char) \]
+    \[ \forall type . \; \exists inst(C2, type) \Longrightarrow \exists inst(C1, type, Char) \]
 dove $ inst(C, \overline{t}) $ è, banalmente, l'instanza con nome di proprietà $ C $ e tipi $ \overline{t} $. \`E
 possibile aggiungere più di un predicato alla stessa proprietà.
 
@@ -877,6 +877,29 @@ property Foo (K x Char) => Bar x y =
 ;;
 \end{lstlisting}
 Si noti come i vincoli sui constraints vengano tutti rispettati.
+
+\subsection{Costruzione delle istanze}
+Nel modulo \texttt{Compiler.Types.Builder.Instances} vengono create le seguenti 3 tabelle:
+\begin{itemize}
+    \item \texttt{InstsTable}, ovvero la tabella che contiene i bindings (sotto forma di token dell'AST) delle istanze;
+    \item \texttt{PropMethodsTable}, ovvero la tabella che contiene i metodi delle proprietà sotto forma di token
+    tipati;
+    \item \texttt{ImplTable}, ovvero la tabella che contiene i constraints che derivano dalle istanze definite
+    dall'utente;
+\end{itemize}
+Per quanto riguarda l'ultima tabella, data la definizione di un'istanza:
+\begin{lstlisting}
+instance Eq Char =
+    <implementazioni>
+;;
+\end{lstlisting}
+la testa \texttt{Eq Char} ha la forma di un constraint, nonostante non rispetti uno dei vincoli sui constraints (un
+constraint deve avere almeno una variabile di tipo), infatti l'istanza viene salvata sotto forma di constraint
+(\texttt{LangSpecConstraint}).
+Le tre tabelle vengono create in un unico modulo per una questione di efficienza (i token delle istanze vengono visitati
+una sola volta). Inoltre, in questo
+modulo viene effettuato il controllo del vincolo sull'esistenza dei predicati delle proprietà (cfr. paragrafo "constraints
+delle proprietà" in "Estensioni del polimorfismo ad hoc").
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
