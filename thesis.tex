@@ -908,13 +908,24 @@ di un'istanza), creare un identificatore univoco che non può essere uguale a ne
 
 \subsection{Preparazione alla type-inference}
 Prima di effettuare la type-inference è necessario fare alcune considerazioni ed effettuare alcune computazioni.
+
+\subsubsection{Bindings delle istanze}
 Innanzitutto, è bene notare come in Core non esista un costrutto particolare per i bindings delle istanze, inoltre, il
 costrutto di GHC che rappresenta le istanze (\texttt{ClsInst}) non porta con sè informazioni che riguardano i
 bindings [10].
 Perciò, è in un qualche modo necessario gestire i bindings delle istanze. La politica del compilatore è quella di
-aggiungerli nell'insieme di bindings da dare in input all'algoritmo di type-inference. Tuttavia, data una proprietà,
-può esistere un numero arbitrario di istanze e con esse, un numero arbitrario di metodi con lo stesso nome. Questo
-problema viene già gestito (cfr. Costruzione delle istanze)
+aggiungerli nell'insieme di bindings da dare in input all'algoritmo di type-inference. La presenza di bindings con lo
+stesso identificatore è stata già risolta (cfr. Costruzione delle istanze).
+
+\subsubsection{Simboli innestati univoci}
+Prima della type-inference, vengono visitate tutte le espressioni dei bindings e vengono creati nuovi identificatori
+per ogni definizione innestata di variabile (costrutto \texttt{let..in}). I nuovi identificatori sono resi univoci in
+tutto il programma. Il modulo che crea e garantisce che i nuovi identificatori sono univoci è
+\texttt{Compiler.Desugar.Names}. La proprietà di unicità degli identificatori innestati è molto importante, vedremo in
+seguito il motivo (cfr. type-inference).
+
+\subsubsection{Clusters di definizioni ricorsive}
+%TODO
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
