@@ -5,6 +5,7 @@
 \usepackage{tikz}
 \usepackage{enumitem}
 \usepackage{hyperref}
+\usepackage{proof}
 
 \lstset{
     language=Haskell,
@@ -908,9 +909,25 @@ di un'istanza), creare un identificatore univoco che non può essere uguale a ne
 
 \subsection{Preparazione alla type-inference}
 Prima di effettuare la type-inference è necessario fare alcune considerazioni ed effettuare alcune computazioni.
+Innazitutto, il type-system di riferimento è \textit{Hindley-Milner} (o Damas-Hindley-Milner, in seguito lo indicheremo con HM)
+con alcune estensioni che riguardano il costrutto del pattern matching, l'inferenza di definizioni ricorsive e la
+risoluzione delle istanze. Il modulo che si occupa della preparazione alla type-inference è \texttt{Compiler.Types.Prepare}
+Introdurremo il type-system in modo preciso prossimamente (cfr. Type-inference), tuttavia, ora presentiamo alcune
+caratteristiche del type-system che è bene conoscere come premessa alla preparazione della type-inference.
+Innanzitutto, HM viene descritto formalmente da un insieme di \textit{regole} le quali si occupano di "tipare"
+espressioni di un formalismo fissato: una versione del lambda-calcolo estesa con un costrutto di espressioni "let..in".
+Una delle regole è quella sull'inferenza del tipo di un simbolo (la regola la chiameremo chiamiamo \textbf{Var})
+la quale, informalmente, sostiene che: data l'ipotesi di un simbolo $ x $ con schema di tipo $ \sigma $ nel contesto di
+un ambiente di tipizzazione $ \Gamma $ e $ \tau $ l'istanziazione del tipo $ \sigma $, si conclude che il simbolo
+$ x $ ha tipo $ \tau $.
+Un'altra regola utile è quella
+sull'inferenza delle definizioni mutualmente ricorsive. In particolare, essa sostiene che, l'inferenza di definizioni
+mutualmente ricorsive avviene in "gruppo", ovvero un insieme $ {f_1, ..., f_n} $ di simboli mutualmente ricorsivi
+tra loro vengono considerati nel loro insieme e non singolarmente (regola \textbf{Rec}).
+Queste regole serviranno come premessa ad alcune fasi nella preparazione della type inference.
 
 \subsubsection{Bindings delle istanze}
-Innanzitutto, è bene notare come in Core non esista un costrutto particolare per i bindings delle istanze, inoltre, il
+\`E bene notare come in Core non esista un costrutto particolare per i bindings delle istanze, inoltre, il
 costrutto di GHC che rappresenta le istanze (\texttt{ClsInst}) non porta con sè informazioni che riguardano i
 bindings [10].
 Perciò, è in un qualche modo necessario gestire i bindings delle istanze. La politica del compilatore è quella di
@@ -924,8 +941,60 @@ tutto il programma. Il modulo che crea e garantisce che i nuovi identificatori s
 \texttt{Compiler.Desugar.Names}. La proprietà di unicità degli identificatori innestati è molto importante, vedremo in
 seguito il motivo (cfr. type-inference).
 
-\subsubsection{Clusters di definizioni ricorsive}
+\subsubsection{Clusters di definizioni mutualmente ricorsive}
+Come è stato già menzionato precedentemente, le definizioni mutualmente ricorsive devono essere considerate come insiemi
+e non singolarmente. Perciò è necessario distinguere due tipi di bindings, quelli mutualmente ricorsivi e i restanti:
+\begin{lstlisting}
+data RawBinding =
+      RawNonRec (Raw.SDUnion With.ProgState)
+    | RawRec [Raw.SDUnion With.ProgState]
+\end{lstlisting}
+La precedente definizione è nel modulo \texttt{Compiler.Types.Prepare.Lib} e divide i bindings dell'AST in bindings
+non ricorsivi e bindings mutualmente ricorsivi. Rimane, quindi, da dividere i bindings del programma. Prima di presentare
+l'algoritmo, bisogna effettuare una precisazione molto importante. In precedenza, abbiamo aggiunto i bindings delle
+istanze alla lista dei bindings del programma, cambiando, però, gli identificatori, rendendoli univoci all'interno del
+programma. Per dividere riconoscere i bindings mutualmente ricorsivi è necessaria una funzione che calcoli le dipendenze
+di una definizione. Nelle espressioni, in generale, possono essere menzionati i metodi delle proprietà, ma non possono,
+in alcun modo, essere menzionati i metodi delle istanze. Inoltre, il tipo dei metodi delle proprietà è sempre noto a
+priori e non è possibile, prima della type-inference, inferire le istanze (cfr. static dispatch) giuste dei metodi.
+Nel calcolo delle dipendenze, i metodi di proprietà possono, quindi, essere esclusi. La funzione \textit{depsOf}, la quale
+prende in input un binding \texttt{b} dell'AST e la tabella \texttt{PropMethodsTable}, calcolerà le dipendenze di
+\texttt{b}, escludendo le dipendenze che provengono dalla tabella dei metodi di proprietà. L'insieme dei bindings di
+un programma può essere visto come un grafo orientato $ G $ in cui:
+\begin{itemize}
+    \item i nodi sono i bindings;
+    \item gli archi sono le dipendenze di un binding.
+\end{itemize}
+Il problema di trovare i clusters di definizioni mutualmente ricorsive corrisponde a trovare le \textit{componenti
+fortemente connesse} del grafo $ G $. Il modulo che implementa l'algoritmo è \texttt{Compiler.Types.Prepare.Recursion}
+e utilizza la libreria \texttt{Data.Graph}.
+
+\subsubsection{Sorting dei bindings}
+A questo punto, abbiamo una lista di \texttt{RawBinding}. Possiamo fare la seguente osservazione: i bindings possono
+essere visti come un grafo orientato aciclico $ G $, in cui, come prima:
+\begin{itemize}
+    \item i nodi sono i bindings;
+    \item gli archi sono le dipendenze di un binding.
+\end{itemize}
+L'unica differenza è sull'aciclicità del grafo. Questa proprietà è garantita dal seguente fatto: se esistesse un ciclo
+in $ G $, allora l'algoritmo di raggruppamento dei clusters l'avrebbe trovato e avrebbe creato un cluster di definizioni
+mutualmente ricorsive tra loro. La regola di inferenza \textbf{Var} impone che si conosca sempre lo schema di tipo di
+un simbolo, perciò, è necessario, prima di effettuare la type-inference, ordinare i bindings in base alle loro dipendenze.
+L'ordinamento viene effettuato nel modulo \texttt{Compiler.Types.Prepare.Sort} e l'algoritmo utilizzato è un'estensione
+dell'insertion-sort, dove, la nozione di ordinamento è data dalle dipendenze dei bindings, ovvero: \newline
+Siano $ b $ e $ b' $ due bindings, si ha che:
+\begin{itemize}
+    \item $ b > b' $, se $ b' $ è una dipendenza diretta di $ b $ oppure esistono dei bindings $ c_1, ..., c_n $ tali che:
+    $ b > c_1 \and c_1 > c_2 \and ... \and c_n-1 > c_n \and c_n > b' $;
+    \item $ b = b' $, se la componente di $ b $ in $ G $ non è raggiungibile da nessun nodo della componente $ b' $.
+\end{itemize}
+la proprietà di transitività di questa nozione di ordinamento è garantita dall'assenza di cicli all'interno del grafo.
+Di seguito vi è l'algoritmo:
 %TODO
+\begin{lstlisting}
+\end{lstlisting}
+
+\subsection{Type-inference}
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
