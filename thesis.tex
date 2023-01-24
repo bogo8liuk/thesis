@@ -985,7 +985,7 @@ dell'insertion-sort, dove, la nozione di ordinamento è data dalle dipendenze de
 Siano $ b $ e $ b' $ due bindings, si ha che:
 \begin{itemize}
     \item $ b > b' $, se $ b' $ è una dipendenza diretta di $ b $ oppure esistono dei bindings $ c_1, ..., c_n $ tali che:
-    $ b > c_1 \and c_1 > c_2 \and ... \and c_n-1 > c_n \and c_n > b' $;
+    \newline $ b > c_1 \wedge c_1 > c_2 \wedge ... \wedge c_n-1 > c_n \wedge c_n > b' $;
     \item $ b = b' $, se la componente di $ b $ in $ G $ non è raggiungibile da nessun nodo della componente $ b' $.
 \end{itemize}
 la proprietà di transitività di questa nozione di ordinamento è garantita dall'assenza di cicli all'interno del grafo.
