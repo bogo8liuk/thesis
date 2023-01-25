@@ -989,10 +989,36 @@ Siano $ b $ e $ b' $ due bindings, si ha che:
     \item $ b = b' $, se la componente di $ b $ in $ G $ non è raggiungibile da nessun nodo della componente $ b' $.
 \end{itemize}
 la proprietà di transitività di questa nozione di ordinamento è garantita dall'assenza di cicli all'interno del grafo.
-Di seguito vi è l'algoritmo:
-%TODO
+Di seguito vi è l'algoritmo di sorting di una singola componente del grafo:
 \begin{lstlisting}
+sortComponent(bindings, remaining, component):
+    match bindings, remaining with
+        [], [] -> component
+        [], (_ : _) -> sortComponent remaining [] component
+        (b : t), _ ->
+            let (inserted, component') = tryInsert b component in
+                if inserted
+                then sortComponent t remaining component'
+                else sortComponent t (addTail b remaining) component 
 \end{lstlisting}
+L'algoritmo prende in input i bindings di una componente, i bindings rimanenti e la componente già ordinata. Ora
+presentiamo l'algoritmo di inserzione di un binding in una componente già ordinata:
+\begin{lstlisting}
+tryInsert(binding, component):
+    match component with
+        [] -> [component]
+        (b : t) ->
+            if b in depsOf(binding)
+            then tryInsert binding t
+            else if binding in depsOf(b)
+            then (True, binding : component)
+            else (False, component)
+\end{lstlisting}
+Ora abbiamo implementato una versione alternativa dell'insertion sort in cui gli inserimenti vengono effettuati
+solamente se si è a conoscenza che il binding da inserire fa parte delle dipendenze dirette di un altro binding già
+inserito nella componente. Inoltre, se non vi sono abbastanza informazioni per inserire un binding in una componente,
+il suo inserimento viene "rimandato" (viene inserito nei bindings rimanenti) e verrà effettuato in un'iterazione
+successiva.
 
 \subsection{Type-inference}
 
