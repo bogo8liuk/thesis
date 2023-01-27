@@ -638,7 +638,7 @@ Finora abbiamo trattato mono-tipi e tipi qualificati, tuttavia, la sola presenza
 a costruire tipi "polimorfi". Si consideri il seguente esempio:
 \[ map : (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
 In questo caso, il tipo della funzione $ map $ non è polimorfo, in quanto le variabili di tipo $ \alpha $ e $ \beta $
-rappresentano un tipo fissato non ancora conosciuto. Per ottenere il polimorfismo, è necessario introdurre i
+rappresentano un tipo fissato non ancora conosciuto. Per ottenere il polimorfismo, è necessario introdurre
 dei quantificatori, ad esempio, possiamo rifinire il tipo di $ map $ nel modo seguente:
 \[ map : \forall \alpha, \beta . \; (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
 A differenza di prima, in cui $ map $ aveva un tipo prefissato, qui può avere molteplici tipi. Ora diamo la definizione
@@ -985,7 +985,7 @@ dell'insertion-sort, dove, la nozione di ordinamento è data dalle dipendenze de
 Siano $ b $ e $ b' $ due bindings, si ha che:
 \begin{itemize}
     \item $ b > b' $, se $ b' $ è una dipendenza diretta di $ b $ oppure esistono dei bindings $ c_1, ..., c_n $ tali che:
-    \newline $ b > c_1 \wedge c_1 > c_2 \wedge ... \wedge c_n-1 > c_n \wedge c_n > b' $;
+    \newline $ (b > c_1) \wedge (c_1 > c_2) \wedge ... \wedge (c_{n-1} > c_n) \wedge (c_n > b') $;
     \item $ b = b' $, se la componente di $ b $ in $ G $ non è raggiungibile da nessun nodo della componente $ b' $.
 \end{itemize}
 la proprietà di transitività di questa nozione di ordinamento è garantita dall'assenza di cicli all'interno del grafo.
@@ -1018,9 +1018,36 @@ Ora abbiamo implementato una versione alternativa dell'insertion sort in cui gli
 solamente se si è a conoscenza che il binding da inserire fa parte delle dipendenze dirette di un altro binding già
 inserito nella componente. Inoltre, se non vi sono abbastanza informazioni per inserire un binding in una componente,
 il suo inserimento viene "rimandato" (viene inserito nei bindings rimanenti) e verrà effettuato in un'iterazione
-successiva.
+successiva. Il codice si trova nel modulo \texttt{Compiler.Types.Prepare.Sort}.
+
+Dopo l'ordinamento dei bindings, è garantito che, ogni qual volta verrà inferito un binding, è garantito che la premessa
+della regola \textbf{Var} sia vera.
 
 \subsection{Type-inference}
+langgg permette all'utente di indicare o non indicare il tipo di una variabile. Nel caso non venga indicato, il
+compilatore dovrà inferire il tipo della variabile definita, quindi dovrà fare una "scelta". Per farlo, dovrà prima
+inferire il tipo dell'espressione legata alla variabile, ad esempio:
+\begin{lstlisting}
+type Maybe a = Nothing | Just a
+let x = Nothing
+\end{lstlisting}
+Si può affermare che l'espressione legata alla variabile $ x $ abbia tipo $ Maybe \alpha $. Ora, il compilatore
+deve scegliere un tipo da sostituire alla variabile di tipo $ \alpha $. Se la scelta fosse arbitraria, ad esempio
+$ Int $, l'utilizzo di $ x $ sarebbe limitato solo a un tipo ovvero $ Maybe Int $. Un'altra possibile soluzione
+potrebbe essere associare a $ x $ il tipo $ Maybe a $. Tuttavia, anche questa scelta risulterebbe limitante in quanto,
+come è stato già esposto nella sezione sul type-system (cfr. Schemi di tipi), la variabile di tipo $ \alpha $
+denoterebbe un tipo fissato non ancora conosciuto. L'introduzione di uno schema di tipo rappresenta una scelta
+"più generale":
+\[ x : \forall \alpha. \; Maybe \; \alpha \]
+In questo caso, $ x $ può avere molteplici tipi.
+
+\subsubsection{Damas-Hindley-Milner}
+Come è stato già menzionato precedentemente, il sistema di tipi di langgg si basa sul type-system di Damas-Hindley-Milner.
+L'algoritmo di inferenza su cui si basa inferisce il tipo più \textit{generale} possibile.
+%TODO
+
+\subsubsection{Regole di inferenza}
+%TODO
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
