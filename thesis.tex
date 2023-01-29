@@ -1053,24 +1053,47 @@ Come è stato già anticipato, HM viene presentato sotto forma di \textit{regole
 dove le premesse sono un insieme di \textit{giudizi} e \textit{predicati} e la conclusione è un \textit{giudizio}. Un
 \textit{giudizio} è un'affermazione sul tipo di un simbolo, ad esempio:
 \[ x : \sigma \]
-afferma che il simbolo $ x $ ha schema di tipo $ \sigma $, mentre:
-\[ x : \tau \]
-afferma che il simbolo $ x $ ha mono-tipo $ \tau $. Ora verranno elencate le regole di inferenza:
+afferma che il simbolo $ x $ tipo $ \tau $. Ora verranno elencate le regole di inferenza:
 
 \paragraph{Inferenza di variabile}
 Prima di presentare di la regola d'inferenza delle variabili è necessario due ulteriori regole. La prima è la
 regola di specializzazione e introduce una nozione d'ordine parziale tra tipi:
-\[ \infer[\textbf{Spec}]{\forall \alpha_1 ... \forall \alpha_n. \; \tau \sqsubseteq \forall \beta_1 ... \beta_m. \; \tau'}{\tau' = \{ \alpha_i / \tau_i \}\tau & \beta_i \notin free(\forall \alpha_1 ... \forall \alpha_n . \; \tau)} \]
-La prossima regola rappresenta l'algoritmo di instanziazione di schema di tipo a mono-tipo:
+\[ \infer[\textbf{Spec}]{\forall \alpha_1 ... \forall \alpha_n. \; \tau \sqsubseteq \forall \beta_1 ... \beta_m. \; \tau'}{\tau' = \{ \alpha_i \mapsto \tau_i \}\tau & \beta_i \notin free(\forall \alpha_1 ... \forall \alpha_n . \; \tau)} \]
+Questa regola sostiene che se esiste una sostituzione $ S = \{ \alpha_i \mapsto \tau_i \} $ tale che $ \tau' = S \tau $,
+allora la versione "quantificata" dei mono-tipi $ \tau $ e $ \tau' $ rispetta la relazione d'ordine parziale
+$ \sqsubseteq $. Nella premessa vi è un'ulteriore condizione che afferma che le variabili quantificate di $ \tau' $
+non devono apparire come variabili libere in $ \forall \alpha_1 ... \alpha_n. \; \tau $; questo perché le variabili
+non legate da un quantificatore (quindi libere) non devono essere sostituite, bensì devono essere trattate come costanti.
+All'interno del codice, i token tipati che implementano la type-class \texttt{SpecType} in \texttt{Compiler.Ast.Typed}
+permettono l'applicazione di una sostituzione al loro tipo.
+La prossima regola rappresenta l'algoritmo di instanziazione:
 \[ \infer[\textbf{Inst}]{\Gamma \vdash_W e : \tau}{\Gamma \vdash_W e : \sigma & \sigma \sqsubseteq \tau} \]
+Questa regola è utile per istanziare uno schema di tipo in mono-tipo. \`E chiaro che è necessario tener conto delle
+eventuali variabili libere nello schema di tipo $ \sigma $, ma queste vengono gestite dalla regola di specializzazione.
+Ora, possiamo esporre la regola di inferenza di una variabile, la quale è stata già introdotta in precedenza, seppur
+in maniera informale.
 \[ \infer[\textbf{Var}]{\Gamma \vdash_W x : \tau, \; \emptyset}{x : \sigma \in \Gamma & \tau = inst(\sigma)} \]
-Questa prima regola è stata già introdotta, seppur in maniera informale, richiede l'introduzione di un'ulteriore regola,
-ovvero l'instanziazione di uno schema di tipo ($ inst $).
-dove $ \sqsubseteq $ è una relazione d'ordine parziale
+\`E doveroso notare che nella conclusione, oltre al giudizio sul tipo della variabile, vi è un altro valore in "output",
+ovvero le eventuali sostituzioni generate dall'inferenza dei costrutti coinvolti. In questo non vi è alcuna sostituzione.
+
+\paragraph{Inferenza di applicazione}
+La prossima regola serve per inferire l'applicazione di due espressioni:
 \[ \infer[\textbf{App}]{\Gamma \vdash_W e_0 e_1 : S_2\tau', \; S_2S_1S_0}{\Gamma \vdash_W e_0 : \tau_0, \; S_0 & S_0\Gamma \vdash_W e_1 : \tau_1, \; S_1 & \tau' = newvar & S_2 = mgu(S_1\tau_0, \tau1 \mapsto \tau')} \]
-\newline
+Vi sono due nuovi operatori:
+\begin{itemize}
+    \item $ newvar $, il quale ritorna una nuova variabile di tipo $ \alpha $ tale che $ \alpha \notin free(\Gamma) $;
+    \item $ mgu $, il quale rappresenta l'algoritmo di unificazione che verrà presentato dettagliatamente nel prossimo
+    paragrafo. Tralasciando, quindi, i dettagli implementativi, tale operatore serve per trovare il tipo più generale.
+    Come risultato, fornisce una sostituzione $ S_2 $, la quale viene successivamente applicata al mono-tipo $ \tau' $
+    per ottenere il tipo di ritorno del costrutto di applicazione.
+\end{itemize}
+
+\paragraph{Unificazione}
+
+\paragraph{Inferenza di lambda astrazione}
 \[ \infer[\textbf{Abs}]{\Gamma \vdash_W \lambda x. e : S\tau \mapsto \tau', S}{\tau = newvar & \Gamma, \; x : \tau \vdash_W e : \tau', \; S} \]
-\newline
+
+\paragraph{Inferenza del costrutto "let..in"}
 \[ \infer[\textbf{Let}]{\Gamma \vdash_W let x = e_0 in e_1 : \tau', \; S_1S_0}{\Gamma \vdash_W e_0 : \tau, \; S_0 & S_0\Gamma, x : \overline{S_0\Gamma}(\tau) \vdash_W e_1 : \tau', \; S_1} \]
 
 \section*{Bibliografia}
