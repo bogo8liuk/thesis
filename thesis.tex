@@ -1078,7 +1078,7 @@ ovvero le eventuali sostituzioni generate dall'inferenza dei costrutti coinvolti
 
 \paragraph{Inferenza di applicazione}
 La prossima regola serve per inferire l'applicazione di due espressioni:
-\[ \infer[\textbf{App}]{\Gamma \vdash_W e_0 e_1 : S_2\tau', \; S_2S_1S_0}{\Gamma \vdash_W e_0 : \tau_0, \; S_0 & S_0\Gamma \vdash_W e_1 : \tau_1, \; S_1 & \tau' = newvar & S_2 = mgu(S_1\tau_0, \tau1 \mapsto \tau')} \]
+\[ \infer[\textbf{App}]{\Gamma \vdash_W e_0 \; e_1 : S_2\tau', \; S_2S_1S_0}{\Gamma \vdash_W e_0 : \tau_0, \; S_0 & S_0\Gamma \vdash_W e_1 : \tau_1, \; S_1 & \tau' = newvar & S_2 = mgu(S_1\tau_0, \tau1 \mapsto \tau')} \]
 Vi sono due nuovi operatori:
 \begin{itemize}
     \item $ newvar $, il quale ritorna una nuova variabile di tipo $ \alpha $ tale che $ \alpha \notin free(\Gamma) $;
@@ -1087,14 +1087,34 @@ Vi sono due nuovi operatori:
     Come risultato, fornisce una sostituzione $ S_2 $, la quale viene successivamente applicata al mono-tipo $ \tau' $
     per ottenere il tipo di ritorno del costrutto di applicazione.
 \end{itemize}
+Si noti che, a differenza di \textbf{Var}, in questa regola vi sono tre sostituzioni in output
+\begin{itemize}
+    \item $ S_0 $ derivante dall'inferenza della prima espressione;
+    \item $ S_1 $ derivante dall'inferenza della seconda espressione;
+    \item $ S_2 $ derivante dall'esecuzione dell'algoritmo di unificazione tra tipi;
+\end{itemize}
+Nell'inferenza di $ e_1 $, l'ambiente di tipizzazione di riferimento è $ \Gamma $ a cui viene applicata la sostituzione
+$ S_0 $. Una possibile ottimizzazione è la seguente:
+\[ \infer[\textbf{App}]{S_0\Gamma \vdash_W e_0 \; e_1 : S_2\tau', \; S_2S_1}{\Gamma \vdash_W e_0 : \tau_0, \; S_0 & S_0\Gamma \vdash_W e_1 : \tau_1, \; S_1 & \tau' = newvar & S_2 = mgu(S_1\tau_0, \tau1 \mapsto \tau')} \]
+La sostituzione $ S_0 $ viene, quindi, spostata dall'output direttamente all'ambiente di tipizzazione. Questo per evitare
+di applicare la sostituzione all'ambiente di tipizzazione due volte: una prima di inferire $ e_1 $, una dopo il risultato
+di output (si presume che le sostituzioni vengano tutte applicate).
 
 \paragraph{Unificazione}
+L'unificazione è quel processo di risoluzione di equazioni tra espressioni "simboliche". In generale, i mono-tipi nel
+type-system utilizzato in HM (e conseguentemente anche quello utilizzato da langgg) possono essere considerati come
+termini di un'equazione. Si parla di mono-tipi, poiché l'unificazione non prevede la quantificazione delle variabili
+all'interno di un'equazione. Un problema di unificazione è un insieme finito di equazioni:
+\[ \{ \tau_1 = \tau_1' \; ... \; \tau_n = \tau_n' \} \]
+dove $ \tau_i, \tau_i' $ sono dei mono-tipi. La soluzione di un problema di unificazione è data da una sostituzione
+$ S = \{ \alpha_j \mapsto \tau_j \} $ tale che:
+\[ \forall i \in \{1, ..., n\}. \; S\tau_i = S\tau_i' \]
 
 \paragraph{Inferenza di lambda astrazione}
 \[ \infer[\textbf{Abs}]{\Gamma \vdash_W \lambda x. e : S\tau \mapsto \tau', S}{\tau = newvar & \Gamma, \; x : \tau \vdash_W e : \tau', \; S} \]
 
 \paragraph{Inferenza del costrutto "let..in"}
-\[ \infer[\textbf{Let}]{\Gamma \vdash_W let x = e_0 in e_1 : \tau', \; S_1S_0}{\Gamma \vdash_W e_0 : \tau, \; S_0 & S_0\Gamma, x : \overline{S_0\Gamma}(\tau) \vdash_W e_1 : \tau', \; S_1} \]
+\[ \infer[\textbf{Let}]{\Gamma \vdash_W let \; x = e_0 \; in \; e_1 : \tau', \; S_1S_0}{\Gamma \vdash_W e_0 : \tau, \; S_0 & S_0\Gamma, x : \overline{S_0\Gamma}(\tau) \vdash_W e_1 : \tau', \; S_1} \]
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
