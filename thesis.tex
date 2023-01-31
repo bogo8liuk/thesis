@@ -1164,6 +1164,65 @@ Il tipo \texttt{UnificationError} possiede 4 casi d'errore e tutti prendono in i
     può essere alcuna soluzione all'equazione, si pensi, ad esempio, a:
         \[ M \; \alpha = M \; Int \; \beta \]
 \end{itemize}
+Ora passiamo all'algoritmo vero e proprio, il quale sarà presentato mostrando direttamente soltanto una parte di esso
+all'interno del codice sorgente in \texttt{rawUnify}:
+\begin{lstlisting}
+rawUnify monoTy monoTy' isSpecTest =
+    case unification monoTy monoTy' empty of
+        Left err -> Left err
+        Right vvars -> Right $ elems vvars
+    where
+        unification lhty lhty' vvars
+            | not $ sameInfrdKindOf lhty lhty' =
+                Left $ UnmatchKinds lhty lhty'
+            | occursCheck lhty lhty' =
+                Left $ OccursCheck lhty lhty'
+            | tyVarAndConcrete lhty lhty' =
+                if isSpecTest
+                then Left $ UnmatchTypes lhty lhty'
+                else unification lhty' lhty vvars
+            | bothConcrete lhty lhty' =
+                if headEq lhty lhty'
+                then argsUnification lhty lhty' vvars
+                else Left $ UnmatchTypes lhty lhty'
+            | bothTyVar lhty lhty' && argsOf lhty' > argsOf lhty =
+                if isSpecTest
+                then Left $ UnmatchTypes lhty lhty'
+                else unification lhty' lhty vvars
+            | otherwise =
+                argsUnification lhty lhty' vvars
+
+        argsUnification =
+            if isSpecTest
+            then unifyOnArgs
+            else twoChancesUnifyArgs
+
+        twoChancesUnifyArgs lhty lhty' vvars =
+            case unifyOnArgs lhty lhty' vvars of
+                Left err @ (TrySwap _ _) ->
+                    case unifyOnArgs lhty' lhty vvars of
+                        Left _ -> Left err
+                        ok @ (Right _) -> ok
+                err @ (Left _) -> err
+                ok @ (Right _) -> ok
+
+        <resto del codice>
+--$ rm this when building
+\end{lstlisting}
+I commenti nel codice sorgente sono stati rimossi per evitare confusione. Come è stato fatto notare in precedenza,
+l'algoritmo prende in input tre argomenti, di cui i primi due sono i mono-tipi sui quali si vuole calcolare l'unificazione.
+Il terzo argomento è un flag booleano che denota se \texttt{rawUnify} deve essere un test di specializzazione
+(\texttt{True}) o semplicemente l'algoritmo di unificazione (\texttt{False}). Un test di specializzazione è utile per
+capire se l'unificazione può essere fatta in un solo "verso", ovvero se, dati due mono-tipi $ \tau $ e $ \tau' $ e data
+la sostituzione di ritorno $ S = \{ \alpha_i \mapsto \tau_i \} $ conseguente alla valutazione dell'unificazione di
+$ \tau $ e $ \tau' $, vale:
+\[ \forall \alpha_i \in S. \; \alpha_i \in \tau' \]
+dove con $ \alpha_i \in S $ si intendono solamente le variabili di tipo nella parte sinistra di una sostituzione, ovvero
+quelle che devono essere sostituite. Questo rende l'unificazione più stringente
+e ciò è utile quando è richiesto che uno dei due mono-tipi non venga modifcato,
+ad esempio, quando deve essere effettuato il type-check con un tipo che deriva da una annotazione di tipo (type-hinting).
+Infatti, ci si aspetta che, data un'espressione con type-hinting, l'espressione abbia esattamente il tipo indicato
+nell'annotazione di tipo.
 
 \paragraph{Inferenza di lambda astrazione}
 \[ \infer[\textbf{Abs}]{\Gamma \vdash_W \lambda x. e : S\tau \mapsto \tau', S}{\tau = newvar & \Gamma, \; x : \tau \vdash_W e : \tau', \; S} \]
