@@ -1053,7 +1053,8 @@ Come è stato già anticipato, HM viene presentato sotto forma di \textit{regole
 dove le premesse sono un insieme di \textit{giudizi} e \textit{predicati} e la conclusione è un \textit{giudizio}. Un
 \textit{giudizio} è un'affermazione sul tipo di un simbolo, ad esempio:
 \[ x : \sigma \]
-afferma che il simbolo $ x $ tipo $ \tau $. Ora verranno elencate le regole di inferenza:
+afferma che il simbolo $ x $ ha tipo $ \tau $. %TODO
+Ora verranno elencate le regole di inferenza:
 
 \paragraph{Inferenza di variabile}
 Prima di presentare di la regola d'inferenza delle variabili è necessario due ulteriori regole. La prima è la
@@ -1107,8 +1108,40 @@ termini di un'equazione. Si parla di mono-tipi, poiché l'unificazione non preve
 all'interno di un'equazione. Un problema di unificazione è un insieme finito di equazioni:
 \[ \{ \tau_1 = \tau_1' \; ... \; \tau_n = \tau_n' \} \]
 dove $ \tau_i, \tau_i' $ sono dei mono-tipi. La soluzione di un problema di unificazione è data da una sostituzione
-$ S = \{ \alpha_j \mapsto \tau_j \} $ tale che:
+$ S = \{ \alpha_j \mapsto \mu_j \} $, dove \alpha_j è una variabile di tipo e \mu_j è un mono-tipo, tale che:
 \[ \forall i \in \{1, ..., n\}. \; S\tau_i = S\tau_i' \]
+Il codice sorgente che si occupa dell'unificazione si trova nel modulo \texttt{Compiler.Ast.Typed}, in particolare,
+la funzione \texttt{rawUnify} implementa l'algoritmo di unificazione, osserviamo la sua firma:
+\begin{lstlisting}
+rawUnify
+    :: LangHigherType a
+    -> LangHigherType a
+    -> IsSpecTest
+    -> Either (UnificationError a) (Substitution a)
+\end{lstlisting}
+Notiamo subito che vi sono tre argomenti e che il tipo di ritorno è un result-type.
+\begin{lstlisting}
+data UnificationError a =
+      UnmatchTypes (LangHigherType a) (LangHigherType a)
+    | TrySwap (LangHigherType a) (LangHigherType a)
+    | OccursCheck (LangHigherType a) (LangHigherType a)
+    | UnmatchKinds (LangHigherType a) (LangHigherType a)
+
+type IsSpecTest = Bool
+\end{lstlisting}
+Il tipo \texttt{UnificationError} possiede 4 casi d'errore e tutti prendono in input due mono-tipi:
+\begin{itemize}
+    \item \texttt{UnmatchTypes}, ritornato quando non vi è alcuna soluzione all'equazione tra due mono-tipi;
+    \item \texttt{TrySwap}, simile a \texttt{UnmatchTypes} nella semantica, ma indica all'algoritmo di non terminare
+    subito, analizzeremo approfonditamente questo caso in seguito;
+    \item \texttt{OccursCheck}, ritornato quando vi è il tentativo di risolvere un problema del tipo:
+        \[ \alpha = f \; ... \; \alpha \; ...  \]
+    Questo tipo di equazione porterebbe come risultato un termine infinito visto che $ \alpha $ è sotto-termine di
+    se stesso;
+    \item \texttt{UnmatchKinds}, ritornato quando i kinds di due mono-tipi non coincidono. In questo caso, non vi
+    può essere alcuna soluzione all'equazione, si pensi, ad esempio, a:
+        \[ M \; \alpha = M \; Int \; \beta \]
+\end{itemize}
 
 \paragraph{Inferenza di lambda astrazione}
 \[ \infer[\textbf{Abs}]{\Gamma \vdash_W \lambda x. e : S\tau \mapsto \tau', S}{\tau = newvar & \Gamma, \; x : \tau \vdash_W e : \tau', \; S} \]
