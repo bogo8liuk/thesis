@@ -663,6 +663,28 @@ val map : (a -> b) -> List a -> List b
 in questo caso la funzione \texttt{map} avrà il seguente tipo:
 \[ map : \forall \alpha, \beta . \; (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
 
+\subsubsection{Test di uguaglianza tra tipi}
+Il test di uguaglianza tra tipi si differenzia parecchio tra le diverse nozioni di "tipo", inoltre, non sempre risulterà
+utile avere una definizione di uguaglianza tra alcune nozioni di tipo. Partendo dalla nozione di mono-tipo, due
+mono-tipi $ \tau $ e $ \tau' $ sono uguali se hanno i termini identici. Dato che langgg supporta la nozione di mono-tipo
+higher-kinded, è banale asserire che:
+\[ kindOf(\tau) \neq kindOf(\tau') \Longrightarrow \tau \neq \tau' \]
+Per quanto riguarda i tipi qualificati, è necessario prendere in considerazione anche i predicati che precedono un
+mono-tipo. Definiamo, quindi, il test di uguaglianza tra predicati. Siano $ (C \; \tau_1 \; ... \; \tau_n) $ e
+$ (C' \; \tau_1' \; ... \; \tau_n') $ due constraints, essi sono uguali se:
+\[ C = C' \wedge \forall i \in \{1, ..., n\}. \; \tau_i = \tau_i' \]
+Ora possiamo definire il test uguaglianza per i tipi qualificati. Siano $ (P_1, ..., P_n \Rightarrow \tau) $ e
+$ (Q_1, ..., Q_m \Rightarrow \tau') $ due tipi qualificati, essi sono uguali se:
+\begin{enumerate}
+    \item $ \tau = \tau' $
+    \item $ \forall i \in \{1, ..., n\}. \; \exists j \in \{1, ..., m\}. \; P_i = Q_j $
+    \item $ \forall j \in \{1, ..., m\}. \; \exists i \in \{1, ..., n\}. \; Q_j = P_i $
+\end{enumerate}
+Ora rimangono gli schemi di tipo. A differenza dei mono-tipi, qui le variabili possono essere quantificate, quindi non
+basterebbe più definire il test di uguaglianza analizzando solamente i termini del mono-tipo. Nel codice sorgente in
+\texttt{Compiler.Ast.Typed}, non vi è alcuna definizione di uguaglianza tra schemi di tipo poiché questa non è necessaria
+a nessun'altra operazione.
+
 \subsection{Polimorfismo ad hoc}
 langgg supporta il polimorfismo ad hoc esponendo costrutti chiamati \textit{proprietà}, le quali sono concettualmente
 molto simili alle \textit{type classes} di Haskell. Ecco un esempio di definizione di proprietà in langgg:
@@ -1108,7 +1130,7 @@ termini di un'equazione. Si parla di mono-tipi, poiché l'unificazione non preve
 all'interno di un'equazione. Un problema di unificazione è un insieme finito di equazioni:
 \[ \{ \tau_1 = \tau_1' \; ... \; \tau_n = \tau_n' \} \]
 dove $ \tau_i, \tau_i' $ sono dei mono-tipi. La soluzione di un problema di unificazione è data da una sostituzione
-$ S = \{ \alpha_j \mapsto \mu_j \} $, dove \alpha_j è una variabile di tipo e \mu_j è un mono-tipo, tale che:
+$ S = \{ \alpha_j \mapsto \mu_j \} $, dove $ \alpha_j $ è una variabile di tipo e $ \mu_j $ è un mono-tipo, tale che:
 \[ \forall i \in \{1, ..., n\}. \; S\tau_i = S\tau_i' \]
 Il codice sorgente che si occupa dell'unificazione si trova nel modulo \texttt{Compiler.Ast.Typed}, in particolare,
 la funzione \texttt{rawUnify} implementa l'algoritmo di unificazione, osserviamo la sua firma:
