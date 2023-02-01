@@ -1318,8 +1318,9 @@ argomenti dei mono-tipi e questo avviene in \texttt{unifyOnArgs} che si occupa d
 ricorsive. Senza entrare nei dettagli implementativi di \texttt{unifyOnArgs}, una volta che le chiamate ricorsive sono
 state effettuate, se non vi è stato alcun errore, allora l'output sarà una sequenza di sostituzioni. Tuttavia, le
 sostituzioni potrebbero non essere consistenti tra loro; si osservi il seguente esempio:
-\[ \tau = M k k, \; \tau' = M a b \]
-effettuando un'azione di \textit{decompose}, si ottengono le seguenti sostituzioni:
+\[ \tau = M \; k \; k, \; \tau' = M \; a \; b \]
+dove $ M $ è un tipo concreto, mentre gli altri termini sono tutti variabili di tipo. Effettuando un'azione di
+\textit{decompose}, si ottengono le seguenti sostituzioni:
 \[ S_1 = \{k \mapsto a\}, \; S_2 = \{k \mapsto b\} \]
 \`E chiaro che $ S_1 $ e $ S_2 $ non sono consistenti. In questi casi, \texttt{unifyOnArgs}, invece di ritornare
 l'errore \texttt{UnmatchTypes}, ritorna \texttt{TrySwap}. La semantica di quest'ultimo indica che è necessario effettuare
@@ -1333,10 +1334,22 @@ implementa questa parte è \texttt{twoChancesUnifyArgs}. Chiaramente, come si pu
 in quanto vi è prima un'azione di \textit{swap} che dovrebbe essere eseguita.
 
 \paragraph{Inferenza di lambda astrazione}
+La seguente regola inferisce il tipo del costrutto di lambda-astrazione:
 \[ \infer[\textbf{Abs}]{\Gamma \vdash_W \lambda x. e : S\tau \mapsto \tau', S}{\tau = newvar & \Gamma, \; x : \tau \vdash_W e : \tau', \; S} \]
+Nell'inferenza di questo costrutto, l'argomento $ x $ ha come tipo una nuova variabile di tipo, alla quale viene
+successivamente applicata la sostituzione derivante dall'inferenza dell'espressione $ e $.
 
 \paragraph{Inferenza del costrutto "let..in"}
+%TODO: generalization
 \[ \infer[\textbf{Let}]{\Gamma \vdash_W let \; x = e_0 \; in \; e_1 : \tau', \; S_1S_0}{\Gamma \vdash_W e_0 : \tau, \; S_0 & S_0\Gamma, x : \overline{S_0\Gamma}(\tau) \vdash_W e_1 : \tau', \; S_1} \]
+\`E doveroso spiegare il motivo dell'esistenza del costrutto \textit{let..in}. Osserviamo il seguente esempio di
+programma scritto nel formalismo del lambda-calcolo polimorfico:
+\[ (\lambda id. \; (id \; True, id \; 42)) (\lambda x \rightarrow x) \]
+un tale programma non può essere tipato, in quanto il tipo della variabile \textit{id} non è polimorfo. Si ricordi,
+infatti, che nel costrutto della lambda-astrazione, il tipo dell'argomento è un mono-tipo. Per questo motivo, è
+necessario il costrutto \textit{let..in}:
+\[ let \; id = \lambda x. \; x \; in \; (id \; True, id \; 42) \]
+infatti, il programma appena mostrato è \textit{ben tipato}, in quanto il tipo di \textit{id} è uno schema di tipo.
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
