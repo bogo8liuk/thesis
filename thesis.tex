@@ -1075,7 +1075,12 @@ Come è stato già anticipato, HM viene presentato sotto forma di \textit{regole
 dove le premesse sono un insieme di \textit{giudizi} e \textit{predicati} e la conclusione è un \textit{giudizio}. Un
 \textit{giudizio} è un'affermazione sul tipo di un simbolo, ad esempio:
 \[ x : \sigma \]
-afferma che il simbolo $ x $ ha tipo $ \tau $. %TODO
+afferma che il simbolo $ x $ ha tipo $ \tau $. HM necessita, inoltre, di un modo per "tener traccia" dei giudizi,
+ovvero un modo per accoppiare un simbolo con un tipo. Introduciamo, quindi,
+un altro componente: il \textit{contesto} o \textit{ambiente di tipizzazione}. In generale, i giudizi terranno conto
+del contesto, infatti avranno la seguente forma:
+\[ \Gamma \vdash x : \sigma \]
+questa scritta afferma che sotto le ipotesi in $ \Gamma $, il token $ x $ ha tipo $ \sigma $.
 Ora verranno elencate le regole di inferenza:
 
 \paragraph{Inferenza di variabile}
@@ -1212,17 +1217,101 @@ rawUnify monoTy monoTy' isSpecTest =
 I commenti nel codice sorgente sono stati rimossi per evitare confusione. Come è stato fatto notare in precedenza,
 l'algoritmo prende in input tre argomenti, di cui i primi due sono i mono-tipi sui quali si vuole calcolare l'unificazione.
 Il terzo argomento è un flag booleano che denota se \texttt{rawUnify} deve essere un test di specializzazione
-(\texttt{True}) o semplicemente l'algoritmo di unificazione (\texttt{False}). Un test di specializzazione è utile per
-capire se l'unificazione può essere fatta in un solo "verso", ovvero se, dati due mono-tipi $ \tau $ e $ \tau' $ e data
+(\texttt{True}) o semplicemente l'algoritmo di unificazione (\texttt{False}). Un test di specializzazione è l'equivalente
+dell'unificazione, ma può essere fatta in un solo "verso", ovvero se, dati due mono-tipi $ \tau $ e $ \tau' $ e data
 la sostituzione di ritorno $ S = \{ \alpha_i \mapsto \tau_i \} $ conseguente alla valutazione dell'unificazione di
 $ \tau $ e $ \tau' $, vale:
-\[ \forall \alpha_i \in S. \; \alpha_i \in \tau' \]
-dove con $ \alpha_i \in S $ si intendono solamente le variabili di tipo nella parte sinistra di una sostituzione, ovvero
-quelle che devono essere sostituite. Questo rende l'unificazione più stringente
+\[ \forall \alpha_i \in left(S). \; \alpha_i \in \tau' \]
+dove con $ \alpha_i \in left(S) $ si intendono solamente le variabili di tipo nella parte sinistra di una sostituzione,
+ovvero quelle che devono essere sostituite. Questo rende l'unificazione più stringente
 e ciò è utile quando è richiesto che uno dei due mono-tipi non venga modifcato,
 ad esempio, quando deve essere effettuato il type-check con un tipo che deriva da una annotazione di tipo (type-hinting).
 Infatti, ci si aspetta che, data un'espressione con type-hinting, l'espressione abbia esattamente il tipo indicato
 nell'annotazione di tipo.
+
+L'obiettivo dell'algoritmo è riportarsi in una situazione tale che l'equazione tra i due mono-tipi ha la seguente forma:
+\[ \alpha = \tau \]
+dove $ \alpha $ è una variabile di tipo e $ \tau $ è un mono-tipo. Questo perché tale equazione ha la forma di una
+sostituzione: $ \alpha = \tau $.
+Tuttavia, nell'algoritmo, viene considerata la forma:
+\[ \tau = \alpha \]
+Di fatto, però, la semantica dell'unificazione non cambia; i termini dell'equazione possono essere anche invertiti,
+cambiando, però, il "verso" dei controlli e delle operazioni nell'algoritmo.
+Per ottenere un'equazione di quella forma vi sono due operazioni fondamentali:
+\begin{itemize}
+    \item \textit{swap}, in cui, se deve essere effettuata l'unificazione di due mono-tipi $ \tau $ e $ \tau' $,
+    l'ordine di quest'ultimi viene scambiato. Questa operazione è utile quando il mono-tipo $ \tau' $ è più
+    "specializzato" rispetto a $ \tau $. In generale, il mono-tipo più generale (o meno specializzato) possibile
+    è una variabile singoletto, la quale, come è stato menzionato prima, deve stare nella parte destra dell'equazione.
+    \item \textit{decompose}, in cui, se deve essere effettuata l'unificazione di due mono-tipi $ \tau $ e $ \tau' $,
+    viene effettuata l'unificazione tra i vari argomenti dei due mono-tipi, raccogliendo successivamente le
+    varie sostituzioni ottenute. Questa operazione è utile quando un'operazione di \textit{swap} non è vantaggiosa (ovvero
+    il mono-tipo $ \tau $ è già "più specializzato" di $ \tau' $). Essa permette di considerare mono-tipi più piccoli.
+\end{itemize}
+
+Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la quale considera varie casistiche:
+\begin{enumerate}
+    \item
+    \begin{lstlisting}
+| not $ sameInfrdKindOf lhty lhty' =
+    Left $ UnmatchKinds lhty lhty'
+    \end{lstlisting}
+    Nel primo caso viene effettuato un controllo sui kind dei due mono-tipi. Se sono diversi, viene restituito un errore;
+    \item
+    \begin{lstlisting}
+| occursCheck lhty lhty' =
+    Left $ OccursCheck lhty lhty'
+    --$ rm this when building
+    \end{lstlisting}
+    Nel secondo caso viene effettuato un altro controllo: il cosiddetto \textit{occurs check}. Se uno dei due mono-tipi
+    ha la forma di una variabile di tipo e quest'ultima compare nell'altro mono-tipo, allora viene ritornato un errore.
+    \item
+    \begin{lstlisting}
+| tyVarAndConcrete lhty lhty' =
+    if isSpecTest
+    then Left $ UnmatchTypes lhty lhty'
+    else unification lhty' lhty vvars
+    --$ rm this when building
+    \end{lstlisting}
+    Nel terzo caso vi è il primo controllo sulla struttura dei mono-tipi: se \texttt{lhty} ha come testa una variabile
+    di tipo e \texttt{lhty'} ha come testa un tipo concreto, allora vi è un'operazione di \textit{swap}, ovvero vi è
+    una chiamata ricorsiva di \texttt{unification} con gli argomenti invertiti. Se l'unificazione è \textit{strict},
+    viene ritornato un errore, in quanto una variabile di tipo, per definizione, non è più specializzata di un tipo
+    concreto. In questo caso, l'operazione di \textit{swap} non può essere effettuata in quanto verrebbe a meno il vincolo
+    secondo il quale le variabili del primo mono-tipo (\texttt{lhty}) non devono essere sostituite.
+    \item
+    \begin{lstlisting}
+| bothConcrete lhty lhty' =
+    if headEq lhty lhty'
+    then argsUnification lhty lhty' vvars
+    else Left $ UnmatchTypes lhty lhty'
+    --$ rm this when building
+    \end{lstlisting}
+    Nel quarto caso viene testato se entrambi i mono-tipi hanno tipi concreti come testa; se così fosse, le teste
+    devono rappresentare lo stesso tipo concreto, altrimenti viene restituito un errore, in quanto non esisterebbe
+    alcuna sostituzione che permetterebbe l'uguaglianza tra i due mono-tipi. Se, invece, le teste sono uguali, allora
+    viene eseguita un'azione di \textit{decompose}, ovvero vengono effettuate delle chiamate ricorsive sugli argomenti
+    dei due mono-tipi. Analizzeremo la funzione \texttt{argsUnification} in seguito.
+    \item
+    \begin{lstlisting}
+| bothTyVar lhty lhty' && argsOf lhty' > argsOf lhty =
+    if isSpecTest
+    then Left $ UnmatchTypes lhty lhty'
+    else unification lhty' lhty vvars
+    --$ rm this when building
+    \end{lstlisting}
+    Nel quinto caso viene controllato se entrambi i mono-tipi hanno variabili di tipo come testa e se il numero di
+    argomenti del secondo mono-tipo sono strettamente maggiori di quelli del primo. In questo caso, vi è un'operazione
+    di \textit{swap} e la conseguente chiamata ricorsiva. Come prima, se l'unificazione è \textit{strict},
+    l'operazione di \textit{swap} non può essere effettuata.
+    \item
+    \begin{lstlisting}
+| otherwise =
+    argsUnification lhty lhty' vvars
+    \end{lstlisting}
+    Nell'ultimo caso, vengono valutati tutti i casi restanti: quello che viene eseguito è un'azione di decompose sugli
+    argomenti dei due mono-tipi.
+\end{enumerate}
 
 \paragraph{Inferenza di lambda astrazione}
 \[ \infer[\textbf{Abs}]{\Gamma \vdash_W \lambda x. e : S\tau \mapsto \tau', S}{\tau = newvar & \Gamma, \; x : \tau \vdash_W e : \tau', \; S} \]
