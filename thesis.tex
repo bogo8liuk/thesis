@@ -1313,6 +1313,25 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     argomenti dei due mono-tipi.
 \end{enumerate}
 
+La funzione \texttt{argsUnification} implementa l'azione di \textit{decompose}. Per farlo, è necessario "accoppiare" gli
+argomenti dei mono-tipi e questo avviene in \texttt{unifyOnArgs} che si occupa di effettuare le eventuali chiamate
+ricorsive. Senza entrare nei dettagli implementativi di \texttt{unifyOnArgs}, una volta che le chiamate ricorsive sono
+state effettuate, se non vi è stato alcun errore, allora l'output sarà una sequenza di sostituzioni. Tuttavia, le
+sostituzioni potrebbero non essere consistenti tra loro; si osservi il seguente esempio:
+\[ \tau = M k k, \; \tau' = M a b \]
+effettuando un'azione di \textit{decompose}, si ottengono le seguenti sostituzioni:
+\[ S_1 = \{k \mapsto a\}, \; S_2 = \{k \mapsto b\} \]
+\`E chiaro che $ S_1 $ e $ S_2 $ non sono consistenti. In questi casi, \texttt{unifyOnArgs}, invece di ritornare
+l'errore \texttt{UnmatchTypes}, ritorna \texttt{TrySwap}. La semantica di quest'ultimo indica che è necessario effettuare
+un'azione di \textit{swap} e riprovare con \textit{decompose}. Continuando con l'esempio precedente, otterremo:
+\[ S_1 = \{a \mapsto k\}, \; S_2 = \{b \mapsto k\} \]
+In questo caso, $ S_1 $ e $ S_2 $ possono essere unite in un'unica sostituzione:
+\[ S = \{ a \mapsto k, \; b \mapsto k \} \]
+In generale, se anche il "secondo tentativo" non va a buon fine, l'algoritmo termina con un errore. La funzione che
+implementa questa parte è \texttt{twoChancesUnifyArgs}. Chiaramente, come si può notare dall'implementazione di
+\texttt{argsUnification}, se l'unificazione è \textit{strict}, allora il "secondo tentativo" non può essere effettuato,
+in quanto vi è prima un'azione di \textit{swap} che dovrebbe essere eseguita.
+
 \paragraph{Inferenza di lambda astrazione}
 \[ \infer[\textbf{Abs}]{\Gamma \vdash_W \lambda x. e : S\tau \mapsto \tau', S}{\tau = newvar & \Gamma, \; x : \tau \vdash_W e : \tau', \; S} \]
 
