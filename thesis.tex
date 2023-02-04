@@ -1042,7 +1042,7 @@ inserito nella componente. Inoltre, se non vi sono abbastanza informazioni per i
 il suo inserimento viene "rimandato" (viene inserito nei bindings rimanenti) e verrà effettuato in un'iterazione
 successiva. Il codice si trova nel modulo \texttt{Compiler.Types.Prepare.Sort}.
 
-Dopo l'ordinamento dei bindings, è garantito che, ogni qual volta verrà inferito un binding, è garantito che la premessa
+Dopo l'ordinamento dei bindings, è garantito che, ogni qual volta verrà inferito un binding, la premessa
 della regola \textbf{Var} sia vera.
 
 \subsection{Type-inference}
@@ -1053,10 +1053,10 @@ inferire il tipo dell'espressione legata alla variabile, ad esempio:
 type Maybe a = Nothing | Just a
 let x = Nothing
 \end{lstlisting}
-Si può affermare che l'espressione legata alla variabile $ x $ abbia tipo $ Maybe \alpha $. Ora, il compilatore
+Si può affermare che l'espressione legata alla variabile $ x $ abbia tipo $ Maybe \; \alpha $. Ora, il compilatore
 deve scegliere un tipo da sostituire alla variabile di tipo $ \alpha $. Se la scelta fosse arbitraria, ad esempio
-$ Int $, l'utilizzo di $ x $ sarebbe limitato solo a un tipo ovvero $ Maybe Int $. Un'altra possibile soluzione
-potrebbe essere associare a $ x $ il tipo $ Maybe a $. Tuttavia, anche questa scelta risulterebbe limitante in quanto,
+$ Int $, l'utilizzo di $ x $ sarebbe limitato solo a un tipo ovvero $ Maybe \; Int $. Un'altra possibile soluzione
+potrebbe essere associare a $ x $ il tipo $ Maybe \; a $. Tuttavia, anche questa scelta risulterebbe limitante in quanto,
 come è stato già esposto nella sezione sul type-system (cfr. Schemi di tipi), la variabile di tipo $ \alpha $
 denoterebbe un tipo fissato non ancora conosciuto. L'introduzione di uno schema di tipo rappresenta una scelta
 "più generale":
@@ -1065,8 +1065,19 @@ In questo caso, $ x $ può avere molteplici tipi.
 
 \subsubsection{Damas-Hindley-Milner}
 Come è stato già menzionato precedentemente, il sistema di tipi di langgg si basa sul type-system di Damas-Hindley-Milner.
-L'algoritmo di inferenza su cui si basa inferisce il tipo più \textit{generale} possibile.
-%TODO
+L'algoritmo di inferenza su cui si basa inferisce il tipo più \textit{generale} possibile. Tuttavia, nella letteratura,
+vengono presentati due algoritmi principali, ma nella pratica, solo uno di essi è implementato dai compilatori dei
+linguaggi di programmazione. Verranno entrambi menzionati, ma solo le regole di inferenza dell'algoritmo effettivamente
+implementato verranno esposte:
+\begin{itemize}
+    \item \textit{Algoritmo W}, è l'algoritmo effettivamente utilizzato dalle implementazioni, in quanto tiene traccia
+    delle sostituzioni generate dalle eventuali unificazioni (cfr. Unificazione) e le applica all'ambiente di
+    tipizzazione. Proprio a causa della gestione delle sostituzioni, la complessità computazionale dell'algoritmo
+    nel caso peggiore è esponenziale.
+    \item \textit{Algoritmo J}, è un algoritmo più efficiente di \textit{W} (lineare nella lunghezza dell'espressione),
+    tuttavia, esso non gestisce le sostituzioni, o almeno, esse vengono considerate come side-effects. Viene
+    presentato in letteratura come alternativa efficiente a \textit{W}.
+\end{itemize}
 
 \subsubsection{Regole di inferenza}
 Come è stato già anticipato, HM viene presentato sotto forma di \textit{regole}, le quali hanno la seguente forma:
@@ -1079,7 +1090,7 @@ afferma che il simbolo $ x $ ha tipo $ \tau $. HM necessita, inoltre, di un modo
 ovvero un modo per accoppiare un simbolo con un tipo. Introduciamo, quindi,
 un altro componente: il \textit{contesto} o \textit{ambiente di tipizzazione}. In generale, i giudizi terranno conto
 del contesto, infatti avranno la seguente forma:
-\[ \Gamma \vdash x : \sigma \]
+\[ \Gamma \vdash_W x : \sigma \]
 questa scritta afferma che sotto le ipotesi in $ \Gamma $, il token $ x $ ha tipo $ \sigma $.
 Ora verranno elencate le regole di inferenza:
 
@@ -1212,7 +1223,6 @@ rawUnify monoTy monoTy' isSpecTest =
                 ok @ (Right _) -> ok
 
         <resto del codice>
---$ rm this when building
 \end{lstlisting}
 I commenti nel codice sorgente sono stati rimossi per evitare confusione. Come è stato fatto notare in precedenza,
 l'algoritmo prende in input tre argomenti, di cui i primi due sono i mono-tipi sui quali si vuole calcolare l'unificazione.
@@ -1261,7 +1271,6 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     \begin{lstlisting}
 | occursCheck lhty lhty' =
     Left $ OccursCheck lhty lhty'
-    --$ rm this when building
     \end{lstlisting}
     Nel secondo caso viene effettuato un altro controllo: il cosiddetto \textit{occurs check}. Se uno dei due mono-tipi
     ha la forma di una variabile di tipo e quest'ultima compare nell'altro mono-tipo, allora viene ritornato un errore.
@@ -1271,7 +1280,6 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     if isSpecTest
     then Left $ UnmatchTypes lhty lhty'
     else unification lhty' lhty vvars
-    --$ rm this when building
     \end{lstlisting}
     Nel terzo caso vi è il primo controllo sulla struttura dei mono-tipi: se \texttt{lhty} ha come testa una variabile
     di tipo e \texttt{lhty'} ha come testa un tipo concreto, allora vi è un'operazione di \textit{swap}, ovvero vi è
@@ -1285,7 +1293,6 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     if headEq lhty lhty'
     then argsUnification lhty lhty' vvars
     else Left $ UnmatchTypes lhty lhty'
-    --$ rm this when building
     \end{lstlisting}
     Nel quarto caso viene testato se entrambi i mono-tipi hanno tipi concreti come testa; se così fosse, le teste
     devono rappresentare lo stesso tipo concreto, altrimenti viene restituito un errore, in quanto non esisterebbe
@@ -1298,7 +1305,6 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     if isSpecTest
     then Left $ UnmatchTypes lhty lhty'
     else unification lhty' lhty vvars
-    --$ rm this when building
     \end{lstlisting}
     Nel quinto caso viene controllato se entrambi i mono-tipi hanno variabili di tipo come testa e se il numero di
     argomenti del secondo mono-tipo sono strettamente maggiori di quelli del primo. In questo caso, vi è un'operazione
@@ -1340,16 +1346,72 @@ Nell'inferenza di questo costrutto, l'argomento $ x $ ha come tipo una nuova var
 successivamente applicata la sostituzione derivante dall'inferenza dell'espressione $ e $.
 
 \paragraph{Inferenza del costrutto "let..in"}
-%TODO: generalization
+Prima di presentare la regola di inferenza, è necessario introdurre la regola di generalizzazione:
+\[ \infer[\textbf{Gen}]{\Gamma \vdash_W e : \forall \alpha. \; \tau}{\Gamma \vdash_W e : \tau & \alpha \notin free(\Gamma)} \]
+Questa regola quantifica le variabili di tipo che non compaiono già come variabili libere nell'ambiente di tipizzazione.
+Per il costrutto \textit{let..in}, per indicare la generalizzazione, utilizzeremo la seguente notazione:
+\[ \overline{\Gamma}(\tau) = \forall \overline{\alpha}. \; \tau \qquad \overline{\alpha} = free(\tau) - free(\Gamma) \]
+Ora possiamo presentare la regola di inferenza del costrutto \textit{let..in}:
 \[ \infer[\textbf{Let}]{\Gamma \vdash_W let \; x = e_0 \; in \; e_1 : \tau', \; S_1S_0}{\Gamma \vdash_W e_0 : \tau, \; S_0 & S_0\Gamma, x : \overline{S_0\Gamma}(\tau) \vdash_W e_1 : \tau', \; S_1} \]
 \`E doveroso spiegare il motivo dell'esistenza del costrutto \textit{let..in}. Osserviamo il seguente esempio di
 programma scritto nel formalismo del lambda-calcolo polimorfico:
-\[ (\lambda id. \; (id \; True, id \; 42)) (\lambda x \rightarrow x) \]
+\[ (\lambda id. \; (id \; True, id \; 42)) (\lambda x. \; x) \]
 un tale programma non può essere tipato, in quanto il tipo della variabile \textit{id} non è polimorfo. Si ricordi,
 infatti, che nel costrutto della lambda-astrazione, il tipo dell'argomento è un mono-tipo. Per questo motivo, è
 necessario il costrutto \textit{let..in}:
 \[ let \; id = \lambda x. \; x \; in \; (id \; True, id \; 42) \]
 infatti, il programma appena mostrato è \textit{ben tipato}, in quanto il tipo di \textit{id} è uno schema di tipo.
+
+\subsubsection{Implementazione delle regole di inferenza}
+Il codice sorgente che implementa le regole di inferenza (e quindi la type-inference) è situato nel modulo
+\texttt{Compiler.Types.Builder.Type}. Alcuni costrutti di langgg si ispirano a quelli del formalismo \textit{System-F},
+tuttavia, molti vengono estesi con sintassi differenti. Ad esempio, prendendo come riferimento la definizione del token
+dell'AST che rappresenta il costrutto di lambda-astrazione:
+\begin{lstlisting}
+newtype Lambda a = Lambda ([SymbolName a], Expression a, a)
+\end{lstlisting}
+si può notare come non vi sia un unico argomento, bensì, una lista. Stessa argomentazione vale per l'applicazione
+di espressioni:
+\begin{lstlisting}
+newtype AppExpression a = AppExpr (Expression a, [Expression a], a)
+\end{lstlisting}
+Con le dovute accortezze, l'algoritmo di inferenza considera questi costrutti come l'equivalente di costrutti
+concatenati in \textit{System-F}. Ad esempio:
+\[ \texttt{lam x y z -> x + y + z} \equiv \lambda x. \; \lambda y. \; \lambda z. \; x + y + z \]
+
+Un altra nota è necessaria sulle definizioni di simboli in langgg. Infatti, langgg permette la definizione di simboli
+globali e questo "rompe" la regola di inferenza del costrutto \textit{let..in}. Questo problema viene risolto
+considerando soltanto parte delle premesse del costrutto \textit{let..in}. Ad esempio:
+\begin{lstlisting}
+let x = e
+\end{lstlisting}
+come prima azione, viene inferito il tipo di \texttt{e}, sia esso il mono-tipo $ \tau $, poi viene effettuata la
+generalizzazione, quindi $ x $ avrà tipo $ \forall \overline{\alpha}. \; \tau $. A questo punto, non è necessario
+compiere altre azioni e il binding $ x : \forall \overline{\alpha}. \; \tau $ può essere aggiunto nell'ambiente di
+tipizzazione.
+
+Il costrutto \textit{let..in} in langgg ha nella sintassi un'altra estensione rispetto al suo omonimo in \textit{System-F},
+ovvero i bindings accettano anche argomenti:
+\begin{lstlisting}
+let f x y = (x, y)
+\end{lstlisting}
+In questo caso, la politica dell'algoritmo di inferenza è trattare gli argomenti \texttt{x} e \texttt{y} come argomenti
+di un costrutto di lambda-astrazione (cfr. Lambda-astrazione), quindi, si può pensare a questa equivalenza in termini
+di type-inference con \textit{System-F}:
+\[ \texttt{let f x y = (x, y)} \equiv let \; f = \lambda x. \; \lambda y. \; (x, y) \]
+
+\subsubsection{Estensioni dell'algoritmo di inferenza}
+langgg possiede numerosi costrutti che arricchiscono la sintassi di base di \textit{System-F}, inoltre, introduce
+concetti nuovi come i predicati o i tipi qualificati. Di conseguenza, l'algoritmo di inferenza di tipo di \textit{System-F}
+deve essere esteso.
+
+\paragraph{Pattern matching}
+
+\paragraph{Constraints}
+
+\paragraph{Type-hinting}
+
+\paragraph{Funzioni ricorsive}
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
