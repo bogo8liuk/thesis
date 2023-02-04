@@ -1411,6 +1411,56 @@ concetti nuovi come i predicati o i tipi qualificati. Di conseguenza, l'algoritm
 deve essere esteso.
 
 \paragraph{Pattern matching}
+langgg possiede due costrutti diversi per il pattern matching (cfr. Caratteristiche del linguaggio). Il primo costrutto
+permette "ispezionare" il valore di una singola espressione, per esempio:
+\begin{lstlisting}
+type Maybe a = Nothing | Just a
+
+val f : List a -> String
+let f l =
+    match first l with
+          Nothing -> "No elements in the list"
+        | Just _ -> "The list has at least one element!"
+\end{lstlisting}
+Il secondo costrutto, invece, non agisce su un'espressione, ma sugli argomenti di altri costrutti, per esempio:
+\begin{lstlisting}
+val f : Maybe a -> b -> String
+let f
+    | Nothing _ -> "Error 404"
+    | (Just _) _ -> "Ok 200"
+\end{lstlisting}
+In qualsiasi caso, vi sono sempre uno o più valori da ispezionare, uno o più casi, i quali hanno uno o più \textit{case
+expressions} (nel codice, spesso vengono nominate come \textit{matching expressions}) e un'espressione di ritorno.
+Quindi abbiamo un costrutto della forma:
+\[ match \; val_1 \; ... \; val_n \; with \; case_1 \; ... \; case_m \]
+dove $ val_i $ è un token che definiremo come \textit{token top-level} o \textit{token di scrutinio} e
+$ case_j $, che chiameremo \textit{caso}, ha la forma:
+\[ me_{1j}, \; ... \; me_{nj} \rightarrow e_j \]
+L'algoritmo di inferenza di tale costrutto è il seguente:
+\begin{itemize}
+    \item Inferisci $ val_i $, applica le sostituzioni all'ambiente di tipizzazione e poi fai lo stesso con $ val_{i+1} $,
+    finché non termina la lista di token di scrutinio;
+    \item nell'inferenza dei casi, dovrà valere:
+        \[ \forall j. \; typeOf(val_i) \sqsubseteq typeOf(me_{ij}) \]
+    ovvero le case expressions non potranno avere un tipo più generale dei corrispondenti token di scrutinio;
+    \item nell'inferenza dei casi, è necessario tener traccia dei tipi dei casi già inferiti in precedenza, in
+    quanto non sempre dai casi precedenti si inferisce il tipo più specializzato tra tutti i casi $ case_j $, quindi,
+    i casi già inferiti verrano mantenuti;
+    \item inferisci $ case_j $, applica le sostituzioni all'ambiente di tipizzazione e ai casi precedenti, poi passa
+    a $ case_{j+1} $;
+    \begin{itemize}
+        \item nell'inferenza del caso j-esimo, il quale avrà la forma $ me_{1j} \; ... \; me_{nj} \rightarrow e_j $,
+        verranno inferite, una alla volta, le case expressions $ me_{ij} $;
+        \item inferisci come se fosse un argomento di una lambda astrazione $ me_{ij} $ la quale avrà mono-tipo $ \tau $,
+        trova il tipo dell'i-esima case expression nei casi precedenti, sia esso $ \tau' $, poi effettua
+        l'unificazione tra $ \tau $ e $ \tau' $ e applica le sostituzioni
+        all'ambiente di tipizzazione e ai casi precedenti, poi continua con $ me_{i+1j} $ finché non termina la lista di
+        case expressions;
+        \item inferisci $ e_j $, la quale avrà mono-tipo $ \tau $, trova il tipo delle espressioni dei casi, sia esso
+        $ \tau' $, effettua l'unificazione tra $ \tau $ e $ \tau' $ e applica le sostituzioni all'ambiente di tipizzazione
+        e ai casi precedenti.
+    \end{itemize}
+\end{itemize}
 
 \paragraph{Constraints}
 
