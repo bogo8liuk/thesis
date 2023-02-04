@@ -1223,6 +1223,7 @@ rawUnify monoTy monoTy' isSpecTest =
                 ok @ (Right _) -> ok
 
         <resto del codice>
+--$ rm this when building
 \end{lstlisting}
 I commenti nel codice sorgente sono stati rimossi per evitare confusione. Come è stato fatto notare in precedenza,
 l'algoritmo prende in input tre argomenti, di cui i primi due sono i mono-tipi sui quali si vuole calcolare l'unificazione.
@@ -1271,6 +1272,7 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     \begin{lstlisting}
 | occursCheck lhty lhty' =
     Left $ OccursCheck lhty lhty'
+--$ rm this when building
     \end{lstlisting}
     Nel secondo caso viene effettuato un altro controllo: il cosiddetto \textit{occurs check}. Se uno dei due mono-tipi
     ha la forma di una variabile di tipo e quest'ultima compare nell'altro mono-tipo, allora viene ritornato un errore.
@@ -1280,6 +1282,7 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     if isSpecTest
     then Left $ UnmatchTypes lhty lhty'
     else unification lhty' lhty vvars
+--$ rm this when building
     \end{lstlisting}
     Nel terzo caso vi è il primo controllo sulla struttura dei mono-tipi: se \texttt{lhty} ha come testa una variabile
     di tipo e \texttt{lhty'} ha come testa un tipo concreto, allora vi è un'operazione di \textit{swap}, ovvero vi è
@@ -1293,6 +1296,7 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     if headEq lhty lhty'
     then argsUnification lhty lhty' vvars
     else Left $ UnmatchTypes lhty lhty'
+--$ rm this when building
     \end{lstlisting}
     Nel quarto caso viene testato se entrambi i mono-tipi hanno tipi concreti come testa; se così fosse, le teste
     devono rappresentare lo stesso tipo concreto, altrimenti viene restituito un errore, in quanto non esisterebbe
@@ -1305,6 +1309,7 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     if isSpecTest
     then Left $ UnmatchTypes lhty lhty'
     else unification lhty' lhty vvars
+--$ rm this when building
     \end{lstlisting}
     Nel quinto caso viene controllato se entrambi i mono-tipi hanno variabili di tipo come testa e se il numero di
     argomenti del secondo mono-tipo sono strettamente maggiori di quelli del primo. In questo caso, vi è un'operazione
