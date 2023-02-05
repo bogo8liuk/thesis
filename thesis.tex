@@ -1419,15 +1419,15 @@ type Maybe a = Nothing | Just a
 val f : List a -> String
 let f l =
     match first l with
-          Nothing -> "No elements in the list"
-        | Just _ -> "The list has at least one element!"
+          Nothing -> "Error_404"
+        | Just _ -> "Ok_200"
 \end{lstlisting}
 Il secondo costrutto, invece, non agisce su un'espressione, ma sugli argomenti di altri costrutti, per esempio:
 \begin{lstlisting}
 val f : Maybe a -> b -> String
 let f
-    | Nothing _ -> "Error 404"
-    | (Just _) _ -> "Ok 200"
+    | Nothing _ -> "Error_404"
+    | (Just _) _ -> "Ok_200"
 \end{lstlisting}
 In qualsiasi caso, vi sono sempre uno o più valori da ispezionare, uno o più casi, i quali hanno uno o più \textit{case
 expressions} (nel codice, spesso vengono nominate come \textit{matching expressions}) e un'espressione di ritorno.
@@ -1463,10 +1463,48 @@ L'algoritmo di inferenza di tale costrutto è il seguente:
 \end{itemize}
 
 \paragraph{Constraints}
+%TODO
 
 \paragraph{Type-hinting}
+langgg permette all'utente di indicare il tipo di un'espressione (o di un simbolo). Questo comporta una modifica
+all'algoritmo di inferenza di tipo. Data un'espressione con type-hinting, lo schema generale è inferire prima
+l'espressione e successivamente "applicare" il type-hinting. Per quanto riguarda i casi ricorsivi delle espressioni
+(tutti i casi fuorché i simboli, i letterali e i data-constructors), il tipo proveniente dal type-hinting viene
+"scomposto" in più sotto-tipi che vengono utilizzati come type-hinting nell'inferenza dei casi ricorsivi. Tale
+scomposizione è definita sui tipi funzione ed è chiamata, all'interno del codice sorgente, operazione di
+\textit{unfold}:
+\begin{lstlisting}
+unfoldType(ty):
+    match ty with
+        (ty1 -> ty2) -> ty1 : unfoldType ty2
+        _ -> [ty]
+\end{lstlisting}
+Questa operazione è molto utile, ad esempio, nell'inferenza della lambda astrazione. Si osservi il seguente sorgente
+langgg:
+\begin{lstlisting}
+(lam x -> f x) : Char -> String
+\end{lstlisting}
+Il tipo \texttt{Char -> String} viene scomposto in \texttt{Char} e \texttt{String}. Nell'inferenza dell'argomento
+\texttt{x}, il type-hinting sarà esattamente \texttt{Char}, mentre per l'inferenza dell'espressione \texttt{f x}
+il type-hinting sarà \texttt{String}.
+
+Per quanto riguarda, invece, i casi di base, lo schema è:
+\begin{itemize}
+    \item cerca nell'ambiente di tipizzazione il tipo del token, sia esso lo schema di tipo $ \sigma $;
+    \item applica la regola di istanziazione su $ \sigma $, sia $ \tau $ il mono-tipo risultante;
+    \item sia $ \pi $ il mono-tipo istanziato dallo schema di tipo proveniente dal type-hinting;
+    \item effettua l'unificazione \textit{strict} tra $ \pi $ e $ \tau $; si ricordi che tale operazione, a differenza
+    dell'unificazione originale, non gode della proprietà commutativa, in quanto l'azione di \textit{swap} non è
+    ammessa. Il mono-tipo $ \pi $ non può essere modificato dopo la sostituzione;
+    \item applica l'unificazione all'ambiente di tipizzazione e al token tipato.
+\end{itemize}
+La regola è molto simile a quella senza type-hinting, tuttavia, viene effettuata un'unificazione in più.
+Dato che l'insieme dei letterali e dei data-constructors all'interno del linguaggio non può avere variabili libere,
+un'ottimizzazione che viene applicata ai loro casi è non applicare la sostituzione
+all'ambiente di tipizzazione. Un'operazione che, in generale, è piuttosto dispendiosa.
 
 \paragraph{Funzioni ricorsive}
+%TODO
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
