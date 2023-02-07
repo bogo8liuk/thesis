@@ -240,6 +240,7 @@ più tipi associati; inoltre, i tipi associati alle proprietà possono essere an
 \draw [arrow] (desugar) -- (typeInf);
 \draw [arrow] (desugar) -- (CoreGen);
 \end{tikzpicture}
+\newline
 
 La struttura del compilatore è sequenziale, con eccezione fatta per la fase di \textit{desugaring}. Quest'ultima si
 occupa di rimuovere il cosiddetto "zucchero sintattico" dalle strutture dati - che mantengono le informazioni del
@@ -270,7 +271,7 @@ data Declaration a =
     | LetMulti (MultiSymbolDeclaration a)
 \end{lstlisting}
 
-Di seguito vi è lo schema della prima parte del compilatore:
+Di seguito vi è lo schema della prima parte del compilatore: \newline
 
 \begin{tikzpicture}[node distance=2cm]
 \node (src) [object] {Codice sorgente};
@@ -1505,6 +1506,38 @@ all'ambiente di tipizzazione. Un'operazione che, in generale, è piuttosto dispe
 
 \paragraph{Funzioni ricorsive}
 %TODO
+
+\section{Generazione del codice}
+L'output dell'algoritmo di type inference è un \texttt{TypedProgram}, una tabella che mantiene i bindings tipati.
+La generazione del codice consiste in tre sotto-fasi:
+\begin{enumerate}
+    \item alcuni task che riguardano il desugaring, necessari per la generazione del codice;
+    \item traduzione dai token tipati di \texttt{Compiler.Ast.Typed} ai token della sintassi del linguaggio Core;
+    \item esecuzione del backend di Haskell, il quale genera il codice a basso livello di target differenti.
+\end{enumerate}
+Di seguito, lo schema delle fasi finali del compilatore:
+\newline
+
+\begin{tikzpicture}[node distance=2cm]
+\node (typedProg) [object] {Bindings tipati};
+\node (staticDispatch) [object, below of=typedProg] {Bindings tipati};
+\draw [arrow] (typedProg) -- node[anchor=east] {Dispatch statico} (staticDispatch);
+\node (lambdas) [object, below of=staticDispatch] {Bindings tipati};
+\draw [arrow] (staticDispatch) -- node[anchor=east] {Lambda-astrazione} (lambdas);
+\node (deepPm) [object, below of=lambdas] {Bindings tipati};
+\draw [arrow] (lambdas) -- node[anchor=east] {Rimozione del pattern matching "profondo"} (deepPm);
+\node (scrutinee) [object, below of=deepPm] {Bindings tipati};
+\draw [arrow] (deepPm) -- node[anchor=east] {Unificazione degli scrutini} (scrutinee);
+\node (coreGen) [object, below of=scrutinee] {Sintassi Core};
+\draw [arrow] (scrutinee) -- node[anchor=east] {Generazione della sintassi Core} (coreGen);
+\node (backend) [object, below of=coreGen] {Codice finale};
+\draw [arrow] (coreGen) -- node[anchor=east] {Backend Haskell} (backend);
+\node (desugar) [object, right of=lambdas, xshift=4cm] {Desugaring};
+\draw [arrow] (desugar) -- (staticDispatch);
+\draw [arrow] (desugar) -- (lambdas);
+\draw [arrow] (desugar) -- (deepPm);
+\draw [arrow] (desugar) -- (scrutinee);
+\end{tikzpicture}
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
