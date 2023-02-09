@@ -1566,7 +1566,32 @@ type Box a = Box a
 
 val g : Foo (Box a) => a -> Box a
 let g x = foo (Box x)
+
+let h v = g v
 \end{lstlisting}
+\`E chiaro come la chiamata di \texttt{foo} all'interno dell'espressione legata a \texttt{g} dipenda da quale istanza
+della forma \texttt{Foo (Box a)} venga utilizzata. Vale lo stesso per \texttt{g} nei confronti dell'espressione legata
+ad \texttt{h}. In linea generale, il suddetto problema è legato al polimorfismo ad-hoc e viene risolto attraverso un
+metodo di dispatch statico. Il polimorfismo ad-hoc permette di creare funzioni che hanno comportamenti diversi a
+seconda del loro tipo. Il dispatch statico si occupa di "scegliere" correttamente le funzioni a disposizione nel
+programma (i metodi d'istanza) che implementano i relativi metodi di proprietà nel programma. A differenza di molti
+linguaggi object-oriented, in cui la selezione dei metodi avviene a run-time attraverso meccanismi di dispatch dinamici,
+in langgg la selezione viene risolta completamente a compile-time, evitando così l'overhead che può essere causato
+da un algortimo di dispatch dinamico. In particolare, il dispatch statico in langgg viene implementato attraverso
+la \textit{monomorfizzazione} [11], già introdotta, in realtà, nella costruzione delle istanze. Ora renderemo la
+monomorfizzazione generale a tutte le funzioni del programma; l'implementazione che seguirà è ispirata da un articolo
+sul blog di Jeremy Mikkola [12]. Si ripensi alla precedente funzione \texttt{g}. Il suo
+schema di tipo ha con sè dei predicati. In questo caso, durante la fase di type-inference, alla funzione \texttt{g}
+verrà aggiunto un parametro che corrisponderà al predicato \texttt{Foo (Box a)}, ovvero stiamo trattando il tipo di
+\texttt{g} come se fosse:
+\begin{lstlisting}
+val g : Foo (Box a) -> a -> Box a
+\end{lstlisting}
+\`E necessario estendere la definizione di tipo qualificato:
+\[ QT := MT \; | \; C \; | \; C \Rightarrow QT \]
+Quindi, un tipo qualificato in langgg può possedere soltanto constraints. Questa eventualità viene tuttavia limitata
+a pochi casi possibili e, comunque, langgg non espone una sintassi per esprimere tipi qualificati che possiedono
+soltanto constraints.
 
 \subsection{Lambda-astrazione}
 
@@ -1599,6 +1624,10 @@ let g x = foo (Box x)
     via Constraint Handling Rules - in: Journal of Functional Programming, Volume 17, Issue 1, January 2007, pp. 83 - 129
     %[10]
     \item Definizione di ClsInst in GHC - url: \url{https://hackage.haskell.org/package/ghc-8.10.7/docs/src/InstEnv.html#ClsInst}
+    %[11]
+    \item Monomorphization - url: \url{https://doc.rust-lang.org/book/ch10-01-syntax.html#performance-of-code-using-generics}
+    %[12]
+    \item Type inference for Haskell, part 15 - url: \url{https://jeremymikkola.com/posts/2019_01_15_type_inference_for_haskell_part_15.html}
 \end{enumerate}
 
 \end{document}
