@@ -686,7 +686,7 @@ basterebbe più definire il test di uguaglianza analizzando solamente i termini 
 \texttt{Compiler.Ast.Typed}, non vi è alcuna definizione di uguaglianza tra schemi di tipo poiché questa non è necessaria
 a nessun'altra operazione.
 
-\subsection{Polimorfismo ad hoc}
+\subsection{Polimorfismo ad-hoc}
 langgg supporta il polimorfismo ad hoc esponendo costrutti chiamati \textit{proprietà}, le quali sono concettualmente
 molto simili alle \textit{type classes} di Haskell. Ecco un esempio di definizione di proprietà in langgg:
 \begin{lstlisting}
@@ -955,7 +955,7 @@ costrutto di GHC che rappresenta le istanze (\texttt{ClsInst}) non porta con sè
 bindings [10].
 Perciò, è in un qualche modo necessario gestire i bindings delle istanze. La politica del compilatore è quella di
 aggiungerli nell'insieme di bindings da dare in input all'algoritmo di type-inference. La presenza di bindings con lo
-stesso identificatore è stata già risolta (cfr. Costruzione delle istanze).
+stesso identificatore è stata già risolta (cfr. Costruzione delle istanze e dispatch statico).
 
 \subsubsection{Simboli innestati univoci}
 Prima della type-inference, vengono visitate tutte le espressioni dei bindings e vengono creati nuovi identificatori
@@ -1538,6 +1538,37 @@ Di seguito, lo schema delle fasi finali del compilatore:
 \draw [arrow] (desugar) -- (deepPm);
 \draw [arrow] (desugar) -- (scrutinee);
 \end{tikzpicture}
+
+\subsection{Dispatch statico}
+Il polimorfismo ad-hoc viene implementato attraverso il meccanismo delle type-classes (cfr. Polimorfismo ad-hoc).
+La sintassi Core non possiede, però, costrutti per i metodi delle type-classes e per i bindings delle istanze.
+La politica del compilatore langgg è quella di aggiungere i bindings delle istanze ai bindings del programma,
+cambiando i nomi degli stessi metodi di istanze diverse (cfr. Costruzione delle istanze). Questa politica ha
+importanti implicazioni: innanzitutto, nelle espressioni del programma, i metodi delle istanze possono essere chiamati,
+ma essi possono essere nominati solamente tramite gli identificatori dei metodi delle proprietà. Ad esempio:
+\begin{lstlisting}
+property Foo a =
+    val foo : a -> a
+;;
+
+instance Foo String =
+    let foo s = s
+;;
+
+let f x = (x, foo "42")
+\end{lstlisting}
+Come è stato già esposto in precedenza, il metodo \texttt{foo} dell'istanza \texttt{Foo Int} avrà un identificatore
+diverso da \texttt{foo}. Tuttavia, \texttt{foo} viene nominato nell'espressione legata a \texttt{f}. \`E necessario,
+quindi, un modo per trasformare, eventualmente, le occorrenze dei metodi di proprietà con i giusti metodi di istanza.
+Si pensi a quest'altro pezzo di codice langgg:
+\begin{lstlisting}
+type Box a = Box a
+
+val g : Foo (Box a) => a -> Box a
+let g x = foo (Box x)
+\end{lstlisting}
+
+\subsection{Lambda-astrazione}
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
