@@ -1567,7 +1567,7 @@ type Box a = Box a
 val g : Foo (Box a) => a -> Box a
 let g x = foo (Box x)
 
-let h v = g v
+let h x = g x
 \end{lstlisting}
 \`E chiaro come la chiamata di \texttt{foo} all'interno dell'espressione legata a \texttt{g} dipenda da quale istanza
 della forma \texttt{Foo (Box a)} venga utilizzata. Vale lo stesso per \texttt{g} nei confronti dell'espressione legata
@@ -1579,7 +1579,7 @@ linguaggi object-oriented, in cui la selezione dei metodi avviene a run-time att
 in langgg la selezione viene risolta completamente a compile-time, evitando così l'overhead che può essere causato
 da un algortimo di dispatch dinamico. In particolare, il dispatch statico in langgg viene implementato attraverso
 la \textit{monomorfizzazione} [11], già introdotta, in realtà, nella costruzione delle istanze. Ora renderemo la
-monomorfizzazione generale a tutte le funzioni del programma; l'implementazione che seguirà è ispirata da un articolo
+monomorfizzazione generale a tutte le funzioni del programma; l'implementazione che seguirà si ispira a un articolo
 sul blog di Jeremy Mikkola [12]. Si ripensi alla precedente funzione \texttt{g}. Il suo
 schema di tipo ha con sè dei predicati. In questo caso, durante la fase di type-inference, alla funzione \texttt{g}
 verrà aggiunto un parametro che corrisponderà al predicato \texttt{Foo (Box a)}, ovvero stiamo trattando il tipo di
@@ -1592,6 +1592,35 @@ val g : Foo (Box a) -> a -> Box a
 Quindi, un tipo qualificato in langgg può possedere soltanto constraints. Questa eventualità viene tuttavia limitata
 a pochi casi possibili e, comunque, langgg non espone una sintassi per esprimere tipi qualificati che possiedono
 soltanto constraints.
+
+Sempre durante la fase di type-inference, ogni volta che la funzione \texttt{g} viene utilizzata nel programma, oltre
+alla normale applicazione della regola di inferenza \textbf{Var} e alla generazione del token tipato che rappresenta
+una variabile, verrà generata e applicata a \texttt{g} un'ulteriore variabile. Quest'ultima viene associata al
+relativo problema di constraint e viene salvata nell'ambiente di tipizzazione. Al momento della generalizzazione,
+dai problemi di constraint non normalizzati vengono estratte le variabili associate, le quali diventano parte degli
+argomenti del binding. Ad esempio, l'implementazione della funzione \texttt{h} a livello di token tipati sarà:
+\begin{lstlisting}
+let h v1 x = g v1 x
+\end{lstlisting}
+dove \texttt{v1} è la variabile precedentemente menzionata, detta anche \textit{variabile di dispatch}. Le espressioni
+che contengono le variabili di dispatch sono definite in \texttt{Compiler.Ast.Typed}:
+\begin{lstlisting}
+data DispatchTok a =
+      DispatchVar (NotedVar a) a
+    | DispatchVal (OnlyConstraintScheme a) a
+\end{lstlisting}
+Il primo caso (\texttt{DispatchVar}) rappresenta una variabile di dispatch. Il secondo caso, invece, rappresenta un
+\textit{valore di dispatch}, il quale è costituito da uno schema di tipo contenente solamente constraints ed è utile
+per "selezionare" l'implementazione giusta di una funzione.
+
+La fase di type-inference, oltre a un programma tipato, ritorna anche una sequenza di nomi di simboli da definire.
+Questi ultimi sono tutti quei simboli che compaiono nel programma a cui vengono applicati valori di constraints.
+Infatti, è necessario generare simboli diversi per ogni implementazione utilizzata nel programma. Nel modulo
+\texttt{Compiler.Desugar.AdHoc} viene implementato un algoritmo di monomorfizzazione che, ricorsivamente, cerca
+nelle espressioni tutte le occorrenze di simboli a cui sono applicati valori di constraints e
+genera le conseguenti implementazioni.
+Ovviamente, la generazione di nuove implementazioni può dar vita a nuove espressioni con valori di constraints,
+quindi l'algoritmo agisce ricorsivamente finché non esistono più implementazioni da generare.
 
 \subsection{Lambda-astrazione}
 
