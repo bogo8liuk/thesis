@@ -1466,11 +1466,12 @@ L'algoritmo di inferenza di tale costrutto è il seguente:
 \paragraph{Constraints}
 La sintassi langgg permette di esprimere espressioni il cui tipo possiede dei predicati; ciò richiede che l'algoritmo
 classico di type-inference venga esteso. L'algoritmo esteso di langgg si ispira a [2], in cui Martin Sulzmann,
-Martin Odersky, Martin Wehr presentano un'estensione di HM che supporta anche i constraints. I giudizi di tipo vengono
-estesi con un'ipotesi aggiuntiva sui constraints e avranno la forma:
+Martin Odersky, Martin Wehr presentano un'estensione di HM che supporta anche tipi che possiedono predicati. I giudizi
+di tipo vengono estesi con un'ipotesi aggiuntiva sui constraints e avranno la forma:
 \[ C, \Gamma \vdash_W e : \tau \]
-Perciò l'ambiente di tipizzazione viene esteso con un altro "attore", ovvero un contesto sui constraints. L'articolo
-presenta inizialmente il problema di come ridefinire le regole istanziazione (\textbf{Inst}) e generalizzazione
+Perciò l'ambiente di tipizzazione viene esteso con un altro "attore", ovvero un contesto di soddisfabilità. Nel caso
+di langgg, il contesto di soddisfabilità è dato dall'insieme delle istanze.
+L'articolo presenta inizialmente il problema di come ridefinire le regole istanziazione (\textbf{Inst}) e generalizzazione
 (\textbf{Gen}). Sull'istanziazione di uno schema di tipo si arriva subito alla seguente conclusione:
 \[ \infer[\textbf{Inst}]{C, \Gamma \vdash_W e : \{ \overline{\tau} / \overline{\alpha} \}\tau}{C, \Gamma \vdash_W e : \forall \overline{\alpha}. D \Rightarrow \tau & C \vdash^e \{ \overline{\tau} / \overline{\alpha} \} D} \]
 Questa regola sostiene che, quando si istanzia uno schema di tipo $ \forall \overline{\alpha}. D \Rightarrow \tau $, le
@@ -1529,13 +1530,58 @@ al tipo concreto \texttt{String}. Il constraint \texttt{Foo x Char y}, invece, n
 delle tre istanze lo soddisfa.
 
 Ora che è stata presentata formalmente la nozione di soddisfabilità, possiamo procedere con la ridefinizione della
-regola di generalizzazione. Nell'articolo [2], vengono citati altri sistemi di tipi con constraints i quali, a
-differenza della regola di istanziazione, non convergono verso un'unica regola di inferenza. Le disparità si trovano
-nella'applicazione di soddisfabilità al momento della generalizzazione. In [2], viene proposta la seguente regola:
+regola di generalizzazione. Nell'articolo [2] viene proposta la seguente regola:
 \[ \infer[\textbf{Gen}]{C \wedge \exists \overline{\alpha}. D, \Gamma \vdash_W e : \forall \overline{\alpha}. D \Rightarrow \tau}{C \wedge D, \Gamma \vdash_W e : \tau & \overline{\alpha} \notin free(\Gamma) \cup free(C)} \]
 Si noti come vi è un nuovo quantificatore: $ \exists \overline{\alpha}. D $. Questa notazione è utile per quantificare
-le variabili di tipo all'interno di un constraint. In langgg, questo permette di "rimuovere" un constraint dall'ambiente
-di tipizzazione.
+le variabili di tipo all'interno di un constraint.
+
+Per quanto riguarda l'algoritmo utilizzato in langgg, vi è un ulteriore contesto/ambiente di cui è necessario tener conto,
+ovvero quello dei problemi di constraints correnti. Questa ulteriore estensione dell'ambiente di tipizzazione è utile
+per mantenere i constraints che sono presenti nell'attuale contesto di inferenza. In seguito, vedremo in che modo
+viene utilizzato. Lo indicheremo con $ \Omega $.
+
+Indipendentemente dalle regole \textbf{Inst} e \textbf{Gen} ridefinite, è necessario fissare un comportamento che
+riguarda le altre regole di inferenza. In particolare, è necessario decidere il momento in cui viene eseguito l'algoritmo
+di soddisfabilità dei constraints presenti in $ \Omega $. Questa azione è detta anche \textit{normalizzazione}.
+In [2], vi è la proposta di nuove regole di inferenza in cui la normalizzazione viene effettuata alla fine delle
+premesse di ogni regola di inferenza, eccetto quella della lambda-astrazione. Tuttavia, sempre nell'articolo, vi è
+un'ulteriore proposta nella quale la normalizzazione viene effettuata in maniera \textit{lazy}, ovvero appena dopo
+la generalizzazione ed è questa la politica utilizzata da langgg. Rimangono alcune questione aperte:
+\begin{enumerate}
+    \item quand'è che un predicato viene aggiunto a $ \Omega $?
+    \item quali sono i constraints (se esistono) da normalizzare dopo che è stata effettuata la generalizzazione?
+\end{enumerate}
+Per rispondere a entrambe le domande, mostriamo come avviene l'inferenza di tipo in langgg in presenza di constraints.
+Osserviamo il seguente esempio di codice langgg:
+\begin{lstlisting}
+property Foo a b c =
+    val foo : a -> b -> c -> Char
+;;
+
+let f x y z = foo x y z
+\end{lstlisting}
+Andando a inferire l'espressione legata ad \texttt{f}, un token che viene incontrato è \texttt{foo}. Il suo schema di
+tipo associato è $ \forall a, b, c. \; Foo \; a \; b \; c \Rightarrow a \mapsto b \mapsto c \mapsto Char $. A questo
+punto, si può applicare la regola \textbf{Var}, che, a sua volta, applica la regola
+\textbf{Inst}. Si ricordi che la politica di langgg sulla normalizzazione è \textit{lazy}, perciò
+il constraint $ Foo \; a \; b \; c $ non viene normalizzato immediatamente, bensì viene aggiunto all'ambiente dei
+problemi di constraints. $ \Omega $ si rende quindi necessario proprio a questo fine, ovvero ritardare la normalizzazione.
+\`E bene notare che esso non compare nelle regole di inferenza; questo è possibile in quanto la politica \textit{lazy}
+può essere considerata come \textit{side-effect} che non cambia la semantica della valutazione dei constraints.
+Quindi la conclusione della regola \textbf{Var} in questo caso sarà semplicemente:
+\[ C, \Gamma \vdash_W foo : a1 \mapsto a2 \mapsto a3 \mapsto Char \]
+dove $ a1 $, $ a2 $ e $ a3 $ sono variabili nuove. Continuando ad applicare le regole di inferenza \textbf{App} e
+\textbf{Var} si arriverà ad avere, prima di applicare \textbf{Let} per generalizzare \texttt{f}, il seguente
+ambiente di tipizzazione:
+\[ \Gamma = \{ x : a1, y : a2, z : a3 \} \]
+\[ \Omega = \{ Foo \; a1 \; a2 \; a3 \} \]
+\[ C = \emptyset \]
+Applicando la regola \textbf{Let}, si applica anche la regola \textbf{Gen}; in questo caso, l'unico constraint
+nel contesto è $ Foo \; a1 \; a2 \; a3 $ e il mono-tipo da generalizzare associato \texttt{f} è
+$ \tau = a1 \mapsto a2 \mapsto a3 \mapsto Char $.
+%TODO
+il constraint può essere aggiunto allo schema di tipo che verrà generato. \texttt{f} avrà, quindi, il seguente tipo:
+\[ \forall a1, a2, a3. \; Foo \; a1 \; a2 \; a3 \Rightarrow a1 \mapsto a2 \mapsto a3 \mapsto Char \]
 
 \paragraph{Type-hinting}
 langgg permette all'utente di indicare il tipo di un'espressione (o di un simbolo). Questo comporta una modifica
