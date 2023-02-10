@@ -100,7 +100,7 @@ Il compilatore è stato sviluppato mediante il linguaggio \textit{Haskell}, anch
 Inoltre, il linguaggio target di langgg è \textit{Core}, un formalismo fortemente basato su \textit{System F}, una
 variante tipata del lambda-calcolo che introduce un meccanismo di quantificazione universale sui tipi. Core, inoltre,
 viene utilizzato da GHC (compilatore Haskell) come rappresentazione intermedia di Haskell. All'interno di questo
-contesto, GHC espone delle API che permettono al cliente di utilizzare le funzionalità del compilatore (cfr. [2]); è quindi
+contesto, GHC espone delle API che permettono al cliente di utilizzare le funzionalità del compilatore (cfr. [3]); è quindi
 possibile creare e manipolare programmi Core mediante le API, le quali sono state scritte in Haskell. Per quest'ultimo
 motivo, Haskell è stato scelto come linguaggio di implementazione del compilatore di langgg, tuttavia, nel contesto
 del progetto, Haskell ha anche un altro importante ruolo: alcune delle sue funzionalità sono state, direttamente
@@ -1464,7 +1464,78 @@ L'algoritmo di inferenza di tale costrutto è il seguente:
 \end{itemize}
 
 \paragraph{Constraints}
-%TODO
+La sintassi langgg permette di esprimere espressioni il cui tipo possiede dei predicati; ciò richiede che l'algoritmo
+classico di type-inference venga esteso. L'algoritmo esteso di langgg si ispira a [2], in cui Martin Sulzmann,
+Martin Odersky, Martin Wehr presentano un'estensione di HM che supporta anche i constraints. I giudizi di tipo vengono
+estesi con un'ipotesi aggiuntiva sui constraints e avranno la forma:
+\[ C, \Gamma \vdash_W e : \tau \]
+Perciò l'ambiente di tipizzazione viene esteso con un altro "attore", ovvero un contesto sui constraints. L'articolo
+presenta inizialmente il problema di come ridefinire le regole istanziazione (\textbf{Inst}) e generalizzazione
+(\textbf{Gen}). Sull'istanziazione di uno schema di tipo si arriva subito alla seguente conclusione:
+\[ \infer[\textbf{Inst}]{C, \Gamma \vdash_W e : \{ \overline{\tau} / \overline{\alpha} \}\tau}{C, \Gamma \vdash_W e : \forall \overline{\alpha}. D \Rightarrow \tau & C \vdash^e \{ \overline{\tau} / \overline{\alpha} \} D} \]
+Questa regola sostiene che, quando si istanzia uno schema di tipo $ \forall \overline{\alpha}. D \Rightarrow \tau $, le
+uniche istanze valide sono quelle della forma $ \{ \overline{\tau} / \overline{\alpha} \} $ che \textit{soddisfano}
+il constraint $ D $ nello schema di tipo. In langgg, un constraint $ D $ è \textit{soddisfatto} se, nel programma
+(formalemente in $ C $), esiste un'istanza $ D' $ (in questo caso si intendono le istanze langgg, non l'istanziazione
+di un tipo) tale che:
+\[ satisfy(D, D') \]
+dove $ satisfy $ è l'algoritmo di soddisfabilità dei constraints, definito in \texttt{Compiler.Ast.Typed}. Esso si
+basa sull'unificazione \textit{strict}:
+\begin{lstlisting}
+satisfy(C args, C' args'):
+    C == C' and
+    areEqAfterSpecTest(args, args')
+\end{lstlisting}
+dove \texttt{areEqAfterSpecTest} è l'algoritmo che effettua il test di specializzazione tra i vari tipi di \texttt{args}
+e \texttt{args'}:
+\begin{lstlisting}
+areEqAfterSpecTest(args, args'):
+    match moreSpecOneByOne(args, args', []) with
+        err -> false
+        args'' -> args == args1''
+
+moreSpecOneByOne(args, args', resArgs):
+    match args, args' with
+        [] [] -> resArgs
+        [] _ -> fail
+        _ [] -> fail
+        (ty : t) (ty' : t') ->
+            let subst = isMoreSpec(ty, ty') in
+            let t' = apply(subst, t') in
+            let resArgs = resArgs ++ [apply(subst, ty')] in
+                moreSpecOneByOne(t, t', resArgs)
+\end{lstlisting}
+la funzione \texttt{apply} prende in input una sostituzione e uno o più token che vengono ritornati dopo che è stata
+applicata loro la sostituzione. La funzione \texttt{isMoreSpec} è invece il test di specializzazione (unificazione
+\textit{strict}) tra due mono-tipi; infatti, come da definizione, gli argomenti dei constraints sono mono-tipi.
+Si ricordi che il test di unificazione può fallire. Si noti
+come, a causa dell'utilizzo dell'unificazione \textit{strict}, il test soddisfabilità tra constraints, non sia
+commutativo. Si osservi il seguente esempio in langgg:
+\begin{lstlisting}
+property Foo a b c =
+    <metodi>
+;;
+\end{lstlisting}
+Supponiamo che esistano le seguenti istanze di \texttt{Foo}:
+\begin{lstlisting}
+Foo Char a b
+Foo Int Int Int
+Foo a String Int
+\end{lstlisting}
+Il constraint \texttt{Foo String String Int} è soddisfatto in quanto esiste l'istanza \texttt{Foo a String Int} che
+soddisfa il constraint. La non-commutatività si nota subito, infatti, \texttt{Foo String String Int} non soddisfa
+texttt{Foo a String Int}, in quanto la variabile di tipo \texttt{a} non è più specializzata (o meno generale) rispetto
+al tipo concreto \texttt{String}. Il constraint \texttt{Foo x Char y}, invece, non è soddisfatto in quanto nessuna
+delle tre istanze lo soddisfa.
+
+Ora che è stata presentata formalmente la nozione di soddisfabilità, possiamo procedere con la ridefinizione della
+regola di generalizzazione. Nell'articolo [2], vengono citati altri sistemi di tipi con constraints i quali, a
+differenza della regola di istanziazione, non convergono verso un'unica regola di inferenza. Le disparità si trovano
+nella'applicazione di soddisfabilità al momento della generalizzazione. In [2], viene proposta la seguente regola:
+\[ \infer[\textbf{Gen}]{C \wedge \exists \overline{\alpha}. D, \Gamma \vdash_W e : \forall \overline{\alpha}. D \Rightarrow \tau}{C \wedge D, \Gamma \vdash_W e : \tau & \overline{\alpha} \notin free(\Gamma) \cup free(C)} \]
+Si noti come vi è un nuovo quantificatore: $ \exists \overline{\alpha}. D $. Questa notazione è utile per quantificare
+le variabili di tipo all'interno di un constraint. In langgg, questo permette di "rimuovere" un constraint dall'ambiente
+di tipizzazione.
 
 \paragraph{Type-hinting}
 langgg permette all'utente di indicare il tipo di un'espressione (o di un simbolo). Questo comporta una modifica
@@ -1613,14 +1684,35 @@ Il primo caso (\texttt{DispatchVar}) rappresenta una variabile di dispatch. Il s
 \textit{valore di dispatch}, il quale è costituito da uno schema di tipo contenente solamente constraints ed è utile
 per "selezionare" l'implementazione giusta di una funzione.
 
-La fase di type-inference, oltre a un programma tipato, ritorna anche una sequenza di nomi di simboli da definire.
-Questi ultimi sono tutti quei simboli che compaiono nel programma a cui vengono applicati valori di constraints.
-Infatti, è necessario generare simboli diversi per ogni implementazione utilizzata nel programma. Nel modulo
-\texttt{Compiler.Desugar.AdHoc} viene implementato un algoritmo di monomorfizzazione che, ricorsivamente, cerca
-nelle espressioni tutte le occorrenze di simboli a cui sono applicati valori di constraints e
+La fase di type-inference, oltre a un programma tipato, ritorna anche una sequenza di nomi di simboli da ridefinire.
+Questi ultimi sono tutti quei simboli che compaiono nel programma nella cui espressione vi sono valori di constraints.
+Se in un'espressione un simbolo ha solo valori di dispatch applicati (e non variabili di dispatch), allora è necessario
+generare un nuovo simbolo il cui identificatore univoco viene creato a partire dai valori di dispatch, come è avvenuto
+per i metodi di istanza.
+Nel modulo \texttt{Compiler.Desugar.AdHoc} viene implementato un algoritmo di monomorfizzazione che, ricorsivamente,
+cerca nelle espressioni tutte le occorrenze di simboli a cui sono applicati valori di constraints e
 genera le conseguenti implementazioni.
 Ovviamente, la generazione di nuove implementazioni può dar vita a nuove espressioni con valori di constraints,
-quindi l'algoritmo agisce ricorsivamente finché non esistono più implementazioni da generare.
+quindi l'algoritmo agisce ricorsivamente finché non esistono più implementazioni da generare:
+\begin{enumerate}
+    \item l'input è una serie di bindings $ bs $ in cui cercare i valori di dispatch;
+    \item $ \forall b \in bs $, vengono cercati, nell'espressione legata a $ b $, tutte le occorrenze di simboli che
+    hanno applicati solo valori di dispatch;
+    \item ogni occorrenza viene sostituita con un nuovo identificatore univoco in tutto il programma costituito da:
+        \[<symid><dispatchval_1>...<dispatchval_n>\]
+    dove $ <symid> $ è l'identificatore originale e $ <dispatchval_i> $ è l'i-esimo valore di dispatch applicato;
+    \item $ \forall sym $ che viene sostituito, $ sym $ viene aggiunto alla lista $ rs $ di simboli da creare, con le
+    informazioni sui valori di dispatch che servono per creare il nuovo identificatore;
+    \item $ \forall r \in rs $, viene creato un nuovo binding in cui:
+    \begin{itemize}
+        \item l'identificatore è costruito utilizzando il metodo menzionato precedentemente;
+        \item gli argomenti di dispatch spariscono;
+        \item nell'espressione associata, vengono cercate tutte le occorrenze delle variabili di dispatch, le quali
+        vengono sostituite dai valori di dispatch associati a $ r $;
+        \item applica i passi (3) e (4) per ogni occorrenza di simbolo che ha soltanto valori di dispatch applicati;
+    \end{itemize}
+    \item ripeti (5) finché non terminano i simboli in $ rs $.
+\end{enumerate}
 
 \subsection{Lambda-astrazione}
 
