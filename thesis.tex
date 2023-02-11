@@ -1406,12 +1406,12 @@ di un costrutto di lambda-astrazione (cfr. Lambda-astrazione), quindi, si può p
 di type-inference con \textit{System-F}:
 \[ \texttt{let f x y = (x, y)} \equiv let \; f = \lambda x. \; \lambda y. \; (x, y) \]
 
-\subsubsection{Estensioni dell'algoritmo di inferenza}
+\subsection{Estensioni dell'algoritmo di inferenza}
 langgg possiede numerosi costrutti che arricchiscono la sintassi di base di \textit{System-F}, inoltre, introduce
 concetti nuovi come i predicati o i tipi qualificati. Di conseguenza, l'algoritmo di inferenza di tipo di \textit{System-F}
 deve essere esteso.
 
-\paragraph{Pattern matching}
+\subsubsection{Pattern matching}
 langgg possiede due costrutti diversi per il pattern matching (cfr. Caratteristiche del linguaggio). Il primo costrutto
 permette "ispezionare" il valore di una singola espressione, per esempio:
 \begin{lstlisting}
@@ -1463,36 +1463,33 @@ L'algoritmo di inferenza di tale costrutto è il seguente:
     \end{itemize}
 \end{itemize}
 
-\paragraph{Constraints}
+\subsubsection{Constraints}
 La sintassi langgg permette di esprimere espressioni il cui tipo possiede dei predicati; ciò richiede che l'algoritmo
 classico di type-inference venga esteso. L'algoritmo esteso di langgg si ispira a [2], in cui Martin Sulzmann,
 Martin Odersky, Martin Wehr presentano un'estensione di HM che supporta anche tipi che possiedono predicati. I giudizi
 di tipo vengono estesi con un'ipotesi aggiuntiva sui constraints e avranno la forma:
-\[ C, \Gamma \vdash_W e : \tau \]
+\[ CS, \Gamma \vdash_W e : \tau \]
 Perciò l'ambiente di tipizzazione viene esteso con un altro "attore", ovvero un contesto di soddisfabilità. Nel caso
 di langgg, il contesto di soddisfabilità è dato dall'insieme delle istanze.
 L'articolo presenta inizialmente il problema di come ridefinire le regole istanziazione (\textbf{Inst}) e generalizzazione
 (\textbf{Gen}). Sull'istanziazione di uno schema di tipo si arriva subito alla seguente conclusione:
-\[ \infer[\textbf{Inst}]{C, \Gamma \vdash_W e : \{ \overline{\tau} / \overline{\alpha} \}\tau}{C, \Gamma \vdash_W e : \forall \overline{\alpha}. D \Rightarrow \tau & C \vdash^e \{ \overline{\tau} / \overline{\alpha} \} D} \]
-Questa regola sostiene che, quando si istanzia uno schema di tipo $ \forall \overline{\alpha}. D \Rightarrow \tau $, le
-uniche istanze valide sono quelle della forma $ \{ \overline{\tau} / \overline{\alpha} \} $ che \textit{soddisfano}
-il constraint $ D $ nello schema di tipo. In langgg, un constraint $ D $ è \textit{soddisfatto} se, nel programma
-(formalemente in $ C $), esiste un'istanza $ D' $ (in questo caso si intendono le istanze langgg, non l'istanziazione
-di un tipo) tale che:
-\[ satisfy(D, D') \]
-dove $ satisfy $ è l'algoritmo di soddisfabilità dei constraints, definito in \texttt{Compiler.Ast.Typed}. Esso si
-basa sull'unificazione \textit{strict}:
+\[ \infer[\textbf{Inst}]{CS, \Gamma \vdash_W e : \{ \overline{\tau} / \overline{\alpha} \}\tau'}{CS, \Gamma \vdash_W e : \forall \overline{\alpha}. D \Rightarrow \tau' & CS \vdash^e \{ \overline{\tau} / \overline{\alpha} \} D} \]
+Questa regola sostiene che, quando si istanzia uno schema di tipo $ \forall \overline{\alpha}. D \Rightarrow \tau $, gli
+unici mono-tipi validi sono quelli della forma $ \{ \overline{\tau} / \overline{\alpha} \} \tau' $ e tali che il constraint
+$ \{ \overline{\tau} / \overline{\alpha} \}D $ \textit{soddisfa} uno o più constraints nel contesto di soddisfabilità $ CS $.
+Di seguito è riportato in pseudo-codice l'algoritmo di soddisfabilità dei constraints, definito in
+\texttt{Compiler.Ast.Typed}. Esso si basa sull'unificazione \textit{strict}:
 \begin{lstlisting}
-satisfy(C args, C' args'):
+satisfy(C => args, C' => args'):
     C == C' and
-    areEqAfterSpecTest(args, args')
+    areEq(args, args')
 \end{lstlisting}
-dove \texttt{areEqAfterSpecTest} è l'algoritmo che effettua il test di specializzazione tra i vari tipi di \texttt{args}
-e \texttt{args'}:
+dove \texttt{areEq} è l'algoritmo che effettua il test di specializzazione tra i vari tipi di \texttt{args}
+e \texttt{args'}, eseguendo, successivamente, il test di uguaglianza tra mono-tipi:
 \begin{lstlisting}
-areEqAfterSpecTest(args, args'):
+areEq(args, args'):
     match moreSpecOneByOne(args, args', []) with
-        err -> false
+        failure -> false
         args'' -> args == args1''
 
 moreSpecOneByOne(args, args', resArgs):
@@ -1509,8 +1506,10 @@ moreSpecOneByOne(args, args', resArgs):
 la funzione \texttt{apply} prende in input una sostituzione e uno o più token che vengono ritornati dopo che è stata
 applicata loro la sostituzione. La funzione \texttt{isMoreSpec} è invece il test di specializzazione (unificazione
 \textit{strict}) tra due mono-tipi; infatti, come da definizione, gli argomenti dei constraints sono mono-tipi.
-Si ricordi che il test di unificazione può fallire. Si noti
-come, a causa dell'utilizzo dell'unificazione \textit{strict}, il test soddisfabilità tra constraints, non sia
+Si ricordi che il test di unificazione può fallire. In generale, diremo che un constraint $ C $ \textit{soddisfa} un
+constraint $ C' $ se vale $ satisfy(C, C') $; viceversa, diremo che un constraint $ C $ \textit{è soddisfatto} da un
+constraint $ C' $ se valie $ satisfy(C', C) $.
+Si noti come, a causa dell'utilizzo dell'unificazione \textit{strict}, il test soddisfabilità tra constraints, non sia
 commutativo. Si osservi il seguente esempio in langgg:
 \begin{lstlisting}
 property Foo a b c =
@@ -1531,7 +1530,7 @@ delle tre istanze lo soddisfa.
 
 Ora che è stata presentata formalmente la nozione di soddisfabilità, possiamo procedere con la ridefinizione della
 regola di generalizzazione. Nell'articolo [2] viene proposta la seguente regola:
-\[ \infer[\textbf{Gen}]{C \wedge \exists \overline{\alpha}. D, \Gamma \vdash_W e : \forall \overline{\alpha}. D \Rightarrow \tau}{C \wedge D, \Gamma \vdash_W e : \tau & \overline{\alpha} \notin free(\Gamma) \cup free(C)} \]
+\[ \infer[\textbf{Gen}]{CS \wedge \exists \overline{\alpha}. D, \Gamma \vdash_W e : \forall \overline{\alpha}. D \Rightarrow \tau}{CS \wedge D, \Gamma \vdash_W e : \tau & \overline{\alpha} \notin free(\Gamma) \cup free(CS)} \]
 Si noti come vi è un nuovo quantificatore: $ \exists \overline{\alpha}. D $. Questa notazione è utile per quantificare
 le variabili di tipo all'interno di un constraint.
 
@@ -1569,21 +1568,78 @@ problemi di constraints. $ \Omega $ si rende quindi necessario proprio a questo 
 \`E bene notare che esso non compare nelle regole di inferenza; questo è possibile in quanto la politica \textit{lazy}
 può essere considerata come \textit{side-effect} che non cambia la semantica della valutazione dei constraints.
 Quindi la conclusione della regola \textbf{Var} in questo caso sarà semplicemente:
-\[ C, \Gamma \vdash_W foo : a1 \mapsto a2 \mapsto a3 \mapsto Char \]
+\[ CS, \Gamma \vdash_W foo : a1 \mapsto a2 \mapsto a3 \mapsto Char \]
 dove $ a1 $, $ a2 $ e $ a3 $ sono variabili nuove. Continuando ad applicare le regole di inferenza \textbf{App} e
 \textbf{Var} si arriverà ad avere, prima di applicare \textbf{Let} per generalizzare \texttt{f}, il seguente
 ambiente di tipizzazione:
 \[ \Gamma = \{ x : a1, y : a2, z : a3 \} \]
 \[ \Omega = \{ Foo \; a1 \; a2 \; a3 \} \]
-\[ C = \emptyset \]
+\[ CS = \emptyset \]
 Applicando la regola \textbf{Let}, si applica anche la regola \textbf{Gen}; in questo caso, l'unico constraint
 nel contesto è $ Foo \; a1 \; a2 \; a3 $ e il mono-tipo da generalizzare associato \texttt{f} è
-$ \tau = a1 \mapsto a2 \mapsto a3 \mapsto Char $.
-%TODO
-il constraint può essere aggiunto allo schema di tipo che verrà generato. \texttt{f} avrà, quindi, il seguente tipo:
+$ \tau = a1 \mapsto a2 \mapsto a3 \mapsto Char $. Rimane da decidere quando un constraint deve essere aggiunto allo
+schema e quando, eventualmente, deve essere normalizzato. Innanzitutto, è necessario osservare le variabili libere
+del mono-tipo $ \tau $, siano esse $ \overline{\alpha} = free(\tau) $. Un constraint $ C $ viene aggiunto allo schema
+di tipo se:
+\[ free(C) \subseteq \overline{\alpha} \wedge free(C) \noteq \emptyset \]
+La prima condizione richiede che tutte le variabili libere nel constraint siano presenti anche nel mono-tipo, mentre
+la seconda condizione previene l'occorrenza di constraints senza variabili di tipo. Nel caso in cui la condizione non
+venga rispettata, il constraint $ C $ deve essere normalizzato. Tornando all'esempio precedente, si ha che
+il constraint $ Foo \; a1 \; a2 \; a3 $ può essere aggiunto allo schema di tipo che verrà generato.
+\texttt{f} avrà, quindi, il seguente tipo:
 \[ \forall a1, a2, a3. \; Foo \; a1 \; a2 \; a3 \Rightarrow a1 \mapsto a2 \mapsto a3 \mapsto Char \]
+Si osservi ora quest'altro esempio:
+\begin{lstlisting}
+property Bar a b =
+    val bar : a -> b -> Char
+;;
 
-\paragraph{Type-hinting}
+let z = z
+
+let g x y = (foo x y z, bar x y)
+\end{lstlisting}
+Nell'applicazione delle regole di inferenza, si ottiene che l'espressione legata a \texttt{g} ha tipo
+\texttt{(Char, Char)} e prima di applicare la regola \textbf{Let}, è naturale pensare all'ambiente dei problemi di
+constraints siffatto:
+\[ \Omega = \{ Foo \; a1 \; a2 \; b, Bar \; a1 \; a2 \} \]
+e al mono-tipo da generalizzare:
+\[ \tau = a1 \mapsto a2 \mapsto Char \]
+Al momento della generalizzazione, si ha che:
+\[ free(Foo \; a1 \; a2 \; b) \nsubseteq free(\tau) \wedge free(Bar \; a1 \; a2) \subseteq free(\tau) \]
+Di conseguenza, il constraint $ Bar \; a1 \; a2 $ può essere aggiunto allo schema di tipo, mentre
+$ Foo \; a1 \; a2 \; b $ deve essere normalizzato in quanto la variabile di tipo $ b $ non compare nel mono-tipo $ \tau $.
+
+\paragraph{Normalizzazione}
+Per quanto riguarda la normalizzazione, è stato già menzionato che essa corrisponde alla seguente operazione:
+\begin{lstlisting}
+normalize(C, instances):
+    isSatisfiable(C, instances)
+\end{lstlisting}
+Tuttavia, è necessario perfezionare l'implementazione, in quanto, al momento, non è possibile selezionare l'istanza
+che soddisfa il constraint (cfr. dispatch statico). L'istanza che soddisfa il constraint deve essere unica,
+in quanto, è necessario non avere ambiguità sull'implementazione da scegliere. Chiaramente, se non vi sono istanze
+che soddisfano un constraint, il programma viene respinto con un errore. Bisogna, quindi, fissare una semantica
+nel caso in cui vi siano due o più istanze che soddisfano un constraint. La scelta di langgg è quella di selezionare
+l'istanza "più specializzata". Definiamo ora una relazione d'ordine parziale tra constraints, siano $ C $ e $ C' $ due
+constraints:
+\begin{itemize}
+    \item se $ satisfy(C, C') \wedge satisfy(C', C) $, allora $ C = C' $;
+    \item se $ satisfy(C, C') \wedge \neg(satisfy(C', C)) $, allora $ C > C' $;
+    \item se $ \neg(satisfy(C, C')) \wedge satisfy(C', C) $, allora $ C < C' $;
+    \item se $ \neg(satisfy(C, C')) \wedge \neg(satisfy(C', C)) $, allora la relazione d'ordine è indefinita.
+\end{itemize}
+dove l'operatore $ \neg $ è la naturale negazione booleana. Di seguito, vi è definito l'algoritmo di selezione dell'istanza:
+\begin{enumerate}
+    \item l'input è una sequenza $ cs $ di constraints;
+    \item scarta da $ cs $ tutti quei constraints $ c $ tali che esiste $ c' \in cs $ che non sia $ c $ e tale che
+    $ c' > c $;
+    \item se alla fine vi rimane più di un constraint, allora non è possibile selezionare un'istanza; se, invece, vi
+    è una sola istanza rimasta, allora essa viene selezionata.
+\end{enumerate}
+Il fatto che la relazione d'ordine sia parziale non rappresenta un problema, infatti, le istanze vengono scartate solo
+se la relazione d'ordine è definita.
+
+\subsubsection{Type-hinting}
 langgg permette all'utente di indicare il tipo di un'espressione (o di un simbolo). Questo comporta una modifica
 all'algoritmo di inferenza di tipo. Data un'espressione con type-hinting, lo schema generale è inferire prima
 l'espressione e successivamente "applicare" il type-hinting. Per quanto riguarda i casi ricorsivi delle espressioni
@@ -1621,7 +1677,7 @@ Dato che l'insieme dei letterali e dei data-constructors all'interno del linguag
 un'ottimizzazione che viene applicata ai loro casi è non applicare la sostituzione
 all'ambiente di tipizzazione. Un'operazione che, in generale, è piuttosto dispendiosa.
 
-\paragraph{Funzioni ricorsive}
+\subsubsection{Funzioni ricorsive}
 %TODO
 
 \section{Generazione del codice}
