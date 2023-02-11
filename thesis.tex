@@ -1700,7 +1700,17 @@ alle loro dipendenze. Per questo motivo, i bindings ricorsivi vengono raggruppat
 \[ rec \; v_1 = e_1 \; and \; v_2 = e_2 \; and \; ... \; v_n = e_n \]
 Tuttavia, il problema della regola \textbf{Var} non è ancora risolto, quindi è necessario definire una nuova regola
 che riguarda i bindings ricorsivi:
-%TODO
+\[ \infer[\textbf{Rec}]{\Gamma \vdash_W rec \; v_1 = e_1 \; and \; v_n = e_n \; in \; e : \tau }{\Gamma, \Gamma' \vdash_W e_1 : \tau_1 & ... & \Gamma, \Gamma' \vdash_W e_n : \tau_n & \Gamma, \Gamma'' \vdash_W e : \tau } \]
+dove:
+\[ \Gamma' = v_1 : \tau_1, ..., v_n : \tau_n \]
+\[ \Gamma'' = v_1 : \overline{\Gamma}(\tau_1), ..., v_n : \overline{\Gamma}(\tau_n) \]
+La regola inferisce prima tutte le espressioni $ e_i $ e poi applica la regola di generalizzazione \textbf{Gen} soltanto
+alla fine. Nell'algoritmo di inferenza di langgg, prima di inferire un cluster di bindings ricorsivi, vengono creati
+nuovi mono-tipi della forma di variabili di tipo, i quali vengono assegnati ai bindings del cluster. Durante l'inferenza,
+questi mono-tipi possono essere specializzati. In questo modo, si può applicare la regola
+\textbf{Var} ad ogni occorrenza di simbolo ricorsivo. L'istanziazione di un mono-tipo non rappresenta un problema
+in quanto le variabili libere non vengono istanziate. In questo caso, l'algoritmo di istanziazione corrisponde
+alla funzione identità.
 
 \section{Generazione del codice}
 L'output dell'algoritmo di type inference è un \texttt{TypedProgram}, una tabella che mantiene i bindings tipati.
