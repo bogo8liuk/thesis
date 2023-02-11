@@ -1576,12 +1576,12 @@ ambiente di tipizzazione:
 \[ \Omega = \{ Foo \; a1 \; a2 \; a3 \} \]
 \[ CS = \emptyset \]
 Applicando la regola \textbf{Let}, si applica anche la regola \textbf{Gen}; in questo caso, l'unico constraint
-nel contesto è $ Foo \; a1 \; a2 \; a3 $ e il mono-tipo da generalizzare associato \texttt{f} è
+nel contesto è $ Foo \; a1 \; a2 \; a3 $ e il mono-tipo da generalizzare associato a \texttt{f} è
 $ \tau = a1 \mapsto a2 \mapsto a3 \mapsto Char $. Rimane da decidere quando un constraint deve essere aggiunto allo
 schema e quando, eventualmente, deve essere normalizzato. Innanzitutto, è necessario osservare le variabili libere
 del mono-tipo $ \tau $, siano esse $ \overline{\alpha} = free(\tau) $. Un constraint $ C $ viene aggiunto allo schema
 di tipo se:
-\[ free(C) \subseteq \overline{\alpha} \wedge free(C) \noteq \emptyset \]
+\[ free(C) \subseteq \overline{\alpha} \wedge free(C) \neq \emptyset \]
 La prima condizione richiede che tutte le variabili libere nel constraint siano presenti anche nel mono-tipo, mentre
 la seconda condizione previene l'occorrenza di constraints senza variabili di tipo. Nel caso in cui la condizione non
 venga rispettata, il constraint $ C $ deve essere normalizzato. Tornando all'esempio precedente, si ha che
@@ -1605,7 +1605,7 @@ constraints siffatto:
 e al mono-tipo da generalizzare:
 \[ \tau = a1 \mapsto a2 \mapsto Char \]
 Al momento della generalizzazione, si ha che:
-\[ free(Foo \; a1 \; a2 \; b) \nsubseteq free(\tau) \wedge free(Bar \; a1 \; a2) \subseteq free(\tau) \]
+\[ free(Foo \; a1 \; a2 \; b) \not\subseteq free(\tau) \wedge free(Bar \; a1 \; a2) \subseteq free(\tau) \]
 Di conseguenza, il constraint $ Bar \; a1 \; a2 $ può essere aggiunto allo schema di tipo, mentre
 $ Foo \; a1 \; a2 \; b $ deve essere normalizzato in quanto la variabile di tipo $ b $ non compare nel mono-tipo $ \tau $.
 
