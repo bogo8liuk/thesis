@@ -946,7 +946,7 @@ $ x $ ha tipo $ \tau $.
 Un'altra regola utile è quella
 sull'inferenza delle definizioni mutualmente ricorsive. In particolare, essa sostiene che, l'inferenza di definizioni
 mutualmente ricorsive avviene in "gruppo", ovvero un insieme $ {f_1, ..., f_n} $ di simboli mutualmente ricorsivi
-tra loro vengono considerati nel loro insieme e non singolarmente (regola \textbf{Rec}).
+tra loro vengono considerati nel loro insieme e non singolarmente (regola \textbf{Rec}) (cfr. Ricorsione).
 Queste regole serviranno come premessa ad alcune fasi nella preparazione della type inference.
 
 \subsubsection{Bindings delle istanze}
@@ -1687,7 +1687,19 @@ Dato che l'insieme dei letterali e dei data-constructors all'interno del linguag
 un'ottimizzazione che viene applicata ai loro casi è non applicare la sostituzione
 all'ambiente di tipizzazione. Un'operazione che, in generale, è piuttosto dispendiosa.
 
-\subsubsection{Funzioni ricorsive}
+\subsubsection{Ricorsione}
+Il lambda-calcolo polimorfico (\textit{System-F}) non ammette la ricorsione, inoltre, non è nemmeno possibile
+trovare il tipo per il cosiddetto \textit{combinatore Y}, un modo per definire la ricorsione in linguaggi che
+generalmente non la supportano. Questo rende \textit{System-F} non Turing-completo, in quanto qualsiasi programma
+termina. langgg (come anche Haskell e molti altri linguaggi funzionali) ammette, invece, una sintassi per la ricorsione.
+Questo fatto porta con sé alcune conseguenze molto importanti. Innanzitutto, la premessa della regola \textbf{Var}
+non è vera per le funzioni ricorsive, in quanto con la presenza della ricorsione i simboli possono apparire in un
+programma prima ancora che il loro tipo venga generalizzato. Inoltre, sarebbe impossibile ordinare i bindings in base
+alle loro dipendenze. Per questo motivo, i bindings ricorsivi vengono raggruppati
+(cfr. Clusters di definizioni mutualmente ricorsive) e considerati come un unico binding della forma:
+\[ rec \; v_1 = e_1 \; and \; v_2 = e_2 \; and \; ... \; v_n = e_n \]
+Tuttavia, il problema della regola \textbf{Var} non è ancora risolto, quindi è necessario definire una nuova regola
+che riguarda i bindings ricorsivi:
 %TODO
 
 \section{Generazione del codice}
