@@ -1619,16 +1619,17 @@ Tuttavia, è necessario perfezionare l'implementazione, in quanto, al momento, n
 che soddisfa il constraint (cfr. dispatch statico). L'istanza che soddisfa il constraint deve essere unica,
 in quanto, è necessario non avere ambiguità sull'implementazione da scegliere. Chiaramente, se non vi sono istanze
 che soddisfano un constraint, il programma viene respinto con un errore. Bisogna, quindi, fissare una semantica
-nel caso in cui vi siano due o più istanze che soddisfano un constraint. La scelta di langgg è quella di selezionare
-l'istanza "più specializzata". Definiamo ora una relazione d'ordine parziale tra constraints, siano $ C $ e $ C' $ due
-constraints:
+di inferenza di istanza nel caso in cui vi siano due o più istanze che soddisfano un constraint. La scelta di langgg è
+quella di selezionare l'istanza "più specializzata". Definiamo ora una relazione d'ordine parziale tra constraints,
+siano $ C $ e $ C' $ due constraints:
 \begin{itemize}
     \item se $ satisfy(C, C') \wedge satisfy(C', C) $, allora $ C = C' $;
     \item se $ satisfy(C, C') \wedge \neg(satisfy(C', C)) $, allora $ C > C' $;
     \item se $ \neg(satisfy(C, C')) \wedge satisfy(C', C) $, allora $ C < C' $;
     \item se $ \neg(satisfy(C, C')) \wedge \neg(satisfy(C', C)) $, allora la relazione d'ordine è indefinita.
 \end{itemize}
-dove l'operatore $ \neg $ è la naturale negazione booleana. Di seguito, vi è definito l'algoritmo di selezione dell'istanza:
+dove l'operatore $ \neg $ è la naturale negazione booleana. Di seguito, vi è definito l'algoritmo di selezione dell'istanza
+ispirato da [13]:
 \begin{enumerate}
     \item l'input è una sequenza $ cs $ di constraints;
     \item scarta da $ cs $ tutti quei constraints $ c $ tali che esiste $ c' \in cs $ che non sia $ c $ e tale che
@@ -1638,6 +1639,15 @@ dove l'operatore $ \neg $ è la naturale negazione booleana. Di seguito, vi è d
 \end{enumerate}
 Il fatto che la relazione d'ordine sia parziale non rappresenta un problema, infatti, le istanze vengono scartate solo
 se la relazione d'ordine è definita.
+
+\paragraph{Confronto con Haskell}
+langgg ha un sistema di tipi molto simile a quello di Haskell, il quale, a sua volta, possiede un constraint-system
+"costruito" sopra HM. Anche Haskell ha una politica \textit{lazy} di risoluzione delle istanze, ma, a differenza di langgg,
+in caso di molteplici istanze soddisfatte, l'azione di default è quella di rifiutare il programma, a meno che l'utente
+non utilizzi alcune estensioni del linguaggio (cfr. [13]). La politica di langgg è più elastica e permette all'utente
+di avere più istanze valide per certi constraints, tuttavia, ciò rappresenta una responsabilità in più da parte
+dell'utente, il quale deve essere consapevole di come avviene l'inferenza di istanza. Vi è quindi un tradeoff tra
+elasticità e consapevolezza dell'utente.
 
 \subsubsection{Type-hinting}
 langgg permette all'utente di indicare il tipo di un'espressione (o di un simbolo). Questo comporta una modifica
@@ -1851,6 +1861,8 @@ quindi l'algoritmo agisce ricorsivamente finché non esistono più implementazio
     \item Monomorphization - url: \url{https://doc.rust-lang.org/book/ch10-01-syntax.html#performance-of-code-using-generics}
     %[12]
     \item Type inference for Haskell, part 15 - url: \url{https://jeremymikkola.com/posts/2019_01_15_type_inference_for_haskell_part_15.html}
+    %[13]
+    \item Overlapping instances in Haskell - url: \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/instances.html#overlapping-instances}
 \end{enumerate}
 
 \end{document}
