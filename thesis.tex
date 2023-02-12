@@ -438,6 +438,26 @@ si può notare che il costruttore \texttt{MultiSymTok} prenda in input un token 
 \texttt{Desugar.Sigs} è di eliminare dall'AST i costrutti \texttt{Signature} che rappresentano, appunto, le firme delle
 variabili e aggiungere la loro informazione sul tipo come type-hinting delle definizioni delle variabili.
 
+\subsection{Renaming delle variabili di tipo}
+Prima di iniziare le fasi di costruzione dei token "tipati", il programma viene visitato e le occorrenze delle variabili
+di tipo vengono tutte rinominate in modo che, dato il programma $ P $:
+\[ \forall v, v' \in tyVars(P). \; v \neq v' \]
+dove $ tyVars $ è la funzione che ritorna tutte le variabili \textit{non legate} di un token, mentre il test di uguaglianza
+tra variabili di tipo è definita come il test di uguaglianza degli identificatori delle variabili.
+Chiaramente, le variabili legate vengono cambiate in base a come vengono aggiornati i binders, ad esempio, si consideri
+la seguente definizione:
+\begin{lstlisting}
+type T a b = C1 Int a | C2 a (T a b)
+\end{lstlisting}
+Se viene effettuata la seguente sostituzione:
+\[ \{ a \mapsto a_1, b \mapsto a_2 \} \]
+Allora la nuova definizione di T avrà la seguente forma:
+\begin{lstlisting}
+type T a1 a2 = C1 Int a1 | C2 a1 (T a1 a2)
+\end{lstlisting}
+Il motivo di questo renaming verrà descritto in seguito (cfr. Kind-inference). Il codice risiede nel modulo
+\texttt{Compiler.Desugar.TyVars}.
+
 \section{Generazione dei token "tipati"}
 Dopo la generazione dell'albero di sintassi astratta e alcune fasi di desugaring, questa seconda macro componente del
 compilatore si occupa della generazione dei token "tipati". Questi ultimi prendono questa nomea in quanto, a questo
@@ -889,7 +909,13 @@ tipo saranno noti, quindi si può inferire il kind del costruttore di tipo $ T $
 utilizzato un ambiente di tipizzazione (che connoteremo con $ \Delta $) in cui vengono salvati le coppie della forma:
 \[ < tipo, kind > \]
 dove il $ tipo $ è il nome di un qualsiasi tipo che compare senza parametri; sono comprese le variabili di tipo.
-In generale, si seguono queste regole:
+In questo contesto, i nomi dei tipi non hanno uno \textit{scope} in quanto è garantito che non ci siano tipi diversi con
+nomi di uguali nel programma.
+Questa condizione è banalmente garantita per i tipi concreti in quanto non è possibile definire tipi molteplici con nomi
+uguali, mentre, per quanto riguarda le variabili di tipo, il renaming
+delle variabili di tipo (cfr. Renaming delle variabili di tipo) garantisce la condizione. Inoltre, la sintassi degli
+identificatori garantisce che non vi siano variabili di tipo e tipi concreti con nomi uguali.
+In generale, vengono visitate tutte le definizioni di data-constructors nelle definizioni di tipo, seguendo queste regole:
 \begin{itemize}
     \item se un tipo $ ty_i $ ha la forma di variabile di tipo $ \alpha_j $, per un qualche $ j \in {1, ..., m} $, allora
     per HK, $ \alpha_j : * $;
