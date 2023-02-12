@@ -619,7 +619,15 @@ Ad esempio, dato il tipo:
 \[ t_1 \mapsto t_2 \]
 sapendo che il kind del costruttore di tipo funzione è $ * \mapsto * \mapsto * $, è necessario, affinché il suddetto
 kind venga rispettato, che il kind di $ t_1 $ e $ t_2 $ sia $ * $.
-%TODO: definizione di kind nel codice
+Nel codice sorgente, la definizione di kind nel compilatore langgg si trova in \texttt{Compiler.Ast.Typed}:
+\begin{lstlisting}
+data LangKind =
+      LKVar String
+    | LKConst
+    | SubLK [LangKind]
+\end{lstlisting}
+Il costruttore \texttt{LKVar} rappresenta le variabili di kind, il costruttore \texttt{LKConst} rappresenta il kind
+\textit{tipo} $ * $, mentre il costruttore \texttt{SubLK} rappresenta l'applicazione di kinds.
 
 \subsubsection{Subtyping: predicati e tipi qualificati}
 La nozione di mono-tipo ammette le variabili di tipo, le quali fungono da placeholder per qualsiasi tipo dello stesso
