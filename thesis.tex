@@ -1943,6 +1943,47 @@ tripla. Di preciso, gli argomenti del binding diventano argomenti di un costrutt
 espressione l'espressione legata del binding. Si ricordi che, durante la type inference, gli argomenti di un binding
 vengono trattati come argomenti di un costrutto di lambda-astrazione (cfr. Implementazione delle regole di inferenza).
 
+\subsection{Rimozione del pattern matching profondo}
+Si consideri il seguente sorgente langgg:
+\begin{lstlisting}
+type Success = Ok200
+type Error = Undefined | Err401 | Err404 | Err500
+type ErrType = ServerError | ClientError
+
+type Maybe a = Nothing | Just a
+type Either a b = Left a | Right b
+
+let f x =
+    match x with
+          Nothing -> Just ServerError
+        | Just (Right Ok200) -> Nothing
+        | Just (Left Err401) -> Just ClientError
+        | Just (Left Err404) -> Just ClientError
+        | Just _ -> Just ServerError
+\end{lstlisting}
+Semanticamente, il codice relativo alla funzione \texttt{f} è equivalente a:
+\begin{lstlisting}
+let f x =
+    match x with
+          Nothing -> Just ServerError
+        | Just x1 ->
+            (match x1 with
+                  Right x2 ->
+                    (match x2 with
+                        Ok200 -> Nothing
+                    )
+                | Left x2 ->
+                    (match x2 with
+                        Err401 -> Just ClientError
+                        Err404 -> Just ClientError
+                        %TODO
+                    )
+            )
+                        
+\end{lstlisting}
+
+\subsection{Unificazione degli scrutini}
+
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
     %[1]
