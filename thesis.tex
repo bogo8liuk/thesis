@@ -1933,6 +1933,15 @@ quindi l'algoritmo agisce ricorsivamente finché non esistono più implementazio
 \end{enumerate}
 
 \subsection{Lambda-astrazione}
+Riportiamo la definizione di binding:
+\begin{lstlisting}
+type BindingSingleton a = (NotedVar a, [NotedVar a], NotedExpr a)
+\end{lstlisting}
+Come si può notare dalla definizione, un binding è una tripla costituita da un identificatore, degli argomenti e
+un'espressione. In questa fase, vengono modificate tutte le espressioni in modo da eliminare gli argomenti dalla
+tripla. Di preciso, gli argomenti del binding diventano argomenti di un costrutto di lambda-astrazione che ha come
+espressione l'espressione legata del binding. Si ricordi che, durante la type inference, gli argomenti di un binding
+vengono trattati come argomenti di un costrutto di lambda-astrazione (cfr. Implementazione delle regole di inferenza).
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
