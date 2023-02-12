@@ -864,7 +864,57 @@ variabili di tipo (sommando il risultato per tutte le variabili di tipo incontra
 controlli risiede nel modulo \texttt{Compiler.Constraints.Check}.
 
 \subsection{Kind-inference}
-%TODO
+La kind-inference in langgg è necessaria per poter costruire i token che rappresentano i costruttori di tipi. Prima
+di entrare nei dettagli, è bene fare alcune precisazioni sui kind. Innanzitutto, langgg non espone all'utente alcuna
+sintassi per manipolare i kind o per scrivere espressioni con i kind. Come conseguenza, la definizione di kind in
+langgg (cfr. Tipi higher-kinded) non viene estesa con una definizione di kind polimorfica. Questo non avviene per i tipi,
+infatti, la nozione di mono-tipo viene successivamente estesa con la nozione di schema di tipo, la quale introduce
+il polimorfismo parametrico.
+
+L'ipotesi fondamentale (che connoteremo con HK) su cui si basa la kind-inference è sul kind del tipo \textit{funzione}:
+\[ (\mapsto) : * \mapsto * \mapsto * \]
+In generale, l'inferenza di kind avviene "osservando" le definizioni dei tipi di dati algebrici, in particolare,
+guardando le definizioni dei data-constructors. La definizione di un data-constructor ha la seguente forma:
+\[ C \; ty_1 \; ... \; ty_n \]
+Supponendo che il data-constructor $ C $ \textit{costruisca} il tipo $ T \; \alpha_1 \; ... \; \alpha_m $, allora
+$ C $ avrà tipo:
+\[ ty_1 \mapsto ... \mapsto ty_n \mapsto T \; \alpha_1 \; ... \; \alpha_m \]
+Come conseguenza dell'ipotesi HK si ha che:
+\[ \forall i \in \{ 1, ..., n \}. \; ty_i : * \]
+e:
+\[ T \; \alpha_1 \; ... \; \alpha_m : * \]
+Si ricordi che le variabili di tipo che compaiono nei tipi $ ty_i $ sono legate ai binders
+$ \alpha_1 \; ... \; \alpha_m $. Una volta che tutti i data-constructors sono stati visitati, i kind delle variabili di
+tipo saranno noti, quindi si può inferire il kind del costruttore di tipo $ T $. Durante la kind-inference viene
+utilizzato un ambiente di tipizzazione (che connoteremo con $ \Delta $) in cui vengono salvati le coppie della forma:
+\[ < tipo, kind > \]
+dove il $ tipo $ è il nome di un qualsiasi tipo che compare senza parametri; sono comprese le variabili di tipo.
+In generale, si seguono queste regole:
+\begin{itemize}
+    \item se un tipo $ ty_i $ ha la forma di variabile di tipo $ \alpha_j $, per un qualche $ j \in {1, ..., m} $, allora
+    per HK, $ \alpha_j : * $;
+    \item se un tipo $ ty_i $ ha come testa un tipo concreto $ T' $ che esiste già in $ \Delta $, allora si possono
+    inferire i kind degli argomenti di $ ty_i $; per i tipi che esistono già in $ \Delta $ e che non hanno una variabile
+    di kind come kind associato, viene effettuato il kind-check, mentre per i tipi non presenti in $ \Delta $ o che
+    hanno una variabile di kind come kind associato, vengono inseriti in $ \Delta $ con il nuovo kind inferito. Infine,
+    deve valere che $ ty_i : * $;
+    \item se un tipo $ ty_i $ ha come testa un tipo concreto $ T' $ che non esiste in $ \Delta $, allora si inferiscono
+    i kind degli argomenti di $ ty_i $, senza effettuare la fase di kind-check. Infine, $ T' $ viene inserito in
+    $ \Delta $ con kind $ K_1 \mapsto ... \mapsto K_r $, dove $ K_1, ..., K_r $ sono i kind degli argomenti applicati a
+    $ T' $;
+    \item se un tipo $ ty_i $ ha come testa una variabile di tipo $ m $, deve valere che $ m $ non compare come suo
+    argomento diretto. Nel caso non valga la condizione, il programma viene respinto con un errore. Poi l'inferenza
+    procede come per i tipi concreti;
+    \item se un tipo $ arg $ compare come argomento i-esimo di un costruttore di tipo $ tycon $, se $ tycon \in \Delta $,
+    allora sia $ K $ il suo kind, il kind inferito di $ arg $ sarà quello dell'i-esimo argomento di $ K $. Se
+    $ tycon \notin \Delta $, allora viene creata una variabile di kind $ \kappa $ e in $ \Delta $ viene inserito il
+    binding $ < arg, \kappa > $;
+    \item le variabili di tipo che compaiono soltanto nei binders avranno kind $ * $;
+    \item dopo che tutte le definizioni di tipo sono state visitate, le variabili di tipo in $ \Delta $ che hanno
+    variabili di kind come kind associato, acquisiscono il kind $ * $;
+    \item ogni qual volta un tipo che ha una variabile di kind $ \kappa $ come kind associato acquisisce un nuovo kind
+    $ K $, le occorrenze di $ \kappa $ in $ \Delta $ come variabili libere devono essere $ specializzate $ con $ K $.
+\end{itemize}
 
 \subsection{Data constructors}
 Una delle tabelle di simboli che appare nel modulo \texttt{Compiler.Types.Table} è \texttt{DataConsTable}. In essa
