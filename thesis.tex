@@ -1961,7 +1961,7 @@ let f x =
         | Just (Left Err404) -> Just ClientError
         | Just _ -> Just ServerError
 \end{lstlisting}
-Semanticamente, il codice relativo alla funzione \texttt{f} è equivalente a:
+Il codice relativo alla funzione \texttt{f} è semanticamente equivalente a:
 \begin{lstlisting}
 let f x =
     match x with
@@ -1974,13 +1974,17 @@ let f x =
                     )
                 | Left x2 ->
                     (match x2 with
-                        Err401 -> Just ClientError
-                        Err404 -> Just ClientError
-                        %TODO
+                          Err401 -> Just ClientError
+                        | Err404 -> Just ClientError
+                        | _ -> Just ServerError
                     )
             )
-                        
 \end{lstlisting}
+La differenza tra le due versioni è che nella seconda i data-constructors appaiono solo come teste (e non come argomenti)
+nelle \textit{case expressions}. In seguito, vedremo perché è importante che valga questa proprietà (cfr. Generazione del
+codice Core). Questa fase di desugaring trasforma le espressioni di pattern matching, modificando le
+\textit{case expressions}, in modo che ad ogni loro argomento che contiene un data-contructor, viene creata una nuova
+expressione di pattern matching innestata. Il codice relativo a questa fase si trova in \texttt{Compiler.Desugar.DeepPM}.
 
 \subsection{Unificazione degli scrutini}
 
