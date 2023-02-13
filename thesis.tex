@@ -1828,7 +1828,9 @@ Di seguito, lo schema delle fasi finali del compilatore:
 \draw [arrow] (desugar) -- (scrutinee);
 \end{tikzpicture}
 
-\subsection{Dispatch statico}
+\subsection{Fasi di desugaring}
+
+\subsubsection{Dispatch statico}
 Il polimorfismo ad-hoc viene implementato attraverso il meccanismo delle type-classes (cfr. Polimorfismo ad-hoc).
 La sintassi Core non possiede, però, costrutti per i metodi delle type-classes e per i bindings delle istanze.
 La politica del compilatore langgg è quella di aggiungere i bindings delle istanze ai bindings del programma,
@@ -1932,7 +1934,7 @@ quindi l'algoritmo agisce ricorsivamente finché non esistono più implementazio
     \item ripeti (5) finché non terminano i simboli in $ rs $.
 \end{enumerate}
 
-\subsection{Lambda-astrazione}
+\subsubsection{Lambda-astrazione}
 Riportiamo la definizione di binding:
 \begin{lstlisting}
 type BindingSingleton a = (NotedVar a, [NotedVar a], NotedExpr a)
@@ -1943,7 +1945,7 @@ tripla. Di preciso, gli argomenti del binding diventano argomenti di un costrutt
 espressione l'espressione legata del binding. Si ricordi che, durante la type inference, gli argomenti di un binding
 vengono trattati come argomenti di un costrutto di lambda-astrazione (cfr. Implementazione delle regole di inferenza).
 
-\subsection{Rimozione del pattern matching profondo}
+\subsubsection{Rimozione del pattern matching profondo}
 Si consideri il seguente sorgente langgg:
 \begin{lstlisting}
 type Success = Ok200
@@ -1986,7 +1988,29 @@ codice Core). Questa fase di desugaring trasforma le espressioni di pattern matc
 \textit{case expressions}, in modo che ad ogni loro argomento che contiene un data-contructor, viene creata una nuova
 expressione di pattern matching innestata. Il codice relativo a questa fase si trova in \texttt{Compiler.Desugar.DeepPM}.
 
-\subsection{Unificazione degli scrutini}
+\subsubsection{Unificazione degli scrutini}
+Questa è un'altra fase di desugaring che riguarda le espressioni di pattern matching. Le motivazioni di questa
+fase verranno chiarite in seguito (cfr. Generazione del codice Core). Prima di entrare nei dettagli di questa fase,
+è necessario definire cosa sono le \textit{variabili di scrutinio} o più semplicemente \textit{scrutini}. Sia
+$ match \; e \; with \; m_1 \rightarrow e_1 \; ... \; m_n \rightarrow e_n $ un'espressione di pattern matching,
+chiameremo \textit{scrutinio} la variabile legata direttamente al valore dell'espressione $ e $. Ad esempio:
+\begin{lstlisting}
+let f x y =
+    match g x y with
+          Just v -> Just (v + y)
+        | a -> Just y
+        | b -> b
+\end{lstlisting}
+Nell'espressione legata ad \texttt{f}, le variabili di scrutinio sono \texttt{a} e \texttt{b}, mentre la variabile
+\texttt{v} non lo è. Ciò che avviene nella fase di desugaring è la trasformazione delle case-expressions in modo che
+una sola variabile di scrutinio venga utilizzata, quindi il codice langgg precedentemente mostrato diventerà:
+\begin{lstlisting}
+let f x y =
+    match g x y with
+          Just v -> v + y
+        | v1 -> y
+        | v1 -> y * 2
+\end{lstlisting}
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
