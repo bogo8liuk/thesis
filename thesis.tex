@@ -1514,7 +1514,7 @@ let f
     | Nothing _ -> "Error_404"
     | (Just _) _ -> "Ok_200"
 \end{lstlisting}
-In qualsiasi caso, vi sono sempre uno o più valori da ispezionare, uno o più casi, i quali hanno uno o più \textit{case
+In qualsiasi caso, vi sono sempre uno o più valori da ispezionare e uno o più casi, i quali hanno uno o più \textit{case
 expressions} (nel codice, spesso vengono nominate come \textit{matching expressions}) e un'espressione di ritorno.
 Quindi abbiamo un costrutto della forma:
 \[ match \; val_1 \; ... \; val_n \; with \; case_1 \; ... \; case_m \]
@@ -1546,6 +1546,30 @@ L'algoritmo di inferenza di tale costrutto è il seguente:
         e ai casi precedenti.
     \end{itemize}
 \end{itemize}
+
+\paragraph{Eliminazione del pattern matching "in larghezza"}
+Come è stato già menzionato precedentemente, langgg espone due sintassi diverse per effettuare il pattern matching,
+una delle quali può possedere un numero arbitrario di case-expressions. Tuttavia, il token che rappresenta un
+\textit{caso} del costrutto di pattern matching può avere solamente una \textit{matching expression} (equivalente
+a una case expression), la sua definizione si trova in \texttt{Compiler.Ast.Typed}:
+\begin{lstlisting}
+data NotedCase a = NotedCase (NotedMatchExpr a) (NotedExpr a) a
+\end{lstlisting}
+Questo rende necessaria una fase di desugaring che avviene subito dopo l'inferenza di un costrutto di pattern matching,
+quindi durante la fase di type-inference. Si consideri il seguente codice langgg:
+\begin{lstlisting}
+type Maybe a = Nothing | Just a
+type Either a b = Left a | Right b
+
+let f
+    | Nothing _ -> 42
+    | (Just x) (Left y) -> x + y
+    | _ (Right y) -> y
+\end{lstlisting}
+Dopo aver inferito il tipo dell'espressione legata ad \texttt{f}, vengono creati gli argomenti di \texttt{f}, i quali
+sono legati alle case expressions nell'espressione di pattern matching, siano essi \texttt{v1} e \texttt{v2}. %TODO
+\begin{lstlisting}
+\end{lstlisting}
 
 \subsubsection{Constraints}
 La sintassi langgg permette di esprimere espressioni il cui tipo possiede dei predicati; ciò richiede che l'algoritmo
@@ -2007,10 +2031,11 @@ una sola variabile di scrutinio venga utilizzata, quindi il codice langgg preced
 \begin{lstlisting}
 let f x y =
     match g x y with
-          Just v -> v + y
-        | v1 -> y
-        | v1 -> y * 2
+          Just v -> Just (v + y)
+        | v1 -> Just y
+        | v1 -> v1
 \end{lstlisting}
+Si noti che le variabili delle sotto-espressioni vengono opportunamente aggiornate.
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
