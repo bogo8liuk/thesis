@@ -2131,8 +2131,8 @@ prevenire la ricorsione infinita in codice mutualmente ricorsivo.
 La fase finale di compilazione di un programma langgg consiste nel compilare un programma Core in target differenti.
 La pagina di documentazione ufficiale di GHC espone nei dettagli il ciclo di compilazione di un programma Haskell (e
 di conseguenza di un programma Core) [19]. Lo schema semplificato è il seguente:
-
 \newline
+
 \begin{tikzpicture}[node distance=2cm]
 \node (Core) [process] {Programma Core};
 \node (Stg) [process, below of=Core] {Programma STG};
@@ -2150,8 +2150,18 @@ di conseguenza di un programma Core) [19]. Lo schema semplificato è il seguente
 
 STG è un'ulteriore rappresentazione intermedia di Haskell, ma, a differenza di Core, non è un linguaggio tipato.
 Uno degli obiettivi più importanti di STG è rendere efficiente la valutazione delle espressioni sull'hardware standard.
-C-- è un linguaggio C-like, sviluppato con l'obiettivo di essere generato dai compilatori di linguaggi ad alto livello.
-%TODO:cfh
+C - - è un linguaggio C-like, sviluppato con l'obiettivo di essere generato dai compilatori di linguaggi ad alto livello.
+Nella traduzione da un formalismo a un altro, vi sono vari passaggi (pipeline) in cui vengono effettuate, oltre alla
+traduzione effettiva, alcune ottimizzazioni.
+
+I tre target principali sono:
+\begin{itemize}
+    \item Codice C, che viene restituito in output come \textit{pretty-printing} dal codice C - -;
+    \item Codice Assembly specifico di una macchina;
+    \item Codice Llvm, portabile e ottimizzato per molte architetture.
+\end{itemize}
+
+\section{Sviluppi futuri}
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
