@@ -2162,6 +2162,88 @@ I tre target principali sono:
 \end{itemize}
 
 \section{Sviluppi futuri}
+langgg è un linguaggio sperimentale in evoluzione. Vi sono alcune \textit{features} che arricchiscono il linguaggio che
+potrebbero essere implementate in futuro. Di seguito, sono elencate alcune caratteristiche ritenute interessanti da
+aggiungere al linguaggio. In particolare, nella presentazione delle funzionalità aggiuntive, verranno analizzate prima le
+basi teoretiche, discutendo i vantaggi che vengono portati al linguaggio (e, eventualmente, svantaggi) e i problemi
+che vengono risolti grazie alle suddette funzionalità aggiuntive.
+
+\subsection{Tipi lineari}
+Un sistema di tipi \textit{lineari} è una caratteristica dei linguaggi di programmazione (specialmente funzionali) molto
+interessante, la quale porta numerosi vantaggi all'utente in termini pratici, tuttavia, non è una \textit{feature}
+largamente adottata nei linguaggi mainstream. Vi è stata una proposta di implementazione in GHC [20] che ha
+successivamente dato vita a un'estensione di Haskell. Questa sezione si ispirerà alla proposta che è stata fatta per GHC:
+verranno analizzati i vantaggi principali che porta un sistema di tipi \textit{lineari} e verrà, a sua volta, proposta una
+bozza di implementazione nel compilatore langgg.
+
+Innanzitutto, prima di dare qualsiasi definizione, è bene precisare
+come nell'articolo [20] i tipi non vengono divisi in due macro-insiemi (lineari e non-lineari), bensì la linearità viene
+associata al tipo funzione. Informalmente, una funzione è \textit{lineare} se consuma il suo argomento una e una sola
+volta. Indicheremo con $ \triangleright $ il tipo funzione lineare. Il motivo per il quale la linearità viene definita
+sul tipo funzione e non sulla totalità dei tipi è che questo permette di avere retrocompatibilità su un type-system già
+esistente. Per quanto riguarda la nozione di \textit{valutazione} (o \textit{consumazione}) di un valore, è bene
+introdurre la politica che viene utilizzata da Haskell: la \textit{valutazione lazy}. Questo tipo di valutazione delle
+espressioni permette di valutare le espressioni non nel momento in cui vengono legate alle variabili,
+bensì quando c'è l'effettivo bisogno del loro risultato per effettuare altre computazioni. Questa politica permette di
+ritardare il più possibile la valutazione delle espressioni. Due vantaggi pratici che offre un sistema di tipi lineari
+sono: l'utilizzo e il controllo della mutabilità con interfacce \textit{pure}; maggiore controllo in computazioni che
+riguardano l'IO. Precisiamo cosa si intende con \textit{consumare un valore esattamente una volta}, diamo questa
+definizione proposta anche nell'articolo di riferimento:
+\begin{itemize}
+    \item per consumare un valore atomico (ovvero di un tipo con costruttore di tipo senza argomenti, ad esempio il
+    tipo \texttt{Char}) esattamente una volta, lo si valuti;
+    \item per consumare un valore di tipo funzione esattamente una volta, si applichi a esso un argomento e consuma
+    il risultato esattamente una volta;
+    \item per consumare un valore di un tipo di dato algebrico esattamente una volta, si esegua il pattern matching su
+    di esso e si consumi tutte le sue componenti lineari esattamente una volta.
+\end{itemize}
+Con questa definizione possiamo arrivare a una prima conclusione sul tipo dei data-constructors, ovvero quale tipo
+dovremmo assegnare a un data-constructor? Prendiamo come esempio il costruttore delle coppie \texttt{(,)}:
+\begin{itemize}
+    \item $ (,) : \forall \alpha, \beta. \; \alpha \; \triangleright \; \beta \; \triangleright \; (\alpha, \beta) $
+    \item $ (,) : \forall \alpha, \beta. \; \alpha \mapsto \beta \mapsto (\alpha, \beta) $
+\end{itemize}
+La prima scelta è quella corretta, infatti, se il risultato dell'espressione \texttt{(,) x y} è consumato esattamente
+una volta, allora, per definizione, \texttt{x} e \texttt{y} vengono consumati esattamente una volta.
+
+Questo sistema di tipi può portare, tuttavia, ad alcuni problemi. Si pensi, come viene mostrato in un esempio in [20],
+alla seguente implementazione della funzione \texttt{map} di Haskell:
+\begin{lstlisting}
+map _ [] = []
+map f (x : t) = f x : map f t
+\end{lstlisting}
+La funzione \texttt{map} può avere i seguenti due tipi:
+\begin{itemize}
+    \item $ map : \forall \alpha, \beta. \; (\alpha \; \triangleright \; \beta) \mapsto [\alpha] \; \triangleright \; [\beta] $
+    \item $ map : \forall \alpha, \beta. \; (\alpha \mapsto \beta) \mapsto [\alpha] \mapsto [\beta] $
+\end{itemize}
+I due tipi sono incompatibili tra loro. Introduciamo, quindi, un livello di polimorfismo sulla
+\textit{molteplicità} delle freccie (tipi funzione):
+\begin{itemize}
+    \item $ map : \forall \alpha, \beta, p. \; (\alpha \mapsto_p \beta) \mapsto [\alpha] \mapsto_p [\beta] $
+\end{itemize}
+Con la notazione appena mostrata, stiamo asserendo che \texttt{map} accetta come argomenti una funzione con molteplicità
+illimitata (ovvero non-lineare) e una lista con molteplicità $ p $, inoltre, la funzione in input accetta un argomento
+di molteplicità $ p $. Definiamo formalmente la molteplicità:
+\[ \pi, \mu := 1 | \omega | p | \pi + \mu | \pi * \mu \]
+dove $ \omega $ è la molteplicità illimitata e $ p $ è una variabile di molteplicità. Inoltre, valgono le seguenti
+relazioni affermazioni:
+\begin{itemize}
+    \item $ + $ e $ * $ sono associativi e commutativi;
+    \item $ * $ ha precedenza maggiore di $ + $;
+    \item $ forall p. \; p * 1 = 1 * p = p $;
+    \item $ \omega * \omega = \omega $;
+    \item $ 1 + 1 = 1 + \omega = \omega + \omega = \omega $.
+\end{itemize}
+Consideriamo $ \mapsto \equiv \mapsto_{\omega} $ e $ \triangleright \equiv \mapsto_1 $. Si noti come valga la seguente
+affermazione:
+\[ \forall p, q. \; p + q = \omega \]
+Tuttavia, se aggiungiamo l'elemento neutro di $ + $, sia esso $ 0 $, allora la precedente affermazione non vale più.
+Dato questo sistema di tipi lineari, è ora necessario aggiornare l'algoritmo di type inference in modo che inferisca
+anche le molteplicità dei vari tipi funzione. Per questo, in [20] viene definito un lambda-calcolo le cui regole
+d'inferenza inferiscono la molteplicità corretta dei tipi funzione. Non specificheremo di seguito le regole d'inferenza,
+tuttavia, è bene fare alcune precisazioni. Innanzitutto, vi sono due regole diverse per quanto riguarda le variabili
+e i data-constructors. %TODO: cfh
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
@@ -2210,6 +2292,8 @@ I tre target principali sono:
     \item DataCon, version 8.10.7 - url: \url{https://hackage.haskell.org/package/ghc-8.10.7/docs/DataCon.html}
     %[19]
     \item GHC Commentary: The Compiler - url: \url{https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/compiler/}
+    %[20]
+    %TODO: Linear Haskell
 \end{enumerate}
 
 \end{document}
