@@ -2173,8 +2173,10 @@ Un sistema di tipi \textit{lineari} è una caratteristica dei linguaggi di progr
 interessante, la quale porta numerosi vantaggi all'utente in termini pratici, tuttavia, non è una \textit{feature}
 largamente adottata nei linguaggi mainstream. Vi è stata una proposta di implementazione in GHC [20] che ha
 successivamente dato vita a un'estensione di Haskell. Questa sezione si ispirerà alla proposta che è stata fatta per GHC:
-verranno analizzati i vantaggi principali che porta un sistema di tipi \textit{lineari} e verrà, a sua volta, proposta una
-bozza di implementazione nel compilatore langgg.
+verranno date alcune definizioni al fine di introdurre la nozione di \textit{tipo lineare} e verrà, a sua volta, proposta una
+bozza di implementazione nel compilatore langgg. Due vantaggi pratici che offre un sistema di tipi lineari sono: l'utilizzo
+e il controllo della mutabilità con interfacce \textit{pure}; maggiore controllo in computazioni che riguardano l'IO.
+In generale, i tipi lineari offrono maggiori garanzie all'utente programmatore.
 
 Innanzitutto, prima di dare qualsiasi definizione, è bene precisare
 come nell'articolo [20] i tipi non vengono divisi in due macro-insiemi (lineari e non-lineari), bensì la linearità viene
@@ -2185,9 +2187,8 @@ esistente. Per quanto riguarda la nozione di \textit{valutazione} (o \textit{con
 introdurre la politica che viene utilizzata da Haskell: la \textit{valutazione lazy}. Questo tipo di valutazione delle
 espressioni permette di valutare le espressioni non nel momento in cui vengono legate alle variabili,
 bensì quando c'è l'effettivo bisogno del loro risultato per effettuare altre computazioni. Questa politica permette di
-ritardare il più possibile la valutazione delle espressioni. Due vantaggi pratici che offre un sistema di tipi lineari
-sono: l'utilizzo e il controllo della mutabilità con interfacce \textit{pure}; maggiore controllo in computazioni che
-riguardano l'IO. Precisiamo cosa si intende con \textit{consumare un valore esattamente una volta}, diamo questa
+ritardare il più possibile la valutazione delle espressioni.
+Precisiamo cosa si intende con \textit{consumare un valore esattamente una volta}, diamo questa
 definizione proposta anche nell'articolo di riferimento:
 \begin{itemize}
     \item per consumare un valore atomico (ovvero di un tipo con costruttore di tipo senza argomenti, ad esempio il
