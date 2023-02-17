@@ -2225,25 +2225,56 @@ I due tipi sono incompatibili tra loro. Introduciamo, quindi, un livello di poli
 Con la notazione appena mostrata, stiamo asserendo che \texttt{map} accetta come argomenti una funzione con molteplicità
 illimitata (ovvero non-lineare) e una lista con molteplicità $ p $, inoltre, la funzione in input accetta un argomento
 di molteplicità $ p $. Definiamo formalmente la molteplicità:
-\[ \pi, \mu := 1 | \omega | p | \pi + \mu | \pi * \mu \]
+\[ \pi, \mu := 1 \; | \; \omega \; | \; p \; | \; \pi + \mu \; | \; \pi * \mu \]
 dove $ \omega $ è la molteplicità illimitata e $ p $ è una variabile di molteplicità. Inoltre, valgono le seguenti
 relazioni affermazioni:
 \begin{itemize}
     \item $ + $ e $ * $ sono associativi e commutativi;
     \item $ * $ ha precedenza maggiore di $ + $;
-    \item $ forall p. \; p * 1 = 1 * p = p $;
+    \item $ \forall p. \; p * 1 = 1 * p = p $;
     \item $ \omega * \omega = \omega $;
     \item $ 1 + 1 = 1 + \omega = \omega + \omega = \omega $.
 \end{itemize}
-Consideriamo $ \mapsto \equiv \mapsto_{\omega} $ e $ \triangleright \equiv \mapsto_1 $. Si noti come valga la seguente
-affermazione:
-\[ \forall p, q. \; p + q = \omega \]
+Consideriamo $ \mapsto \; \equiv \; \mapsto_{\omega} $ e $ \triangleright \; \equiv \; \mapsto_1 $. Si noti come valga
+la seguente affermazione:
+\[ \forall \pi, \mu. \; \pi + \mu = \omega \]
 Tuttavia, se aggiungiamo l'elemento neutro di $ + $, sia esso $ 0 $, allora la precedente affermazione non vale più.
 Dato questo sistema di tipi lineari, è ora necessario aggiornare l'algoritmo di type inference in modo che inferisca
 anche le molteplicità dei vari tipi funzione. Per questo, in [20] viene definito un lambda-calcolo le cui regole
 d'inferenza inferiscono la molteplicità corretta dei tipi funzione. Non specificheremo di seguito le regole d'inferenza,
-tuttavia, è bene fare alcune precisazioni. Innanzitutto, vi sono due regole diverse per quanto riguarda le variabili
-e i data-constructors. %TODO: cfh
+tuttavia, è bene fare alcune precisazioni. Innanzitutto, nelle regole di inferenza, si può pensare ai tipi nell'ambiente
+di tipizzazione come l'input di un giudizio e alle molteplicità come l'output.
+Esistono due regole diverse per quanto riguarda le variabili e i data-constructors e questo è dato dalla diversa
+definizione di linearità per le funzioni e per i data-constructors. Per quanto riguarda, invece, il costrutto di
+lambda-astrazione, visto che deve essere creato un tipo funzione e a priori non si conosce la molteplicità di questo
+tipo, a esso viene associata una variabile di molteplicità (che non esiste già come variabile libera). Per la regola
+di applicazione, è necessario guardare la
+molteplicità della freccia (nel tipo dell'espressione che applica) e a seconda della sua molteplcità, le variabili libere
+nell'argomento dell'applicazione dovranno essere utilizzate con la stessa molteplicità.
+
+\paragraph{Bozza di implementazione in langgg}
+Ora che è stato presentato un sistema di tipi lineari, si può delineare una bozza di implementazione in langgg.
+Il sistema di tipi lineari da aggiungere a quello già esistente di langgg si ispira a quello appena presentato,
+riutilizzando le varie nozioni incontrate. Ma prima di aggiornare il sistema di tipi di langgg, è doveroso definire
+la politica di valutazione delle espressioni in langgg (al momento indefinita e dipendente dall'implementazione).
+Una scelta che può essere coerente con il sistema di tipi lineari da aggiungere è quella di una politica \textit{lazy}
+come quella di Haskell. Questo comporta che la traduzione dei token tipati in codice Core sia tale che le espressioni
+di langgg legate alle variabili non vengano valutate al momento della definizione delle variabili, bensì, la loro
+valutazione venga ritardata fin quando ci sarà una computazione all'interno del programma che necessiterà il loro
+valore. Fatta questa importante premessa, ora è possibile discutere l'estensione del sistema di tipi di langgg.
+Un primo aggiornamento che può essere effettuato è alla nozione di mono-tipo:
+\[ MT \; := \; \alpha \; | \; T \; | \; MT \; MT \; | \; MT \mapsto_{\pi} MT \]
+Dove $ \pi $ è la nozione di molteplicità fornita in precedenza (anch'essa da aggiungere al sistema di tipi).
+Dopodiché, sarà necessario estendere l'algoritmo di type inference, in particolare:
+\begin{itemize}
+    \item è necessario aggiungere un "attore" all'ambiente di tipizzazione, sia esso $ \Pi $, il quale associa ai
+    token una molteplicità. Anche in questo ambiente sarà necessario tener conto delle variabili libere, in quanto
+    la nozione di molteplicità stessa può possedere variabili di molteplicità;
+    \item estendere le regole di inferenza in modo che, oltre alla normale type inference, eseguano anche l'inferenza
+    di molteplicità. Si presume che, come per i tipi, in langgg le molteplicità possano o non possano essere esplicitate;
+    \item per quanto riguarda le regole di inferenza, al momento della generalizzazione, sarà necessario generalizzare
+    anche le eventuali variabili di molteplicità che non compaiono libere in $ \Pi $.
+\end{itemize}
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
@@ -2293,7 +2324,8 @@ e i data-constructors. %TODO: cfh
     %[19]
     \item GHC Commentary: The Compiler - url: \url{https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/compiler/}
     %[20]
-    %TODO: Linear Haskell
+    \item Jean-Philippe Bernardy, Mathieu Boespflug, Ryan R. Newton, Simon Peyton Jones, Arnaud Spiwack - Linear Haskell -
+    in: arXiv:1710.09756
 \end{enumerate}
 
 \end{document}
