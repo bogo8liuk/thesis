@@ -6,6 +6,7 @@
 \usepackage{enumitem}
 \usepackage{hyperref}
 \usepackage{proof}
+\usepackage{amssymb}
 
 \lstset{
     language=Haskell,
@@ -2226,7 +2227,7 @@ I due tipi sono incompatibili tra loro. Introduciamo, quindi, un livello di poli
 Con la notazione appena mostrata, stiamo asserendo che \texttt{map} accetta come argomenti una funzione con molteplicità
 illimitata (ovvero non-lineare) e una lista con molteplicità $ p $, inoltre, la funzione in input accetta un argomento
 di molteplicità $ p $. Definiamo formalmente la molteplicità:
-\[ \pi, \mu := 1 \; | \; \omega \; | \; p \; | \; \pi + \mu \; | \; \pi * \mu \]
+\[ \pi := 1 \; | \; \omega \; | \; p \; | \; \pi + \pi \; | \; \pi * \pi \]
 dove $ \omega $ è la molteplicità illimitata e $ p $ è una variabile di molteplicità. Inoltre, valgono le seguenti
 relazioni affermazioni:
 \begin{itemize}
@@ -2276,6 +2277,57 @@ Dopodiché, sarà necessario estendere l'algoritmo di type inference, in partico
     \item per quanto riguarda le regole di inferenza, al momento della generalizzazione, sarà necessario generalizzare
     anche le eventuali variabili di molteplicità che non compaiono libere in $ \Pi $.
 \end{itemize}
+
+\subsection{Effetti}
+Gli \textit{effetti algebrici} rappresentano un modo per ottenere più controllo su comportamenti impuri da parte dei
+programmi. Essi si basano sul fatto che tali comportamenti impuri derivano da un insieme di \textit{operazioni} come,
+per esempio, \texttt{read} e \texttt{write} per la lettura e la scrittura su file o \texttt{raise} per le eccezioni.
+L'idea alla base è avere un sistema di tipi che comprende una nuovo insieme di tipi, detti \textit{tipi effetti}, in
+grado di inglobare l'insieme di \textit{operazioni} che portano \textit{side-effects} (di qualsiasi genere). Linguaggi
+come Koka [21] implementano un sistema di tipi che supporta anche gli \textit{effetti}. In questa sezione, verranno
+discusse le principali caratteristiche di un sistema di \textit{effetti}, seguendo l'articolo [22], poi verrà proposta
+un'implementazione nel compilatore langgg, analizzando i cambiamenti da portare e gli eventuali ostacoli.
+
+Nell'articolo [22] viene, innazitutto, fissato un linguaggio. L'aaproccio utilizzato qui è lo stesso, tuttavia, il
+linguaggio che verrà definito sarà leggermente diverso da quello nell'articolo:
+\[ v := e \; | \; fun \; x \mapsto c \; | \; h \]
+\[ h := handler \{ return \; x \mapsto c, \; op_1(x;k) \mapsto c_1, \; ..., \; op_n(x;k) \mapsto c_n \} \]
+\[ c := return \; v \; | \; op(v;y.c) \; | \; do \; x \leftarrow c_1 \; in \; c_2 \; | \; v1 \; v2 \; | \; with \; v \; handle \; c \]
+dove $ e $ sono i costrutti di \textit{System-F}, estesi anche con valori costanti. $ v $ rappresenta i \textit{valori},
+$ h $ rappresenta gli handler e $ c $ le computazioni.
+\`E necessaria una discussione di alcuni costrutti appena definiti:
+\begin{itemize}
+    \item il costrutto $ return \; v $, dove $ v $ è un valore, rappresenta la computazione pura ed è utile ogni qual
+    volta viene utilizzato un valore in un contesto in cui ci si aspetta una computazione;
+    \item la chiamata di un'\textit{operazione} $ op(v;y.c) $ passa un parametro $ v $ all'operazione $ op $, il
+    risultato viene legato a $ y $ e, infine, viene valutata la computazione $ c $, chiamata anche $ continuazione $.
+    Un'operazione rappresenta un'esecuzione con side-effect;
+    \item il costrutto $ do \; x \leftarrow c_1 \; in \; c_2 $ è chiamato \textit{sequenziazione}. Viene valutata
+    prima la computazione $ c_1 $, poi il risultato viene legato alla variabile $ x $ e, infine, si valuta $ c_2 $.
+    Questo costrutto non è da confondersi con la chiamata di un'operazione, in quanto, sebbene simili, la sequenziazione
+    è utile per mettere in sequenza qualsiasi computazione;
+    \item un \textit{handler} definisce delle azioni da eseguire al momento della chiamata di certe operazioni
+    (specificate dall'handler stesso). L'handling della computazione pura è opzionale;
+    \item il costrutto $ with \; v \; handle \; c $ valuta la computazione $ c $ utilizzando l'handler nel valore
+    $ v $ per gestire le computazioni in $ c $;
+\end{itemize}
+Nel formalismo appena presentato, vi è una divisione tra computazioni pure e impure. A questo punto, si può definire
+un sistema di tipi. Per farlo, estenderemo il sistema di tipi di System-F:
+\[ VT := PT \; | \; PT \rightsquigarrow CT \; | \; CT \Rrightarrow CT \]
+\[ CT := VT ! \{ op_1, \; ..., \; op_n \} \]
+\`E doveroso fare alcune precisazioni riguardo a queste definizioni. Innanzitutto, $ VT $ è il tipo dei valori, mentre
+$ CT $ è il tipo delle computazioni. Con $ PT $ si intende uno schema di tipo, è indifferente se il suo caso base sia
+un tipo qualificato (cfr. Schemi di tipi) oppure un mono-tipo. Il caso $ CT \Rrightarrow CT $ rappresenta il tipo degli
+handler, invece, il caso $ PT \rightsquigarrow CT $ rappresenta il tipo funzione che ha come tipo di "ritorno" un tipo
+di computazione. Le regole di inferenza per il formalismo in questione sono abbastanza intuitive e non verranno riportate
+(esse sono comunque definite in [22]). I tipi delle computazioni racchiudono le possibili operazioni che fanno parte
+dell'effetto. Questo fatto permette di catturare precisamente i side-effects prodotti dalle operazioni.
+
+\paragraph{Bozza di implementazione in langgg}
+Un sistema di effetti offre un meccanismo generale per gestire le computazioni impure. langgg è un linguaggio
+funzionale puro e, al momento, non ha un meccanismo per gestire tutto ciò che non riguarda il "mondo puro". Un sistema
+di effetti potrebbe essere un modo per aggiungere computazioni impure, come input/output, eccezioni, multi-threading,
+mantenendo divisi il "mondo puro" da quello "impuro".
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
@@ -2327,6 +2379,11 @@ Dopodiché, sarà necessario estendere l'algoritmo di type inference, in partico
     %[20]
     \item Jean-Philippe Bernardy, Mathieu Boespflug, Ryan R. Newton, Simon Peyton Jones, Arnaud Spiwack - Linear Haskell -
     in: arXiv:1710.09756
+    %[21]
+    \item Effect Typing - url: \url{https://koka-lang.github.io/koka/doc/book.html#why-effects}
+    %[22]
+    \item Matija Pretnar - An Introduction to Algebraic Effects and Handlers. Invited tutorial paper - in: Electronic
+    Notes in Theoretical Computer Science, Volume 319, 21 December 2015, Pages 19-35
 \end{enumerate}
 
 \end{document}
