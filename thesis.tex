@@ -2322,7 +2322,7 @@ un tipo qualificato (cfr. Schemi di tipi) oppure un mono-tipo. Il caso $ CT \Rri
 handler, invece, il caso $ PT \rightsquigarrow CT $ rappresenta il tipo funzione che ha come tipo di "ritorno" un tipo
 di computazione. Le regole di inferenza per il formalismo in questione sono abbastanza intuitive e non verranno riportate
 (esse sono comunque definite in [22]). I tipi delle computazioni racchiudono le possibili operazioni che fanno parte
-dell'effetto. Questo fatto permette di catturare precisamente i side-effects prodotti dalle operazioni.
+dell'effetto. Questo fatto permette di catturare in maniera precisa i side-effects prodotti dalle operazioni.
 
 \paragraph{Bozza di implementazione in langgg}
 Un sistema di effetti offre un meccanismo generale per gestire le computazioni impure. langgg è un linguaggio
@@ -2352,8 +2352,9 @@ una computazione nel modo giusto, è necessario eseguire un'analisi statica dell
 operazioni definite in un effetto. Inoltre, è possibile eseguire l'analisi statica degli handler e decidere se un handler
 gestisce tutte le operazioni utilizzate in una computazione. Tuttavia, se, come in Koka, vi sono effetti che comprendono,
 ad esempio, anche la divergenza di un programma, non esiste un'operazione specifica associata all'effetto di divergenza.
-In questo caso, è necessario un'analisi statica specifica, infatti, l'unico "costrutto" che permette la divergenza è la
-ricorsione, quindi, ogni qual volta vi sono uno o più bindings ricorsivi, il loro tipo può essere l'effetto divergenza.
+In questo caso, è necessario un'analisi statica specifica, infatti, l'unico "costrutto" con cui si ottiene la divergenza
+in langgg è la ricorsione,
+quindi, ogni qual volta vi sono uno o più bindings ricorsivi, il loro tipo può essere l'effetto divergenza.
 Il fatto che un qualche simbolo $ f $ abbia come tipo l'effetto divergenza non implica che la valutazione di $ f $
 provochi l'effettiva divergenza del programma. Questo perché il problema della fermata non è decidibile.
 
@@ -2362,7 +2363,8 @@ Anche Haskell possiede un meccanismo per dividere il mondo puro da quello impuro
 la quale ingloba un token che rappresenta lo stato del mondo impuro. A differenza di un sistema ad effetti come quello
 presentato precedentemente, questo meccanismo utilizzato da Haskell è meno fine, in quanto tratta la (quasi) totalità
 delle computazioni impure con la monade \texttt{IO}. Questo implica un potenziale ostacolo: la "compilazione" dei
-side-effects potrebbe dipendere da come viene "compilata" la monade IO. In ogni caso, è necessario un \textit{mapping}
+side-effects potrebbe dipendere da come viene "compilata" la monade \texttt{IO}. In ogni caso, è necessario un
+\textit{mapping}
 dagli effetti definiti nel linguaggio ai "token" di basso livello del compilatore. A questo proposito, esiste un
 modulo delle API di GHC (\texttt{PrimOp}) che espone tutte quelle operazioni che non possono essere definite in un
 sorgente Haskell.
