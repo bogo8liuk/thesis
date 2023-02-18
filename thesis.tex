@@ -2281,14 +2281,15 @@ Dopodiché, sarà necessario estendere l'algoritmo di type inference, in partico
 \subsection{Effetti}
 Gli \textit{effetti algebrici} rappresentano un modo per ottenere più controllo su comportamenti impuri da parte dei
 programmi. Essi si basano sul fatto che tali comportamenti impuri derivano da un insieme di \textit{operazioni} come,
-per esempio, \texttt{read} e \texttt{write} per la lettura e la scrittura su file o \texttt{raise} per le eccezioni.
+per esempio, \texttt{read} e \texttt{write} per la lettura e la scrittura su file, \texttt{raise} per le eccezioni o
+\texttt{fork} per la concorrenza.
 L'idea alla base è avere un sistema di tipi che comprende una nuovo insieme di tipi, detti \textit{tipi effetti}, in
 grado di inglobare l'insieme di \textit{operazioni} che portano \textit{side-effects} (di qualsiasi genere). Linguaggi
 come Koka [21] implementano un sistema di tipi che supporta anche gli \textit{effetti}. In questa sezione, verranno
 discusse le principali caratteristiche di un sistema di \textit{effetti}, seguendo l'articolo [22], poi verrà proposta
 un'implementazione nel compilatore langgg, analizzando i cambiamenti da portare e gli eventuali ostacoli.
 
-Nell'articolo [22] viene, innazitutto, fissato un linguaggio. L'aaproccio utilizzato qui è lo stesso, tuttavia, il
+Nell'articolo [22] viene, innazitutto, fissato un linguaggio. L'approccio utilizzato qui è lo stesso, tuttavia, il
 linguaggio che verrà definito sarà leggermente diverso da quello nell'articolo:
 \[ v := e \; | \; fun \; x \mapsto c \; | \; h \]
 \[ h := handler \{ return \; x \mapsto c, \; op_1(x;k) \mapsto c_1, \; ..., \; op_n(x;k) \mapsto c_n \} \]
@@ -2327,7 +2328,46 @@ dell'effetto. Questo fatto permette di catturare precisamente i side-effects pro
 Un sistema di effetti offre un meccanismo generale per gestire le computazioni impure. langgg è un linguaggio
 funzionale puro e, al momento, non ha un meccanismo per gestire tutto ciò che non riguarda il "mondo puro". Un sistema
 di effetti potrebbe essere un modo per aggiungere computazioni impure, come input/output, eccezioni, multi-threading,
-mantenendo divisi il "mondo puro" da quello "impuro".
+mantenendo separato il "mondo puro" da quello "impuro".
+
+Per aggiungere un sistema di effetti a langgg, è necessario, innanzitutto, aggiungere una nuova sintassi per tutti quei
+costrutti necessari all'implementazione degli effetti, in particolare bisogna aggiungere:
+\begin{itemize}
+    \item una sintassi per definire gli effetti, ovvero i tipi delle computazioni. Questo diventa opzionale se alcuni
+    effetti vengono considerati come built-in, tuttavia, ciò limiterebbe molto le possibilità del programmatore che non
+    sarebbe in grado di estendere l'insieme degli effetti;
+    \item una sintassi per definire le operazioni, ma questo dovrebbe essere una conseguenza della possibilità di
+    definire effetti;
+    \item una sintassi per definire gli handler, infatti, senza di essi, non sarebbe possibile gestire i side-effects;
+    \item una sintassi che permette di utilizzare gli handler. Nel formalismo presentato, un costrutto del genere è
+    rappresentato da $ with \; v \; handle \; c $;
+\end{itemize}
+Dopodiché, è necessario definire un sistema di effetti. Un possibile approccio è quello di Koka [23], il quale, potendo
+inferire tutti i side-effects in una computazione, connota il tipo ritorno con gli effetti opportuni. In particolare,
+l'assenza di side-effects è connotata con $ total $, l'effetto per le funzioni matematiche. In ogni caso, si rende
+necessaria un'estensione del sistema di tipi di langgg, infatti, dati i nuovi costrutti del linguaggio, bisogna quanto
+meno avere un tipo per le computazioni e un tipo per gli handler. L'aggiornamento delle regole di inferenza avviene di
+conseguenza, tuttavia, per quanto riguarda queste ultime, vale la pena fare alcune precisazioni. Per tipizzare
+una computazione nel modo giusto, è necessario eseguire un'analisi statica della computazione e individuare tutte le
+operazioni definite in un effetto. Inoltre, è possibile eseguire l'analisi statica degli handler e decidere se un handler
+gestisce tutte le operazioni utilizzate in una computazione. Tuttavia, se, come in Koka, vi sono effetti che comprendono,
+ad esempio, anche la divergenza di un programma, non esiste un'operazione specifica associata all'effetto di divergenza.
+In questo caso, è necessario un'analisi statica specifica, infatti, l'unico "costrutto" che permette la divergenza è la
+ricorsione, quindi, ogni qual volta vi sono uno o più bindings ricorsivi, il loro tipo può essere l'effetto divergenza.
+Il fatto che un qualche simbolo $ f $ abbia come tipo l'effetto divergenza non implica che la valutazione di $ f $
+provochi l'effettiva divergenza del programma. Questo perché il problema della fermata non è decidibile.
+
+Una volta che sono stati generati gli eventuali token tipati, si rende necessario estendere la generazione del codice.
+Anche Haskell possiede un meccanismo per dividere il mondo puro da quello impuro: viene utilizzata la monade \texttt{IO},
+la quale ingloba un token che rappresenta lo stato del mondo impuro. A differenza di un sistema ad effetti come quello
+presentato precedentemente, questo meccanismo utilizzato da Haskell è meno fine, in quanto tratta la (quasi) totalità
+delle computazioni impure con la monade \texttt{IO}. Questo implica un potenziale ostacolo: la "compilazione" dei
+side-effects potrebbe dipendere da come viene "compilata" la monade IO. In ogni caso, è necessario un \textit{mapping}
+dagli effetti definiti nel linguaggio ai "token" di basso livello del compilatore. A questo proposito, esiste un
+modulo delle API di GHC (\texttt{PrimOp}) che espone tutte quelle operazioni che non possono essere definite in un
+sorgente Haskell.
+
+\subsection{Varianti polimorfe}
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
@@ -2384,6 +2424,8 @@ mantenendo divisi il "mondo puro" da quello "impuro".
     %[22]
     \item Matija Pretnar - An Introduction to Algebraic Effects and Handlers. Invited tutorial paper - in: Electronic
     Notes in Theoretical Computer Science, Volume 319, 21 December 2015, Pages 19-35
+    %[23]
+    \item Effect types - url: \url{https://koka-lang.github.io/koka/doc/book.html#sec-effect-types}
 \end{enumerate}
 
 \end{document}
