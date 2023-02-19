@@ -2370,6 +2370,79 @@ modulo delle API di GHC (\texttt{PrimOp}) che espone tutte quelle operazioni che
 sorgente Haskell.
 
 \subsection{Varianti polimorfe}
+Le \textit{varianti polimorfe} rappresentano un meccanismo di estendibilità dei tipi, in particolare esse risolvono
+il task di, dato un tipo, estenderlo con nuove funzioni e nuovi costruttori. Questo è un problema ricorrente nella
+programmazione e viene risolto anche dai linguaggi orientati agli oggetti tramite meccanismi di sotto-tipaggio e
+ereditarietà, tuttavia, le varianti polimorfe costituiscono un modo più conciso ed elegante di estendere i tipi.
+Esse sono state implementate in OCaml, ma non sono diffuse in molti altri linguaggi di programmazione. Esse rompono
+il vincolo informale secondo il quale un data-constructor appartiene a uno e un solo type-constructor; si ricordi che
+tale vincolo è valido in langgg e Haskell. L'implementazione OCaml offre anche una nuova sintassi per contraddistinguere
+le varianti polimorfe (il loro identificatore è preceduto dal carattere backtick \`).
+In questa sezione, verranno brevemente presentati i principali vantaggi delle varianti polimorfe, dopodiché, non verrà
+presentata un'implementazione in langgg, bensì verranno discusse alcune proposte di implementazioni provenienti da
+altre fonti.
+
+Come mostra Garrigue in [24], uno dei vantaggi principali delle varianti polimorfe è quello già citato precedentemente:
+dopo aver fissato un tipo di dato, estendere le API dei costruttori del tipo di dato. Si osservi il
+seguente pseudo-codice:
+\begin{lstlisting}
+type HttpCode = Ok200 | Err404 | Err500
+\end{lstlisting}
+dove \texttt{HttpCode} è un tipo e \texttt{Ok200}, \texttt{Err404} e \texttt{Err500} sono data-constructors associati
+solamente al tipo \texttt{HttpCode}. In seguito diremo che, dato un data-constructor $ dc $ e un type-constructor $ tc $,
+$ dc \in tc $, se $ dc $ è associato a $ tc $ e a nessun'altro construttore di tipo. Poniamo che un utente stia
+sviluppando il codice per un server http e, inizialmente, rappresenti i codici di risposta http con il tipo
+\texttt{HttpCode}. Un metodo per evitare di riscrivere il codice relativo al server ogni volta che è necessario un nuovo
+codice di risposta è definire \texttt{HttpCode} con tutti i possibili codici di risposta http. \`E chiaro che è una
+soluzione parecchio dispendiosa per l'utente, inoltre, molti dei codici potrebbero rimanere inutilizzati. Inoltre,
+alcune funzioni implementate nel codice del server potrebbero gestire insiemi molto ristretti di codici http, ad esempio:
+\begin{lstlisting}
+let handleReq json =
+    let res = process(json);
+    lookupAndSend res
+
+val lookupAndSend : (HttpCode, String) -> HttpAction ()
+let lookupAndSend res =
+    match res with
+          (Ok200, msg) -> send(msg)
+        | (Err404, path) -> send("path " ++ path ++ " not found")
+        | (Err500, _) -> send("Excuse me, my fault")
+
+let server =
+    listen(fun req -> handleReq(req))
+\end{lstlisting}
+Sarebbe veramente tedioso per l'utente fare pattern matching nella funzione \texttt{lookupAndSend} su tutti i codici
+http esistenti. Utlizzando le varianti polimorfe, possiamo isolare i casi da gestire per \texttt{lookupAndSend}:
+\begin{lstlisting}
+val lookupAndSend : ({< `Ok200, `Err404, `Err500}, String) -> HttpAction ()
+let lookupAndSend res =
+    match res with
+          (`Ok200, msg) -> send(msg)
+        | (`Err404, path) -> send("path " ++ path ++ " not found")
+        | (`Err500, _) -> send("Excuse me, my fault")
+\end{lstlisting}
+Utilizziamo la sintassi \texttt{\{< `Ok200, `Err404, `Err500\}} per indicare che il tipo è polimorfo (anche in assenza
+di variabili di tipo) e che può essere ristretto in seguito. Supponiamo di avere poi il seguente pezzo di codice:
+\begin{lstlisting}
+val possibleRes : List {> `Ok200, `Err404, `Err500}
+let possibleRes = [`Ok200, `Err404, `Err500]
+\end{lstlisting}
+Anche in questo caso, il tipo \texttt{\{> `Ok200, `Err404, `Err500\}} è polimorfo, ma, a differenza di prima, questo
+tipo può essere esteso con altri varianti polimorfe. Successivamente, l'utente potrebbe aggiungere il seguente codice:
+\begin{lstlisting}
+val defaultRes : List {> `Err400, `Tmp307, `Ok200, `Err404, `Err500}
+let defaultRes = [`Err400, `Tmp307] ++ possibleRes
+\end{lstlisting}
+Al di là della sottile differenza tra \texttt{<} e \texttt{>} che riguarda la tipizzazione delle varianti polimorfe,
+questo è un esempio di come possono essere utilizzate le varianti polimorfe per estendere un tipo. Un altro effetto
+benefico portato dall'uso delle varianti polimorfe è la condivisione di tipi di dato tra librerie inizialmente separate.
+infatti, senza le varianti polimorfe, sarebbe necessario costruire l'astrazione giusta per "far comunicare" le
+librerie nel modo giusto, utilizzando un attore di terze parti che funga da interfaccia comune tra le librerie coinvolte.
+Invece, l'utilizzo con le varianti polimorfe, è possibile definire lo stesso tipo nelle librerie coinvolte, permettendo
+alle librerie di essere indipendenti tra loro.
+
+\paragraph{Implementazioni}
+Garrigue %TODO
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
@@ -2428,6 +2501,12 @@ sorgente Haskell.
     Notes in Theoretical Computer Science, Volume 319, 21 December 2015, Pages 19-35
     %[23]
     \item Effect types - url: \url{https://koka-lang.github.io/koka/doc/book.html#sec-effect-types}
+    %[24]
+    \item Jacques Garrigue - Programming with Polymorphic Variants - url:
+    \url{https://caml.inria.fr/pub/papers/garrigue-polymorphic_variants-ml98.pdf}
+    %[25]
+    \item Koji Kagawa - Polymorphic Variants in Haskell - in: Haskell '06: Proceedings of the 2006 ACM SIGPLAN workshop
+    on Haskell, 17 Semptember 2006, Pages 37-47
 \end{enumerate}
 
 \end{document}
