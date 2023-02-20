@@ -7,6 +7,7 @@
 \usepackage{hyperref}
 \usepackage{proof}
 \usepackage{amssymb}
+\usepackage{amsmath}
 
 \lstset{
     language=Haskell,
@@ -2436,13 +2437,45 @@ let defaultRes = [`Err400, `Tmp307] ++ possibleRes
 Al di là della sottile differenza tra \texttt{<} e \texttt{>} che riguarda la tipizzazione delle varianti polimorfe,
 questo è un esempio di come possono essere utilizzate le varianti polimorfe per estendere un tipo. Un altro effetto
 benefico portato dall'uso delle varianti polimorfe è la condivisione di tipi di dato tra librerie inizialmente separate.
-infatti, senza le varianti polimorfe, sarebbe necessario costruire l'astrazione giusta per "far comunicare" le
+Infatti, senza le varianti polimorfe, sarebbe necessario costruire l'astrazione per "far comunicare" le
 librerie nel modo giusto, utilizzando un attore di terze parti che funga da interfaccia comune tra le librerie coinvolte.
-Invece, l'utilizzo con le varianti polimorfe, è possibile definire lo stesso tipo nelle librerie coinvolte, permettendo
+Invece, con le varianti polimorfe, è possibile definire lo stesso tipo nelle librerie coinvolte, permettendo
 alle librerie di essere indipendenti tra loro.
 
 \paragraph{Implementazioni}
-Garrigue %TODO
+In letteratura, vi sono numerose proposte di implementazione delle varianti polimorfe. Di seguito, ne elencheremo alcune,
+analizzando eventuali vantaggi e svantaggi:
+\begin{itemize}
+    \item come propone inzialmente Garrigue [24], una possibile compilazione delle varianti polimorfe può essere effettuata
+    facendo un mapping da varianti a valori numerici interi. Questa soluzione è semplice da implementare e piuttosto
+    efficiente, tuttavia, presenta un grosso svantaggio: è necessario conoscere tutte le varianti polimorfe di un programma.
+    Il problema nasce se il linguaggio permette la compilazione separata di sorgenti, infatti, a quel punto non è possibile
+    conoscere contemporaneamente tutte le varianti polimorfe in un programma;
+    \item sempre Garrigue [24] propone un'implementazione altrettanto efficiente e che risolve il problema della
+    compilazione separata: un mapping dai nomi delle varianti ai loro valori hash. Sebbene questo metodo sia semplice,
+    efficiente e permetta la compilazione separata, presenta anch'esso uno svantaggio: cosa succede se due varianti
+    polimorfe diverse hanno lo stesso valore hash? Questo evento è piuttosto raro (se si utilizza una "buona" funzione hash)
+    e proprio per questo risulta un ottimo compromesso tra i vantaggi che porta e i casi "sfortunati", tuttavia, è
+    necessario comunque gestire questa eventualità. Garrigue [24] propone di emettere un errore a tempo di compilazione,
+    il quale è sempre una scelta migliore di un errore a run-time. \`E chiaro che l'utente dovrà cambiare manualmente
+    l'implementazione dei sorgenti. Questo diventa particolarmente sconveniente quando i sorgenti in questione non sono
+    stati scritti dall'utente stesso, ma sono esterni;
+    \item Kagawa [25] tratta l'implementazione delle varianti polimorfe in Haskell e propone una soluzione di più
+    "alto livello": un mapping dalle varianti polimorfe alle type-classes di Haskell. Questa soluzione, come vedremo, è
+    piuttosto "elegante" in quanto non è necessario estendere il linguaggio, tuttavia, presenta qualche ostacolo.
+    Presentiamo, prima di tutto, la sintassi scelta da Kagawa [25]:
+\begin{lstlisting}
+variant cs => a in VariantName ts where
+    Constr_1 :: ty_11 -> ... -> ty_1n -> a
+    ...
+    Constr_m :: ty_m1 -> ... -> ty_mn -> a
+\end{lstlisting}
+\end{itemize}
+    Le varianti polimorfe sono rappresentate dai simboli \texttt{Constr_*}, i quali hanno degli identificatori che
+    iniziano con una lettera maiuscola. Si può notare come la dichiarazione di una variante sia molto simile a quella
+    di un type-class. Tuttavia, vi è una restrizione, ovvero che la variabile di tipo \texttt{a} deve apparire come tipo
+    di ritorno di ogni variante polimorfa. Il contesto \texttt{cs} specifica le superclassi, che, a loro volta, dovranno
+    essere delle varianti. \texttt{ts} è una sequenza di argomenti (variabili di tipo) come per le type-classes. %TODO: cfh
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
