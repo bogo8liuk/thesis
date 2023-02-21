@@ -383,19 +383,20 @@ Di seguito vi è lo schema della prima parte del compilatore: \newline
 \draw [arrow] (desugar) -- (rawastAlias);
 \end{tikzpicture}
 
-%TODO: cfh
-\subsection{Il parser}
+\subsection{Il parser}\hypertarget{Il parser}
 Il parser è la prima componente del compilatore (dopo la lettura del sorgente). \`E stato scritto mediante la libreria
-open-source \texttt{Parsec} [4], la quale si basa sul concetto di parser combinator monadico. Il codice risiede nel
-modulo \texttt{Compiler.Syntax} ed ha una struttura gerarchica: parte definendo i combinators di "pezzi" primitivi dei
+open-source \texttt{Parsec} \hyperlink{bibl4}[4], la quale si basa sul concetto di parser combinator monadico.
+Il codice risiede nel
+modulo \texttt{Compiler.Syntax} ed ha una struttura gerarchica: il codice di più "basso livello" definisce i combinators
+di "pezzi" primitivi dei
 token dell'AST (\texttt{Compiler.Syntax.Lib.SimpleParser}), dopodiché, nel modulo \texttt{Compiler.Syntax.Grammar} vi
-è la generazione vera e propria dei token dell'AST e, infine, vi è l'entry point del parser, ovvero
+è la generazione vera e propria dei token dell'AST e, infine, vi è l'entry-point del parser, ovvero
 \texttt{Compiler.Syntax.Parser}. \`E bene notare che all'interno del modulo \texttt{Compiler.Syntax.Lib.SimpleParser}
 non sono visibili le API dell'AST, in quanto esso si occupa soltanto del parsing dei costrutti del linguaggio e non
 della generazione dei token.
 
-\subsubsection{Parsing degli operatori}
-Fex permette di definire operatori che vengono trattati come simboli di variabili (funzioni). In questo contesto,
+\subsubsection{Parsing degli operatori}\hypertarget{Parsing degli operatori}
+Fex permette di definire operatori che vengono trattati come simboli di variabili. In questo contesto,
 il linguaggio espone all'utente un costrutto particolare che permettere di definire le proprietà degli eventuali
 operatori. Questo costrutto viene valutato durante il parsing e definisce una categoria di operatori, ecco un esempio:
 
@@ -410,11 +411,12 @@ OPERATORS_CATEGORY {#
 \end{lstlisting}
 
 Il primo "campo" è il nome della categoria ed è utile per poter identificare la categoria, infatti, il terzo e il
-quarto campo definiscono rispetto a quali categorie gli attuali operatori hanno precedenza. Il secondo campo definisce
+quarto campo definiscono rispetto a quali categorie gli attuali operatori hanno, rispettivamente, meno o più precedenza.
+Il secondo campo definisce
 l'insieme di operatori che fanno parte della categoria. Infine, l'ultimo campo è una costante e definisce la fissità
 degli operatori: infissa senza associazione, infissa con associazione a sinistra, infissa con associazione a destra,
 postfissa o prefissa. La versione infissa è solo per gli operatori binari, mentre postfissa e prefissa solo per gli
-operatori unari. Si può notare che nella lista di operatori vi è anche un simbolo di variabile preceduto dal simbolo
+operatori unari. Si può notare che nella lista di operatori vi è anche un simbolo di variabile preceduto dal carattere
 di backtick; questo è possibile, in quanto Fex permette di utilizzare i simboli di variabili come operatori
 facendoli precedere dal carattere backtick. La valutazione di questo costrutto è interamente integrata nel parser ed
 è obbligatorio per l'utente definire le categorie degli operatori all'inizio del sorgente. La libreria \texttt{Parsec}
@@ -444,35 +446,35 @@ insert(x, ll):
 
 L'algoritmo scorre la lista finché non:
 \begin{enumerate}
-    \item trova una sottolista \textit{l} in cui esiste almeno un elemento minore di \textit{x}; in questo caso, controlla
+    \item trova una sottolista $ l $ in cui esiste almeno un elemento minore di $ x $; in questo caso, controlla
     eventuali ambiguità delle categorie, poiché l'utente potrebbe aver definito categorie tali che la nozione di
-    ordinamento tra loro non è transitiva. La funzione \texttt{areAmbigous} nel pezzo di pseudocodice si occupa
+    ordinamento tra loro non è transitiva. La funzione \texttt{areAmbigous} nel pezzo di pseudo-codice si occupa
     di eseguire questo controllo. Se non esistono ambiguità tra le categorie, allora viene creata una nuova lista
-    singoletto contenente \textit{x} che viene inserita davanti alla sottolista \textit{l}
-    \item trova una sottolista \textit{l} in cui tutti gli elementi sono uguali a \textit{x}; in questo caso, \textit{x}
-    viene inserito in \textit{l}, eseguendo sempre prima il controllo sulle ambiguità.
+    singoletto contenente $ x $ che viene inserita davanti alla sottolista $ l $
+    \item trova una sottolista $ l $ in cui tutti gli elementi sono uguali a $ x $; in questo caso, $ x $
+    viene inserito in $ l $, eseguendo sempre prima il controllo sulle ambiguità.
 \end{enumerate}
-In tutti gli altri casi, la corrente sottolista \textit{l} contiene almeno un elemento $ x' $ tale che
+In tutti gli altri casi, la corrente sottolista $ l $ contiene almeno un elemento $ x' $ tale che
 $ x' > x $, quindi l'inserimento non può ancora avvenire. Quando la tabella è completa, essa viene passata alla
 funzione \texttt{buildExpressionParser} della libreria \texttt{Parsec} che si occupa di costruire il parser per le
 espressioni.
 
-\subsection{Check dei nomi}
-Dopo la fase di parsing e dell'aggiunta di token built-in del linguaggio (ad esempio, alcuni operatori aritmetici),
+\subsection{Check dei nomi}\hypertarget{Check dei nomi}
+Dopo la fase di parsing e dell'aggiunta di token built-in del linguaggio,
 viene effettuato il controllo di esistenza di ogni tipo di simbolo: nomi di tipo, nomi di variabili, nomi di proprietà,
 etc.. Perciò deve valere la seguente condizione:
-    \[ \forall name \in AST. \exists def(name) \]
+    \[ \forall name \in AST. \; \exists def(name) \in AST \]
 dove \textit{def} è la funzione che ritorna la definizione di un token dell'AST.
 Questo tipo di check è molto importante in quanto fasi successive del compilatore basano le loro computazioni
-sull'ipotesi che tutti i simboli sono stati definiti. Il codice risiede nel modulo \texttt{Compiler.Args}.
+sull'ipotesi che tutti i simboli siano stati definiti. Il codice risiede nel modulo \texttt{Compiler.Args}.
 
-\subsection{Check degli argomenti}
+\subsection{Check degli argomenti}\hypertarget{Check degli argomenti}
 Il controllo degli argomenti viene effettuato, a differenza del check dei nomi che viene eseguito su ogni tipo di nome,
 solo sui nomi di tipo, di alias e di proprietà. In particolare, devono valere le seguenti condizioni:
 \[ \forall name \in AST. \]
 \begin{enumerate}
     \item:
-        \[ isTypeName(name) \Longrightarrow \# args(name) \leq \#args(def(name)) \]
+        \[ isTypeName(name) \Longrightarrow \#args(name) \leq \#args(def(name)) \]
     \item:
         \[ isAliasName(name) \Longrightarrow \#args(name) = \#args(def(name)) \]
     \item:
@@ -481,28 +483,39 @@ solo sui nomi di tipo, di alias e di proprietà. In particolare, devono valere l
 dove \textit{isTypeName}, \textit{isAliasName}, \textit{isPropertyName} sono le funzioni che ritornano \textit{true}
 se il nome in input è, rispettivamente, un nome di tipo, un nome di alias, un nome di proprietà, \textit{false} altrimenti,
 \textit{args} è la funzione che calcola gli argomenti di un token e il simbolo \textit{\#} è la funzione che calcola
-la cardinalità di un insieme. La condizione (1) è meno stringente di (2) e di (3),
+la cardinalità di un insieme. In tutti e tre i casi, gli argomenti di un simbolo sono una sequenza di variabili di tipo,
+ad esempio:
+\begin{lstlisting}
+type Map k v = Entry (Tuple2 k v) | Node (Tuple2 k v) (Map k v) (Map k v)
+
+alias IntMap v = Map Int v
+
+property Existence e a =
+    val exists : e -> a -> Bool
+;;
+\end{lstlisting}
+Gli argomenti di \texttt{Map} sono \texttt{k} e \texttt{v}, quelli di \texttt{IntMap} sono \texttt{v}, mentre quelli di
+\texttt{Existence} sono \texttt{e} e \texttt{a}.
+La condizione (1) è meno stringente di (2) e di (3),
 in quanto l'utente può "manipolare" non solo tipi, ma anche funzioni di tipi,
 anche conosciute come \textit{type constructor}. La condizione (2) è fondamentale per la prossima fase del compilatore.
 Il codice risiede nel modulo \texttt{Compiler.Args}.
 
-\subsection{Prime fasi di desugaring}
+\subsection{Prime fasi di desugaring}\hypertarget{Prime fasi di desugaring}
 Prima della generazione dei token "tipati", il compilatore si occupa di effettuare alcune fasi di desugaring. Esse si
 occupano dell'eliminazione o dell'aggiornamento di alcuni costrutti presenti in un programma per semplificare le fasi
 successive del compilatore.
 
 \subsubsection{Eliminazione degli alias di tipo}
 Fex offre un costrutto che permette all'utente di definire alias di tipi. Ecco un esempio:
-
 \begin{lstlisting}
 alias CharAnd x = Tuple2 Char x
 \end{lstlisting}
-
 Questo tipo di costrutto viene completamente valutato in fase di compilazione: ogni occorrenza di nome di alias viene
-trattata come una vera e propria macro, quindi viene sostituita con il tipo associato all'alias. Il modulo di Desugaring
-si occupa di questo task (\texttt{Compiler.Desugar.Alias}).
+trattata come una vera e propria \textit{macro}, quindi viene sostituita con il tipo associato all'alias. Il modulo di
+Desugaring si occupa di questo task (\texttt{Compiler.Desugar.Alias}).
 Come si nota nell'esempio, gli alias ammettono argomenti (variabili di tipo) che vengono passati alla funzione di tipo.
-Il linguaggio ammette anche alias di alias, tuttavia, ciò può portare a \textit{cicli} di alias, come ad esempio:
+Il linguaggio ammette anche alias di alias, tuttavia, ciò può portare a \textit{cicli}, come ad esempio:
 
 \begin{lstlisting}
 alias A = B
@@ -510,13 +523,15 @@ alias B = C
 alias C = A
 \end{lstlisting}
 
-Per questo motivo, l'algoritmo di sostituzione degli alias implementa anche la "cycle detection". Inoltre, nella
-sostituzione è fondamentale che valga la condizione sugli alias nel check degli argomenti (cfr. check degli argomenti):
-    \[ \forall name \in AST. isAliasName(name) \Longrightarrow \#args(name) = \#args(def(name)) \]
+Per questo motivo, l'algoritmo di sostituzione degli alias implementa anche la "cycle detection": se esiste un ciclo di
+alias, il programma viene rifiutata. Inoltre, nella
+sostituzione è fondamentale che valga la condizione sugli alias nel check degli argomenti
+(cfr. \hyperlink{Check degli argomenti}{Check degli argomenti}):
+    \[ \forall name \in AST. \; isAliasName(name) \Longrightarrow \#args(name) = \#args(def(name)) \]
 Se la sopracitata condizione non fosse vera, non sarebbe possibile effettuare l'unificazione nella kind-inference (cfr.
 kind-inference).
 
-\subsubsection{Eliminazione delle firme di funzioni}
+\subsubsection{Eliminazione delle firme di funzioni}\hypertext{Eliminazione delle firme di funzioni}
 Fex espone un costrutto, detto \textit{signature} (in italiano "firma"), che permette di indicare il tipo di un
 binding. Ad esempio:
 
@@ -526,7 +541,7 @@ val id : a -> a
 
 L'esempio appena mostrato indica che la variabile \textit{id} ha tipo $ \forall \alpha. \alpha \mapsto \alpha $. Questo
 tipo di costrutto non è nient'altro che "zucchero sintattico" per il type-hinting dei binding. I token dei binding
-- \texttt{SymbolDeclaration} e \texttt{MultiSymbolDeclaration} - possono possedere delle informazioni sul type-hinting,
+- \texttt{SymbolDeclaration} e \texttt{MultiSymbolDeclaration} - possono possedere delle informazioni sul proprio tipo,
 ad esempio, guardando la definizione di \texttt{MultiSymbolDeclaration}:
 
 \begin{lstlisting}
@@ -534,13 +549,14 @@ data MultiSymbolDeclaration a =
     MultiSymTok (SymbolName a) (Hint a) (MultiPatternMatch a) a
 \end{lstlisting}
 
-si può notare che il costruttore \texttt{MultiSymTok} prenda in input un token \texttt{Hint}. Il task del modulo
-\texttt{Desugar.Sigs} è di eliminare dall'AST i costrutti \texttt{Signature} che rappresentano, appunto, le firme delle
-variabili e aggiungere la loro informazione sul tipo come type-hinting delle definizioni delle variabili.
+si può notare come il costruttore \texttt{MultiSymTok} prenda in input un token \texttt{Hint}. Il task del modulo
+\texttt{Compiler.Desugar.Sigs} è di eliminare dall'AST i costrutti \texttt{Signature} che rappresentano, appunto, le
+firme delle variabili e aggiungere l'informazione sul tipo contenuta in esse come type-hinting delle definizioni dei
+bindings.
 
 \subsubsection{Renaming delle variabili di tipo}
-Prima di iniziare le fasi di costruzione dei token "tipati", il programma viene visitato e le occorrenze delle variabili
-di tipo vengono tutte rinominate in modo che, dato il programma $ P $:
+Prima di iniziare le fasi di costruzione dei token "tipati", dato un programma $ P $, esso viene visitato e le occorrenze
+delle variabili di tipo vengono tutte rinominate in modo che:
 \[ \forall v, v' \in tyVars(P). \; v \neq v' \]
 dove $ tyVars $ è la funzione che ritorna tutte le variabili \textit{non legate} di un token, mentre il test di uguaglianza
 tra variabili di tipo è definita come il test di uguaglianza degli identificatori delle variabili.
@@ -555,9 +571,10 @@ Allora la nuova definizione di T avrà la seguente forma:
 \begin{lstlisting}
 type T a1 a2 = C1 Int a1 | C2 a1 (T a1 a2)
 \end{lstlisting}
-Il motivo di questo renaming verrà descritto in seguito (cfr. Kind-inference). Il codice risiede nel modulo
-\texttt{Compiler.Desugar.TyVars}.
+Il motivo di questo renaming verrà descritto in seguito (cfr. \hyperlink{Kind-inference}{Kind-inference}). Il codice
+risiede nel modulo \texttt{Compiler.Desugar.TyVars}.
 
+%TODO: cfh
 \section{Generazione dei token "tipati"}
 Dopo la generazione dell'albero di sintassi astratta e alcune fasi di desugaring, questa seconda macro componente del
 compilatore si occupa della generazione dei token "tipati". Questi ultimi prendono questa nomea in quanto, a questo
