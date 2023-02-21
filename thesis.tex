@@ -97,6 +97,8 @@ Corso di Laurea in Nome corso di Laurea }}
 
 \section{Introduzione}
 
+\subsection{Note}
+
 \subsection{Haskell e System-F come modelli}
 Il compilatore è stato sviluppato mediante il linguaggio \textit{Haskell}, anch'esso linguaggio di programmazione funzionale.
 Inoltre, il linguaggio target di Fex è \textit{Core}, un formalismo fortemente basato su \textit{System-F} (cfr. System-F).
@@ -121,8 +123,9 @@ formalismo, tuttavia, quest'ultimo viene esteso con altri costrutti che offrono 
 
 \subsection{Caratteristiche del linguaggio}
 Tra le principali caratteristiche del linguaggio vi sono:
-\begin{description}
-\item[Linguaggio funzionale puro] Come Haskell, Fex è un linguaggio funzionale puro. La nozione di linguaggio
+
+\paragraph{Linguaggio funzionale puro}
+Come Haskell, Fex è un linguaggio funzionale puro. La nozione di linguaggio
 di programmazione \textit{funzionale} è piuttosto lasca e non vi è una vera e propria definizione formale,
 tant'è che il termine viene spesso utilizzato (e, talvolta, abusato) per indicare un linguaggio avente alcune
 particolari specifiche attribuibili al paradigma di programmazione funzionale. Fex può essere quindi considerato
@@ -134,11 +137,15 @@ controversie. Una proposta di definizione è stata fornita da Amr Sabry in [1]: 
 dei parametri, in particolare, un linguaggio L può essere
 considerato puro se, dato un qualsiasi programma p scritto in L, le funzioni di p sono dei "\textit{mapping}" puri
 dai valori in input ai valori in output, indipendentemente dal tipo di passaggio dei parametri.
-\item[Type-system statico con type-inference] Fex è un linguaggio con type-system statico, inoltre, la fase di
+
+\paragraph{Type-system statico con type-inference}
+Fex è un linguaggio con type-system statico, inoltre, la fase di
 type-checking garantisce la proprietà di type-safety. Il linguaggio permette anche di omettere le indicazioni di
 tipo (type-hinting) nella definizione di simboli; in caso non vi sia type-hinting per la definizione di un simbolo,
 il compilatore inferirà il tipo "più generale possibile" per il simbolo.
-\item["Everything is an expression"] tutti i costrutti all'interno di Fex possono essere considerati espressioni
+
+\paragraph{"Everything is an expression"}
+Tutti i costrutti all'interno di Fex possono essere considerati espressioni
 prive di side-effects; non vi sono costrutti di controllo o costrutti che modificano variabili di stato esterne
 al contesto locale. I costrutti principali sono:
     \begin{enumerate}
@@ -190,13 +197,43 @@ al contesto locale. I costrutti principali sono:
         \item la fissità degli operatori.
         \end{enumerate}
     \end{enumerate}
-\item[Tipi di dati algebrici] Fex supporta anche i tipi di dati algebrici (che sono l'unico modo per definire nuovi
+
+\paragraph{Tipi di dati algebrici}
+Fex supporta anche i tipi di dati algebrici (che sono l'unico modo per definire nuovi
 tipi). Con essi, vi è anche la nozione di \textit{data constructor}, ovvero un costrutto dotato di tipo che può essere
 accompagnato da dati. Per eseguire operazioni con i tipi di dati algebrici vi è il costrutto del pattern matching
-(cfr. grammatica delle espressioni) che permette di destrutturare un data constructor dai suoi dati associati.
-\item[Polimorfismo parametrico] il sistema di tipi del linguaggio supporta le variabili di tipo. Questo tipo di
-polimorfismo permette di avere singoli algoritmi per una moltitudine di tipi.
-\item[Kind] Il linguaggio permette la manipolazione di \textit{funzioni di tipi}, introducendo la nozione di
+(cfr. grammatica delle espressioni) che permette di destrutturare un data constructor dai suoi dati associati:
+\begin{lstlisting}
+type Arith =
+      Plus Expr Expr
+    | Minus Expr Expr
+    | Times Expr Expr
+    | Number Int
+
+let eval expr =
+    match expr with
+          Plus e1 e2 -> eval e1 + eval e2
+        | Minus e1 e2 -> eval e1 - eval e2
+        | Times e1 e2 -> eval e1 * eval e2
+        | Number n -> n
+\end{lstlisting}
+
+\paragraph{Polimorfismo parametrico}
+Il sistema di tipi del linguaggio si basa fortemente su quello di System-F, il quale, come
+è stato già menzionato in precedenza, introduce i quantificatori nei tipi. Quindi Fex fornisce il supporto per le variabili
+di tipo, inoltre, permette di quantificarle (pur con alcune restrizioni). I quantificatori nei tipi permettono ai token
+"tipabili" del linguaggio di possedere più nello stesso momento, infatti, questo tipo di polimorfismo permette di avere
+singoli algoritmi per una moltitudine di tipi, ad esempio:
+\begin{lstlisting}
+type List' a = Empty | Cons a (List' a)
+
+let map
+    | _ Empty -> Empty
+    | f (Cons x t) -> Cons (f x) (map f t)
+\end{lstlisting}
+
+\paragraph{Tipi higher-kinded}
+Il linguaggio permette la manipolazione di \textit{funzioni di tipi}, introducendo la nozione di
 \textit{kind} (cfr. sezione sul sistema di tipi). Quindi, data la seguente definizione di tipo:
 \begin{lstlisting}
 type M a b = DataCon1 a | DataCon2 b | DataCon3 a Char
@@ -214,12 +251,40 @@ M
 m Int
 \end{lstlisting}
 dove \textit{m} è una variabile di tipo a cui viene applicata il tipo \textit{Int}.
-\item[Polimorfismo ad hoc] attraverso il meccanismo delle type-classes (all'interno del linguaggio vengono chiamate
-proprietà), è possibile creare funzioni polimorfe che possono essere applicate ad argomenti di tipi differenti e, a
-seconda dei tipi degli argomenti, viene "selezionata" la giusta implementazione. Ogni proprietà può avere uno, ma anche
-più tipi associati; inoltre, i tipi associati alle proprietà possono essere anche variabili di tipo.
 
-\end{description}
+\paragraph{Polimorfismo ad hoc}
+Attraverso il meccanismo delle type-classes (all'interno del linguaggio vengono chiamate
+proprietà), è possibile creare funzioni polimorfe che possono essere applicate ad argomenti di tipi differenti e, a
+seconda dei tipi degli argomenti, viene "selezionata" un'implementazione. Ogni proprietà può avere uno, ma anche
+più tipi associati; inoltre, i tipi associati alle proprietà possono essere anche variabili di tipo. Si osservi il seguente
+esempio:
+\begin{lstlisting}
+type SuccessHttpCodes =
+      Ok200
+    | Moved301
+
+type ErrorHttpCodes =
+      Err401
+    | Err404
+    | Err500
+
+property Show a =
+    val show : a -> String
+;;
+
+instance Show SuccessHttpCodes =
+    let show
+        | Ok200 -> "Request success"
+        | Moved301 -> "Resource moved permanently"
+;;
+
+instance Show ErrorHttpCodes =
+    let show
+        | Err401 -> "Unauthorized"
+        | Err404 -> "Resource not found"
+        | Err500 -> "Internal server error"
+;;
+\end{lstlisting}
 
 \subsection{Il compilatore}
 \begin{tikzpicture}[node distance=2cm]
