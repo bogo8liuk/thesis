@@ -4,6 +4,7 @@
 \usepackage{listings}
 \usepackage{tikz}
 \usepackage{enumitem}
+\usepackage{blindtext}
 \usepackage{hyperref}
 \usepackage{proof}
 \usepackage{amssymb}
@@ -98,30 +99,47 @@ Corso di Laurea in Nome corso di Laurea }}
 \section{Introduzione}
 
 \subsection{Note}
+Prima di presentare l'articolo, è necessario fare alcune precisazioni utili alla lettura:
+\begin{itemize}
+    \item la sintassi degli identificatori di Fex è Haskell-like, quindi, tutto ciò che viene considerato come
+    \textit{variabile} nel linguaggio ha lettera iniziale minuscola, mentre tutto ciò che viene considerato valore
+    \textit{valore} ha lettera iniziale maiuscola;
+    \item i termini \textit{constraint} e \textit{predicato} sono considerati sinonimi (a meno di contesti particolari).
+    Essi vengono intercambiati abbastanza liberamente;
+    \item talvolta, è possibile che venga presentato codice sorgente (Haskell) del compilatore Fex, tuttavia, verranno
+    isolati e mostrati solamente i punti più interessanti, rimuovendo i commenti e il codice non direttamente inerente
+    al contesto. Altre volte, gli algoritmi e i concetti utilizzati nel compilatore vengono mostrati con uno
+    pseudo-codice oppure con uno pseudo-linguaggio della logica. Questo per evitare di presentare dettagli implementativi
+    poco utili ai fini delle speigazioni.
+\end{itemize}
 
 \subsection{Haskell e System-F come modelli}
-Il compilatore è stato sviluppato mediante il linguaggio \textit{Haskell}, anch'esso linguaggio di programmazione funzionale.
-Inoltre, il linguaggio target di Fex è \textit{Core}, un formalismo fortemente basato su \textit{System-F} (cfr. System-F).
-Core, inoltre,
+Il compilatore è stato sviluppato utilizzando il linguaggio \textit{Haskell}, anch'esso linguaggio di programmazione
+funzionale.
+Inoltre, il linguaggio target di Fex è \textit{Core}, un linguaggio che estende \textit{System-F}
+(cfr. \hyperlink{System-F}{System-F}). Core, inoltre,
 viene utilizzato da GHC (compilatore Haskell) come rappresentazione intermedia di Haskell. All'interno di questo
-contesto, GHC espone delle API che permettono al cliente di utilizzare le funzionalità del compilatore [3]; è quindi
-possibile creare e manipolare programmi Core mediante le API, le quali sono state scritte in Haskell. Per quest'ultimo
+contesto, GHC espone delle API che permettono al cliente di utilizzare le funzionalità del compilatore
+\hyperlink{bibl3}{[3]}; è quindi
+possibile creare e manipolare programmi Core mediante le API, le quali sono scritte in Haskell. Per quest'ultimo
 motivo, Haskell è stato scelto come linguaggio di implementazione del compilatore di Fex, tuttavia, nel contesto
 del progetto, Haskell ha anche un altro importante ruolo: alcune delle sue funzionalità sono state, direttamente
 o indirettamente, fonte di ispirazione per il design di Fex. Nel prossimo paragrafo vengono presentate le principali
 caratteristiche di Fex ed è possibile ritrovare la maggior parte di esse anche in Haskell. Un altro linguaggio
 che è stato fonte di ispirazione, ma con minore impatto, è \textit{OCaml}, linguaggio multi-paradigma (funzionale non
-puro), soprattutto per la sintassi di Fex e per il costrutto delle polymorphic variants (cfr. Varianti polimorfe).
+puro), soprattutto per la sintassi di Fex e per il costrutto delle polymorphic variants (cfr.
+\hyperlink{Varianti polimorfe}{Varianti polimorfe}).
 
-\paragraph{System-F}
-I costrutti principali di Fex si basano su System-F, una versione tipata del lambda-calcolo che introduce un meccanismo di
-quantificazione universale sui tipi. Esso è definito con i seguenti quattro costrutti:
+\paragraph{System-F}\hypertarget{System-F}
+I costrutti principali di Fex si basano su System-F, una versione "tipata" del lambda-calcolo che introduce un meccanismo
+di quantificazione universale sui tipi. Esso è definito con i seguenti quattro costrutti:
 \[ e := x \; | \; e_1 \; e_2 \; | \; \lambda x. \; e \; | \; let \; x = e_1 \; in \; e_2 \]
-Come vedremo in seguito (cfr. Ricorsione), questo formalismo risulta non essere Turing-completo. Fex (come lo stesso
+Come vedremo in seguito (cfr. \hyperlink{Ricorsione}{Ricorsione}), questo formalismo risulta non essere Turing-completo.
+Fex (come lo stesso
 Haskell) basa i propri costrutti e il proprio type-system, nonché il suo algoritmo di inferenza dei tipi, su questo
 formalismo, tuttavia, quest'ultimo viene esteso con altri costrutti che offrono una maggiore espressività.
 
-\subsection{Caratteristiche del linguaggio}
+\subsection{Caratteristiche del linguaggio}\hypertarget{Caratteristiche del linguaggio}
 Tra le principali caratteristiche del linguaggio vi sono:
 
 \paragraph{Linguaggio funzionale puro}
@@ -133,13 +151,16 @@ funzionale poiché, semplicemente, ha numerose caratteristiche proprie del parad
 algebrici, pattern matching, funzioni di ordine superiore, immutabilità, polimorfismo parametrico etc.. Per quanto
 riguarda la nozione di \textit{purità}, nel paradigma funzionale viene fatta spesso la distinzione
 tra linguaggi puri e impuri; anche qui, non vi sono vere e proprie definizioni e la questione è spesso oggetto di
-controversie. Una proposta di definizione è stata fornita da Amr Sabry in [1]: la purità ha a che fare con il passaggio
-dei parametri, in particolare, un linguaggio L può essere
-considerato puro se, dato un qualsiasi programma p scritto in L, le funzioni di p sono dei "\textit{mapping}" puri
-dai valori in input ai valori in output, indipendentemente dal tipo di passaggio dei parametri.
+controversie. Una proposta di definizione è stata fornita da Amr Sabry \hyperlink{bibl1}{[1]}: la purità ha a che
+fare con il passaggio
+dei parametri, in particolare, un linguaggio $ L $ può essere
+considerato puro se, dato un qualsiasi programma $ p $ scritto in $ L $, al variare delle strategie di valutazione
+delle espressione di $ p $ (call-by-value, call-by-name, call-by-reference, call-by-need, etc.), non vi sono differenze
+osservabili, escludendo la divergenza.
 
 \paragraph{Type-system statico con type-inference}
-Fex è un linguaggio con type-system statico, inoltre, la fase di
+Fex è un linguaggio con type-system statico. Questo significa che le proprietà sul sistema di tipi vengono verificate
+a tempo di compilazione, infatti, la fase di
 type-checking garantisce la proprietà di type-safety. Il linguaggio permette anche di omettere le indicazioni di
 tipo (type-hinting) nella definizione di simboli; in caso non vi sia type-hinting per la definizione di un simbolo,
 il compilatore inferirà il tipo "più generale possibile" per il simbolo.
@@ -147,23 +168,23 @@ il compilatore inferirà il tipo "più generale possibile" per il simbolo.
 \paragraph{"Everything is an expression"}
 Tutti i costrutti all'interno di Fex possono essere considerati espressioni
 prive di side-effects; non vi sono costrutti di controllo o costrutti che modificano variabili di stato esterne
-al contesto locale. I costrutti principali sono:
+al contesto locale di un'espressione. I costrutti principali sono:
     \begin{enumerate}
     \item definizioni di: tipi, variabili, proprietà (che corrispondono alle type-classes di Haskell), istanze di
     proprietà, alias di tipi, firme di simboli; le definizioni di simboli hanno le seguenti grammatiche:
     \begin{lstlisting}
       S :=
-          let var args = E
+          let Var Args = E
 
      MS :=
-          let var MPM
+          let Var MPM
     \end{lstlisting}
     \item espressioni date dalla seguente grammatica:
     \begin{lstlisting}
       E :=
-          var
-          datacon
-          literal
+          Var
+          Datacon
+          Literal
           E E
           lam args -> E
           lam MPM
@@ -178,18 +199,19 @@ al contesto locale. I costrutti principali sono:
           | ME ... ME = E | ... | ME ... ME = E
 
      ME :=
-          var
+          Var
           _
-          literal
-          datacon ME ... ME
-          
+          Literal
+          Datacon ME ... ME
     \end{lstlisting}
-    \item un costrutto, valutato a compile-time (cfr. parsing degli operatori), per definire una "categoria" di
+    \item un costrutto, valutato a compile-time (cfr. \hyperlink{Parsing degli operatori}{Parsing degli operatori}),
+    per definire una "categoria" di
     operatori. Le categorie di operatori hanno degli identificatori per poterle nominare, inoltre definiscono le
     seguenti proprietà:
         \begin{enumerate}
         \item una lista di operatori appartenenti alla proprietà. Sono compresi gli identificatori di variabili (gli
-        operatori stessi sono identificatori di variabili) che possono essere utilizzati con la sintassi degli operatori;
+        operatori stessi sono identificatori di variabili) che possono essere utilizzati con la sintassi infissa degli
+        operatori;
         \item una lista di categorie di operatori i quali avranno meno precedenza degli operatori della categoria
         corrente;
         \item una lista di categorie di operatori i quali avranno più precedenza degli operatori della categoria
@@ -200,9 +222,9 @@ al contesto locale. I costrutti principali sono:
 
 \paragraph{Tipi di dati algebrici}
 Fex supporta anche i tipi di dati algebrici (che sono l'unico modo per definire nuovi
-tipi). Con essi, vi è anche la nozione di \textit{data constructor}, ovvero un costrutto dotato di tipo che può essere
-accompagnato da dati. Per eseguire operazioni con i tipi di dati algebrici vi è il costrutto del pattern matching
-(cfr. grammatica delle espressioni) che permette di destrutturare un data constructor dai suoi dati associati:
+tipi). Con essi, vi è anche la nozione di \textit{data constructor}, ovvero un costrutto dotato di tipo e al quale
+possono essere associati dei dati. Per eseguire operazioni con i tipi di dati algebrici vi è il costrutto del pattern
+matching che permette di destrutturare un data constructor dai suoi dati associati:
 \begin{lstlisting}
 type Arith =
       Plus Expr Expr
@@ -222,7 +244,7 @@ let eval expr =
 Il sistema di tipi del linguaggio si basa fortemente su quello di System-F, il quale, come
 è stato già menzionato in precedenza, introduce i quantificatori nei tipi. Quindi Fex fornisce il supporto per le variabili
 di tipo, inoltre, permette di quantificarle (pur con alcune restrizioni). I quantificatori nei tipi permettono ai token
-"tipabili" del linguaggio di possedere più nello stesso momento, infatti, questo tipo di polimorfismo permette di avere
+"tipabili" del linguaggio di possedere più tipi nello stesso momento, infatti, questo tipo di polimorfismo permette di avere
 singoli algoritmi per una moltitudine di tipi, ad esempio:
 \begin{lstlisting}
 type List' a = Empty | Cons a (List' a)
@@ -234,7 +256,7 @@ let map
 
 \paragraph{Tipi higher-kinded}
 Il linguaggio permette la manipolazione di \textit{funzioni di tipi}, introducendo la nozione di
-\textit{kind} (cfr. sezione sul sistema di tipi). Quindi, data la seguente definizione di tipo:
+\textit{kind} (cfr. \hyperlink{Il sistema di tipi}{Il sistema di tipi}). Quindi, data la seguente definizione di tipo:
 \begin{lstlisting}
 type M a b = DataCon1 a | DataCon2 b | DataCon3 a Char
 \end{lstlisting}
@@ -256,8 +278,7 @@ dove \textit{m} è una variabile di tipo a cui viene applicata il tipo \textit{I
 Attraverso il meccanismo delle type-classes (all'interno del linguaggio vengono chiamate
 proprietà), è possibile creare funzioni polimorfe che possono essere applicate ad argomenti di tipi differenti e, a
 seconda dei tipi degli argomenti, viene "selezionata" un'implementazione. Ogni proprietà può avere uno, ma anche
-più tipi associati; inoltre, i tipi associati alle proprietà possono essere anche variabili di tipo. Si osservi il seguente
-esempio:
+più tipi associati. Si osservi il seguente esempio:
 \begin{lstlisting}
 type SuccessHttpCodes =
       Ok200
@@ -318,17 +339,18 @@ La struttura del compilatore è sequenziale, con eccezione fatta per la fase di 
 occupa di rimuovere il cosiddetto "zucchero sintattico" dalle strutture dati - che mantengono le informazioni del
 programma - che, durante le varie fasi di compilazione, possono subire semplificazioni. Talvolta, alcune semplificazioni
 vengono posticipate il più possibile per permettere al compilatore di restituire in output messaggi d'errore comprensibili
-per l'utente. Un esempio ne è la trasformazione che subiscono le strutture dati che rappresentano il costrutto del
-pattern matching. Il modulo che si occupa del desugaring si presenta come una libreria che espone delle API che agiscono
-sulle strutture dati del compilatore. \`E compito del compilatore fare le chiamate al modulo di desugaring. Di seguito,
+per l'utente (cfr. \hyperlink{Fasi di desugaring}{Fasi di desugaring}). Il modulo che si occupa del desugaring si presenta
+come una libreria che espone delle API che agiscono
+sulle strutture dati del compilatore. \`E compito del compilatore fare le chiamate ai vari sotto-moduli di desugaring.
+Nel corso dell'articolo,
 vi è una più ampia e precisa descrizione delle singole fasi di compilazione, con enfasi particolare sugli algoritmi
 più interessanti utilizzati per risolvere i singoli sottoproblemi e su come le varie fasi interagiscono tra loro.
 
 \section{L'albero di sintassi astratta}
-Nella prima parte del compilatore viene eseguito il parsing del sorgente.
-Questa operazione produce quindi l'albero di sintassi astratta (AST). Il codice che gestisce i "token" dell'AST è
-all'interno del modulo \texttt{Compiler.Ast.Tree}; l'entry point dell'albero è dato dal token \texttt{Program}, il
-quale, come nodi figli, ha delle \texttt{Declaration} che rappresentano i vari costrutti del linguaggio.
+Nella prima parte del compilatore viene eseguito il parsing del sorgente e, se non vi sono errori di sintassi, viene prodotto
+l'albero di sintassi astratta (AST). Il codice che gestisce i "token" dell'AST è
+all'interno del modulo \texttt{Compiler.Ast.Tree}; l'entry-point dell'albero è dato dal token \texttt{Program}, il
+quale, come nodi figli, ha delle \texttt{Declaration} che rappresentano i principali costrutti globali del linguaggio.
 
 \begin{lstlisting}
 newtype Program a = Program [Declaration a]
@@ -361,6 +383,7 @@ Di seguito vi è lo schema della prima parte del compilatore: \newline
 \draw [arrow] (desugar) -- (rawastAlias);
 \end{tikzpicture}
 
+%TODO: cfh
 \subsection{Il parser}
 Il parser è la prima componente del compilatore (dopo la lettura del sorgente). \`E stato scritto mediante la libreria
 open-source \texttt{Parsec} [4], la quale si basa sul concetto di parser combinator monadico. Il codice risiede nel
@@ -646,7 +669,7 @@ gli aggiornamenti del grafo sono parecchio rari, inoltre, man mano che GHC ottie
 accrescerà il grafo senza aggiornare i nodi preesistenti; in questo modo, non vi è alcuna necessità di costruire il
 grafo da zero.
 
-\subsection{Il sistema di tipi}
+\subsection{Il sistema di tipi}\hypertarget{Il sistema di tipi}
 In questo paragrafo, verrà presentato il sistema di tipi di Fex. Come è stato già menzionato in precedenza, il
 linguaggio supporta il polimorfismo ad hoc e il polimorfismo parametrico; quest'ultimo viene implementato attraverso
 il concetto di variabile di tipo, la quale può essere considerata come un "placeholder" per i tipi. Il sistema di tipi
@@ -1948,10 +1971,11 @@ Di seguito, lo schema delle fasi finali del compilatore:
 \draw [arrow] (desugar) -- (scrutinee);
 \end{tikzpicture}
 
-\subsection{Fasi di desugaring}
+\subsection{Fasi di desugaring}\hypertarget{Fasi di desugaring}
+.
 
-\subsubsection{Dispatch statico}
-Il polimorfismo ad-hoc viene implementato attraverso il meccanismo delle type-classes (cfr. Polimorfismo ad-hoc).
+\subsubsection{Dispatch statico}\hypertarget{Dispatch statico}
+Il polimorfismo ad-hoc viene implementato attraverso il meccanismo delle type-classes.
 La sintassi Core non possiede, però, costrutti per i metodi delle type-classes e per i bindings delle istanze.
 La politica del compilatore Fex è quella di aggiungere i bindings delle istanze ai bindings del programma,
 cambiando i nomi degli stessi metodi di istanze diverse (cfr. Costruzione delle istanze). Questa politica ha
@@ -2591,80 +2615,80 @@ class cs => VariantName a ts | a -> ts
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
     %[1]
-    \item Amr Sabry - What is a purely functional language? - in: Journal of Functional Programming, Volume 8, Issue 1,
+    \item \hypertarget{bibl1} Amr Sabry - What is a purely functional language? - in: Journal of Functional Programming, Volume 8, Issue 1,
     January 1998, pp. 1 - 22
     %[2]
-    \item Martin Sulzmann, Martin Odersky, Martin Wehr - Type Inference with Constrained Types - in: Theory and Practice
+    \item \hypertarget{bibl2} Martin Sulzmann, Martin Odersky, Martin Wehr - Type Inference with Constrained Types - in: Theory and Practice
     of Object Systems · January 1999
     %[3]
-    \item Stephen Diehl - Dive into GHC: Targeting Core - url: \url{https://www.stephendiehl.com/posts/ghc_03.html} -
+    \item \hypertarget{bibl3} Stephen Diehl - Dive into GHC: Targeting Core - url: \url{https://www.stephendiehl.com/posts/ghc_03.html} -
     ultima visita: 21/02/2023
     %[4]
-    \item libreria Parsec - url: \url{https://hackage.haskell.org/package/parsec} - ultima visita: 21/02/2023
+    \item \hypertarget{bibl4} libreria Parsec - url: \url{https://hackage.haskell.org/package/parsec} - ultima visita: 21/02/2023
     %[5]
-    \item Data types for Haskell entities - url:
+    \item \hypertarget{bibl5} Data types for Haskell entities - url:
     \url{https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/compiler/entity-types} - ultima visita: 21/02/2023
     %[6]
-    \item Edward Y. Zang - Backpack without symbol tables - in: May 11, 2016 - url:
+    \item \hypertarget{bibl6} Edward Y. Zang - Backpack without symbol tables - in: May 11, 2016 - url:
     \url{http://web.mit.edu/~ezyang/Public/backpack-symbol-tables.pdf} - ultima visita: 21/02/2023
     %[7]
-    \item Haskell Flexible Instances extension - url:
+    \item \hypertarget{bibl7} Haskell Flexible Instances extension - url:
     \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/instances.html#extension-FlexibleInstances} -
     ultima visita: 21/02/2023
     %[8]
-    \item Haskell instance resolution termination conditions - url:
+    \item \hypertarget{bibl8} Haskell instance resolution termination conditions - url:
     \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/instances.html#instance-termination-rules} -
     ultima visita: 21/02/2023
     %[9]
-    \item Martin Sulzmann, Gregory J. Duck, Simon Peyton-Jones, Peter J. Stuckey - Understanding Functional Dependencies
+    \item \hypertarget{bibl9} Martin Sulzmann, Gregory J. Duck, Simon Peyton-Jones, Peter J. Stuckey - Understanding Functional Dependencies
     via Constraint Handling Rules - in: Journal of Functional Programming, Volume 17, Issue 1, January 2007, pp. 83 - 129
     %[10]
-    \item Definizione di ClsInst in GHC, version 8.10.7 - url:
+    \item \hypertarget{bibl10} Definizione di ClsInst in GHC, version 8.10.7 - url:
     \url{https://hackage.haskell.org/package/ghc-8.10.7/docs/InstEnv.html#t:ClsInst} - ultima visita: 21/02/2023
     %[11]
-    \item Monomorphization - url:
+    \item \hypertarget{bibl11} Monomorphization - url:
     \url{https://doc.rust-lang.org/book/ch10-01-syntax.html#performance-of-code-using-generics} - ultima visita: 21/02/2023
     %[12]
-    \item Type inference for Haskell, part 15 - url:
+    \item \hypertarget{bibl12} Type inference for Haskell, part 15 - url:
     \url{https://jeremymikkola.com/posts/2019_01_15_type_inference_for_haskell_part_15.html} - ultima visita: 21/02/2023
     %[13]
-    \item Overlapping instances in Haskell - url:
+    \item \hypertarget{bibl13} Overlapping instances in Haskell - url:
     \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/instances.html#overlapping-instances} -
     ultima visita: 21/02/2023
     %[14]
-    \item The GHC API, version 8.10.7 - url: \url{https://hackage.haskell.org/package/ghc-8.10.7} -
+    \item \hypertarget{bibl14} The GHC API, version 8.10.7 - url: \url{https://hackage.haskell.org/package/ghc-8.10.7} -
     ultima visita: 21/02/2023
     %[15]
-    \item CoreSyn, version 8.10.7 - url: \url{https://hackage.haskell.org/package/ghc-8.10.7/docs/CoreSyn.html} -
+    \item \hypertarget{bibl15} CoreSyn, version 8.10.7 - url: \url{https://hackage.haskell.org/package/ghc-8.10.7/docs/CoreSyn.html} -
     ultima visita: 21/02/2023
     %[16]
-    \item Type, version 8.10.7 - url: \url{https://hackage.haskell.org/package/ghc-8.10.7/docs/Type.html} -
+    \item \hypertarget{bibl16} Type, version 8.10.7 - url: \url{https://hackage.haskell.org/package/ghc-8.10.7/docs/Type.html} -
     ultima visita: 21/02/2023
     %[17]
-    \item TyCon, version 8.10.7 - url: \url{https://hackage.haskell.org/package/ghc-8.10.7/docs/TyCon.html} -
+    \item \hypertarget{bibl17} TyCon, version 8.10.7 - url: \url{https://hackage.haskell.org/package/ghc-8.10.7/docs/TyCon.html} -
     ultima visita: 21/02/2023
     %[18]
-    \item DataCon, version 8.10.7 - url: \url{https://hackage.haskell.org/package/ghc-8.10.7/docs/DataCon.html} -
+    \item \hypertarget{bibl18} DataCon, version 8.10.7 - url: \url{https://hackage.haskell.org/package/ghc-8.10.7/docs/DataCon.html} -
     ultima visita: 21/02/2023
     %[19]
-    \item GHC Commentary: The Compiler - url: \url{https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/compiler/} -
+    \item \hypertarget{bibl19} GHC Commentary: The Compiler - url: \url{https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/compiler/} -
     ultima visita: 21/02/2023
     %[20]
-    \item Jean-Philippe Bernardy, Mathieu Boespflug, Ryan R. Newton, Simon Peyton Jones, Arnaud Spiwack - Linear Haskell -
+    \item \hypertarget{bibl20} Jean-Philippe Bernardy, Mathieu Boespflug, Ryan R. Newton, Simon Peyton Jones, Arnaud Spiwack - Linear Haskell -
     in: arXiv:1710.09756
     %[21]
-    \item Effect Typing - url: \url{https://koka-lang.github.io/koka/doc/book.html#why-effects} - ultima visita: 21/02/2023
+    \item \hypertarget{bibl21} Effect Typing - url: \url{https://koka-lang.github.io/koka/doc/book.html#why-effects} - ultima visita: 21/02/2023
     %[22]
-    \item Matija Pretnar - An Introduction to Algebraic Effects and Handlers. Invited tutorial paper - in: Electronic
+    \item \hypertarget{bibl22} Matija Pretnar - An Introduction to Algebraic Effects and Handlers. Invited tutorial paper - in: Electronic
     Notes in Theoretical Computer Science, Volume 319, 21 December 2015, Pages 19-35
     %[23]
-    \item Effect types - url: \url{https://koka-lang.github.io/koka/doc/book.html#sec-effect-types} -
+    \item \hypertarget{bibl23} Effect types - url: \url{https://koka-lang.github.io/koka/doc/book.html#sec-effect-types} -
     ultima visita: 21/02/2023
     %[24]
-    \item Jacques Garrigue - Programming with Polymorphic Variants - url:
+    \item \hypertarget{bibl24} Jacques Garrigue - Programming with Polymorphic Variants - url:
     \url{https://caml.inria.fr/pub/papers/garrigue-polymorphic_variants-ml98.pdf} - ultima visita: 21/02/2023
     %[25]
-    \item Koji Kagawa - Polymorphic Variants in Haskell - in: Haskell '06: Proceedings of the 2006 ACM SIGPLAN workshop
+    \item \hypertarget{bibl25} Koji Kagawa - Polymorphic Variants in Haskell - in: Haskell '06: Proceedings of the 2006 ACM SIGPLAN workshop
     on Haskell, 17 Semptember 2006, Pages 37-47
 \end{enumerate}
 
