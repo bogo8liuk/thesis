@@ -92,10 +92,10 @@ Corso di Laurea in Nome corso di Laurea }}
 
 \textwidth=450pt\oddsidemargin=0pt
 
-\section{Introduzione}
+\tableofcontents
+\newpage
 
-%TODO: dove viene descritto il problema, la subsection può essere rimossa
-\subsection{Il linguaggio}
+\section{Introduzione}
 
 \subsection{Haskell e System-F come modelli}
 Il compilatore è stato sviluppato mediante il linguaggio \textit{Haskell}, anch'esso linguaggio di programmazione funzionale.
@@ -221,9 +221,7 @@ più tipi associati; inoltre, i tipi associati alle proprietà possono essere an
 
 \end{description}
 
-\section{Il compilatore}
-
-\subsection{La struttura}
+\subsection{Il compilatore}
 \begin{tikzpicture}[node distance=2cm]
 \node (src) [object] {Codice sorgente};
 \node (parser) [process, below of=src] {Parser};
@@ -400,7 +398,12 @@ in quanto l'utente può "manipolare" non solo tipi, ma anche funzioni di tipi,
 anche conosciute come \textit{type constructor}. La condizione (2) è fondamentale per la prossima fase del compilatore.
 Il codice risiede nel modulo \texttt{Compiler.Args}.
 
-\subsection{Eliminazione degli alias di tipo}
+\subsection{Prime fasi di desugaring}
+Prima della generazione dei token "tipati", il compilatore si occupa di effettuare alcune fasi di desugaring. Esse si
+occupano dell'eliminazione o dell'aggiornamento di alcuni costrutti presenti in un programma per semplificare le fasi
+successive del compilatore.
+
+\subsubsection{Eliminazione degli alias di tipo}
 Fex offre un costrutto che permette all'utente di definire alias di tipi. Ecco un esempio:
 
 \begin{lstlisting}
@@ -425,7 +428,7 @@ sostituzione è fondamentale che valga la condizione sugli alias nel check degli
 Se la sopracitata condizione non fosse vera, non sarebbe possibile effettuare l'unificazione nella kind-inference (cfr.
 kind-inference).
 
-\subsection{Eliminazione delle firme di funzioni}
+\subsubsection{Eliminazione delle firme di funzioni}
 Fex espone un costrutto, detto \textit{signature} (in italiano "firma"), che permette di indicare il tipo di un
 binding. Ad esempio:
 
@@ -447,7 +450,7 @@ si può notare che il costruttore \texttt{MultiSymTok} prenda in input un token 
 \texttt{Desugar.Sigs} è di eliminare dall'AST i costrutti \texttt{Signature} che rappresentano, appunto, le firme delle
 variabili e aggiungere la loro informazione sul tipo come type-hinting delle definizioni delle variabili.
 
-\subsection{Renaming delle variabili di tipo}
+\subsubsection{Renaming delle variabili di tipo}
 Prima di iniziare le fasi di costruzione dei token "tipati", il programma viene visitato e le occorrenze delle variabili
 di tipo vengono tutte rinominate in modo che, dato il programma $ P $:
 \[ \forall v, v' \in tyVars(P). \; v \neq v' \]
@@ -471,6 +474,7 @@ Il motivo di questo renaming verrà descritto in seguito (cfr. Kind-inference). 
 Dopo la generazione dell'albero di sintassi astratta e alcune fasi di desugaring, questa seconda macro componente del
 compilatore si occupa della generazione dei token "tipati". Questi ultimi prendono questa nomea in quanto, a questo
 livello, compaiono le nozioni di tipo e di kind del linguaggio.
+\newline
 
 \begin{tikzpicture}[node distance=2cm]
 \node (desast) [object] {AST "dezuccherato"};
@@ -673,7 +677,7 @@ Questa appena data è la nozione di \textit{tipo qualificato}. La definizione si
 data LangQualType a = Qual [LangSpecConstraint a] (LangHigherType a)
 \end{lstlisting}
 
-\subsubsection{Schemi di tipi}
+\subsubsection{Schemi di tipi e polimorfismo parametrico}
 Finora abbiamo trattato mono-tipi e tipi qualificati, tuttavia, la sola presenza delle variabili di tipo non è sufficiente
 a costruire tipi "polimorfi". Si consideri il seguente esempio:
 \[ map : (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
@@ -761,11 +765,11 @@ val (/=) : Char -> Char -> Bool
 \end{lstlisting}
 Si può notare come il predicato su \texttt{Eq} non esiste più.
 
-\subsubsection{Estensioni del polimorfismo ad hoc}
+\subsection{Estensioni del polimorfismo ad hoc}
 Il meccanismo di polimorfismo ad hoc precedentemente presentato incontra numerose estensioni in Fex, alcune delle
 quali impongono condizioni aggiuntive sul programma.
 
-\subparagraph{Numero arbitrario di argomenti delle proprietà}
+\subsubsection{Numero arbitrario di argomenti delle proprietà}
 Nell'esempio con \texttt{Eq}, la proprietà possedeva soltanto un argomento, tuttavia, è possibile definire proprietà
 con un numero arbitrario (ma fissato alla definizione) di argomenti ad esempio:
 \begin{lstlisting}
@@ -777,7 +781,7 @@ property Stream s t =
 \end{lstlisting}
 Si noti che \texttt{Stream} ha 2 argomenti.
 
-\subparagraph{Constraints sulle proprietà}
+\subsubsection{Constraints sulle proprietà}
 \`E possibile definire in Fex una proprietà della forma:
 \begin{lstlisting}
 property C1 a Char => C2 a =
@@ -790,7 +794,7 @@ Semanticamente, questo impone la seguente condizione sul programma:
 dove $ inst(C, \overline{t}) $ è, banalmente, l'instanza con nome di proprietà $ C $ e tipi $ \overline{t} $. \`E
 possibile aggiungere più di un predicato alla stessa proprietà.
 
-\subparagraph{Polimorfismo higher-kinded}
+\subsubsection{Polimorfismo higher-kinded}
 Riprendiamo il precedente esempio con \texttt{Stream}:
 \begin{lstlisting}
 property Stream s t =
@@ -806,7 +810,7 @@ si può notare come la variabile \textit{s} abbia kind (utilizzando la rappresen
 mentre la variabile \textit{t} ha kind:
    \[ * \]
 
-\subparagraph{Argomenti arbitrari delle istanze}
+\subsubsection{Argomenti arbitrari delle istanze}
 Gli argomenti di un'istanza possono essere tipi di forma arbitraria, ad esempio:
 \begin{lstlisting}
 property C x y =
@@ -844,7 +848,7 @@ necessario utilizzare l'estensione \texttt{FlexibleInstances} [7]. In Fex, a dif
 dove $ \overline{\alpha} $ sono variabili di tipo distinte e $ TyCon $ è un costruttore di tipo. In seguito, verrà
 mostrato quali vincoli che riguardano i constraints e le istanze possono essere rilassati e con quali conseguenze.
 
-\subparagraph{Constraints sulle istanze}
+\subsubsection{Constraints sulle istanze}
 L'utente ha anche la facoltà di definire istanze con uno o più predicati, ad esempio:
 \begin{lstlisting}
 instance Monad m => Stream m String =
@@ -859,7 +863,7 @@ val consume : Monad m => m String -> (m String, String)
 \end{lstlisting}
 Il constraint sull'istanza viene quindi applicato al tipo dei metodi di istanza.
 
-\subsubsection{Condizioni sui constraint}
+\subsection{Condizioni sui constraints}
 I constraints rappresentano un modo per "restringere" i possibili tipi che possono istanziare una o più variabili di
 tipo. I tipi nelle firme delle variabili (nonché i type-hinting) possono possedere zero o più constraint; lo stesso
 vale, come viene mostrato nei paragrafi precedenti, anche per le proprietà e per le istanze. Esistono, però, dei
@@ -1169,12 +1173,12 @@ implementato verranno esposte:
     delle sostituzioni generate dalle eventuali unificazioni (cfr. Unificazione) e le applica all'ambiente di
     tipizzazione. Proprio a causa della gestione delle sostituzioni, la complessità computazionale dell'algoritmo
     nel caso peggiore è esponenziale.
-    \item \textit{Algoritmo J}, è un algoritmo più efficiente di \textit{W} (lineare nella lunghezza dell'espressione),
+    \item \textit{Algoritmo J}, è un algoritmo più efficiente di \textit{W} (complessità lineare nella lunghezza
+    dell'espressione),
     tuttavia, esso non gestisce le sostituzioni, o almeno, esse vengono considerate come side-effects. Viene
     presentato in letteratura come alternativa efficiente a \textit{W}.
 \end{itemize}
 
-\subsubsection{Regole di inferenza}
 Come è stato già anticipato, HM viene presentato sotto forma di \textit{regole}, le quali hanno la seguente forma:
 \newline
 \[ \infer[\textbf{Regola}]{Conclusione}{Premesse} \]
@@ -1187,9 +1191,9 @@ un altro componente: il \textit{contesto} o \textit{ambiente di tipizzazione}. I
 del contesto, infatti avranno la seguente forma:
 \[ \Gamma \vdash_W x : \sigma \]
 questa scritta afferma che sotto le ipotesi in $ \Gamma $, il token $ x $ ha tipo $ \sigma $.
-Ora verranno elencate le regole di inferenza:
+Ora verranno elencate le regole di inferenza.
 
-\paragraph{Inferenza di variabile}
+\subsubsection{Inferenza di variabile}
 Prima di presentare di la regola d'inferenza delle variabili è necessario due ulteriori regole. La prima è la
 regola di specializzazione e introduce una nozione d'ordine parziale tra tipi:
 \[ \infer[\textbf{Spec}]{\forall \alpha_1 ... \forall \alpha_n. \; \tau \sqsubseteq \forall \beta_1 ... \beta_m. \; \tau'}{\tau' = \{ \alpha_i \mapsto \tau_i \}\tau & \beta_i \notin free(\forall \alpha_1 ... \forall \alpha_n . \; \tau)} \]
@@ -1210,7 +1214,7 @@ in maniera informale.
 \`E doveroso notare che nella conclusione, oltre al giudizio sul tipo della variabile, vi è un altro valore in "output",
 ovvero le eventuali sostituzioni generate dall'inferenza dei costrutti coinvolti. In questo non vi è alcuna sostituzione.
 
-\paragraph{Inferenza di applicazione}
+\subsubsection{Inferenza di applicazione}
 La prossima regola serve per inferire l'applicazione di due espressioni:
 \[ \infer[\textbf{App}]{\Gamma \vdash_W e_0 \; e_1 : S_2\tau', \; S_2S_1S_0}{\Gamma \vdash_W e_0 : \tau_0, \; S_0 & S_0\Gamma \vdash_W e_1 : \tau_1, \; S_1 & \tau' = newvar & S_2 = mgu(S_1\tau_0, \tau1 \mapsto \tau')} \]
 Vi sono due nuovi operatori:
@@ -1234,7 +1238,7 @@ La sostituzione $ S_0 $ viene, quindi, spostata dall'output direttamente all'amb
 di applicare la sostituzione all'ambiente di tipizzazione due volte: una prima di inferire $ e_1 $, una dopo il risultato
 di output (si presume che le sostituzioni vengano tutte applicate).
 
-\paragraph{Unificazione}
+\subsubsection{Unificazione}
 L'unificazione è quel processo di risoluzione di equazioni tra espressioni "simboliche". In generale, i mono-tipi nel
 type-system utilizzato in HM (e conseguentemente anche quello utilizzato da Fex) possono essere considerati come
 termini di un'equazione. Si parla di mono-tipi, poiché l'unificazione non prevede la quantificazione delle variabili
@@ -1439,13 +1443,13 @@ implementa questa parte è \texttt{twoChancesUnifyArgs}. Chiaramente, come si pu
 \texttt{argsUnification}, se l'unificazione è \textit{strict}, allora il "secondo tentativo" non può essere effettuato,
 in quanto vi è prima un'azione di \textit{swap} che dovrebbe essere eseguita.
 
-\paragraph{Inferenza di lambda astrazione}
+\subsubsection{Inferenza di lambda astrazione}
 La seguente regola inferisce il tipo del costrutto di lambda-astrazione:
 \[ \infer[\textbf{Abs}]{\Gamma \vdash_W \lambda x. e : S\tau \mapsto \tau', S}{\tau = newvar & \Gamma, \; x : \tau \vdash_W e : \tau', \; S} \]
 Nell'inferenza di questo costrutto, l'argomento $ x $ ha come tipo una nuova variabile di tipo, alla quale viene
 successivamente applicata la sostituzione derivante dall'inferenza dell'espressione $ e $.
 
-\paragraph{Inferenza del costrutto "let..in"}
+\subsubsection{Inferenza del costrutto "let..in"}
 Prima di presentare la regola di inferenza, è necessario introdurre la regola di generalizzazione:
 \[ \infer[\textbf{Gen}]{\Gamma \vdash_W e : \forall \alpha. \; \tau}{\Gamma \vdash_W e : \tau & \alpha \notin free(\Gamma)} \]
 Questa regola quantifica le variabili di tipo che non compaiono già come variabili libere nell'ambiente di tipizzazione.
@@ -1454,7 +1458,7 @@ Per il costrutto \textit{let..in}, per indicare la generalizzazione, utilizzerem
 Ora possiamo presentare la regola di inferenza del costrutto \textit{let..in}:
 \[ \infer[\textbf{Let}]{\Gamma \vdash_W let \; x = e_0 \; in \; e_1 : \tau', \; S_1S_0}{\Gamma \vdash_W e_0 : \tau, \; S_0 & S_0\Gamma, x : \overline{S_0\Gamma}(\tau) \vdash_W e_1 : \tau', \; S_1} \]
 \`E doveroso spiegare il motivo dell'esistenza del costrutto \textit{let..in}. Osserviamo il seguente esempio di
-programma scritto nel formalismo del lambda-calcolo polimorfico:
+programma scritto nel formalismo System-F:
 \[ (\lambda id. \; (id \; True, id \; 42)) (\lambda x. \; x) \]
 un tale programma non può essere tipato, in quanto il tipo della variabile \textit{id} non è polimorfo. Si ricordi,
 infatti, che nel costrutto della lambda-astrazione, il tipo dell'argomento è un mono-tipo. Per questo motivo, è
@@ -1465,7 +1469,10 @@ infatti, il programma appena mostrato è \textit{ben tipato}, in quanto il tipo 
 \subsubsection{Implementazione delle regole di inferenza}
 Il codice sorgente che implementa le regole di inferenza (e quindi la type-inference) è situato nel modulo
 \texttt{Compiler.Types.Builder.Type}. Alcuni costrutti di Fex si ispirano a quelli del formalismo \textit{System-F},
-tuttavia, molti vengono estesi con sintassi differenti. Ad esempio, prendendo come riferimento la definizione del token
+tuttavia, molti vengono estesi con sintassi differenti.
+
+\paragraph{Lambda-astrazione in Fex}
+Prendendo come riferimento la definizione del token
 dell'AST che rappresenta il costrutto di lambda-astrazione:
 \begin{lstlisting}
 newtype Lambda a = Lambda ([SymbolName a], Expression a, a)
@@ -1479,9 +1486,10 @@ Con le dovute accortezze, l'algoritmo di inferenza considera questi costrutti co
 concatenati in \textit{System-F}. Ad esempio:
 \[ \texttt{lam x y z -> x + y + z} \equiv \lambda x. \; \lambda y. \; \lambda z. \; x + y + z \]
 
+\paragraph{Simboli globali in Fex}
 Un altra nota è necessaria sulle definizioni di simboli in Fex. Infatti, Fex permette la definizione di simboli
 globali e questo "rompe" la regola di inferenza del costrutto \textit{let..in}. Questo problema viene risolto
-considerando soltanto parte delle premesse del costrutto \textit{let..in}. Ad esempio:
+considerando soltanto parte delle premesse del costrutto \textit{let..in}. S consideri, ad esempio:
 \begin{lstlisting}
 let x = e
 \end{lstlisting}
@@ -1490,6 +1498,7 @@ generalizzazione, quindi $ x $ avrà tipo $ \forall \overline{\alpha}. \; \tau $
 compiere altre azioni e il binding $ x : \forall \overline{\alpha}. \; \tau $ può essere aggiunto nell'ambiente di
 tipizzazione.
 
+\paragraph{Costrutto "let..in" in Fex}
 Il costrutto \textit{let..in} in Fex ha nella sintassi un'altra estensione rispetto al suo omonimo in \textit{System-F},
 ovvero i bindings accettano anche argomenti:
 \begin{lstlisting}
@@ -2275,7 +2284,7 @@ di applicazione, è necessario guardare la
 molteplicità della freccia (nel tipo dell'espressione che applica) e a seconda della sua molteplcità, le variabili libere
 nell'argomento dell'applicazione dovranno essere utilizzate con la stessa molteplicità.
 
-\paragraph{Bozza di implementazione in Fex}
+\subsubsection{Bozza di implementazione in Fex}
 Ora che è stato presentato un sistema di tipi lineari, si può delineare una bozza di implementazione in Fex.
 Il sistema di tipi lineari da aggiungere a quello già esistente di Fex si ispira a quello appena presentato,
 riutilizzando le varie nozioni incontrate. Ma prima di aggiornare il sistema di tipi di Fex, è doveroso definire
@@ -2345,7 +2354,7 @@ di computazione. Le regole di inferenza per il formalismo in questione sono abba
 (esse sono comunque definite in [22]). I tipi delle computazioni racchiudono le possibili operazioni che fanno parte
 dell'effetto. Questo fatto permette di catturare in maniera precisa i side-effects prodotti dalle operazioni.
 
-\paragraph{Bozza di implementazione in Fex}
+\subsubsection{Bozza di implementazione in Fex}
 Un sistema di effetti offre un meccanismo generale per gestire le computazioni impure. Fex è un linguaggio
 funzionale puro e, al momento, non ha un meccanismo per gestire tutto ciò che non riguarda il "mondo puro". Un sistema
 di effetti potrebbe essere un modo per aggiungere computazioni impure, come input/output, eccezioni, multi-threading,
@@ -2462,7 +2471,7 @@ librerie nel modo giusto, utilizzando un attore di terze parti che funga da inte
 Invece, con le varianti polimorfe, è possibile definire lo stesso tipo nelle librerie coinvolte, permettendo
 alle librerie di essere indipendenti tra loro.
 
-\paragraph{Implementazioni}
+\subsubsection{Implementazioni}
 In letteratura, vi sono numerose proposte di implementazione delle varianti polimorfe. Di seguito, ne elencheremo alcune,
 analizzando eventuali vantaggi e svantaggi:
 \begin{itemize}
