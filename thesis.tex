@@ -99,26 +99,26 @@ Corso di Laurea in Nome corso di Laurea }}
 
 \subsection{Haskell come modello}
 Il compilatore è stato sviluppato mediante il linguaggio \textit{Haskell}, anch'esso linguaggio di programmazione funzionale.
-Inoltre, il linguaggio target di langgg è \textit{Core}, un formalismo fortemente basato su \textit{System F}, una
+Inoltre, il linguaggio target di Fex è \textit{Core}, un formalismo fortemente basato su \textit{System F}, una
 variante tipata del lambda-calcolo che introduce un meccanismo di quantificazione universale sui tipi. Core, inoltre,
 viene utilizzato da GHC (compilatore Haskell) come rappresentazione intermedia di Haskell. All'interno di questo
 contesto, GHC espone delle API che permettono al cliente di utilizzare le funzionalità del compilatore (cfr. [3]); è quindi
 possibile creare e manipolare programmi Core mediante le API, le quali sono state scritte in Haskell. Per quest'ultimo
-motivo, Haskell è stato scelto come linguaggio di implementazione del compilatore di langgg, tuttavia, nel contesto
+motivo, Haskell è stato scelto come linguaggio di implementazione del compilatore di Fex, tuttavia, nel contesto
 del progetto, Haskell ha anche un altro importante ruolo: alcune delle sue funzionalità sono state, direttamente
-o indirettamente, fonte di ispirazione per il design di langgg. Nel prossimo paragrafo vengono presentate le principali
-caratteristiche di langgg ed è possibile ritrovare la maggior parte di esse anche in Haskell. Un altro linguaggio
+o indirettamente, fonte di ispirazione per il design di Fex. Nel prossimo paragrafo vengono presentate le principali
+caratteristiche di Fex ed è possibile ritrovare la maggior parte di esse anche in Haskell. Un altro linguaggio
 che è stato fonte di ispirazione, ma con minore impatto, è \textit{OCaml}, linguaggio multi-paradigma (funzionale non
-puro), soprattutto per la sintassi di langgg e per il costrutto delle polymorphic variants (cfr. paragrafo sugli
+puro), soprattutto per la sintassi di Fex e per il costrutto delle polymorphic variants (cfr. paragrafo sugli
 sviluppi futuri).
 
 \subsection{Caratteristiche del linguaggio}
 Tra le principali caratteristiche del linguaggio vi sono:
 \begin{description}
-\item[Linguaggio funzionale puro] Come Haskell, langgg è un linguaggio funzionale puro. La nozione di linguaggio
+\item[Linguaggio funzionale puro] Come Haskell, Fex è un linguaggio funzionale puro. La nozione di linguaggio
 di programmazione \textit{funzionale} è piuttosto lasca e non vi è una vera e propria definizione formale,
 tant'è che il termine viene spesso utilizzato (e, talvolta, abusato) per indicare un linguaggio avente alcune
-particolari specifiche attribuibili al paradigma di programmazione funzionale. langgg può essere quindi considerato
+particolari specifiche attribuibili al paradigma di programmazione funzionale. Fex può essere quindi considerato
 funzionale poiché, semplicemente, ha numerose caratteristiche proprie del paradigma funzionale, quali: tipi di dati
 algebrici, pattern matching, funzioni di ordine superiore, immutabilità, polimorfismo parametrico etc.. Per quanto
 riguarda la nozione di \textit{purità}, nel paradigma funzionale viene fatta spesso la distinzione
@@ -127,11 +127,11 @@ controversie. Una proposta di definizione è stata fornita da Amr Sabry in [1]: 
 dei parametri, in particolare, un linguaggio L può essere
 considerato puro se, dato un qualsiasi programma p scritto in L, le funzioni di p sono dei "\textit{mapping}" puri
 dai valori in input ai valori in output, indipendentemente dal tipo di passaggio dei parametri.
-\item[Type-system statico con type-inference] langgg è un linguaggio con type-system statico, inoltre, la fase di
+\item[Type-system statico con type-inference] Fex è un linguaggio con type-system statico, inoltre, la fase di
 type-checking garantisce la proprietà di type-safety. Il linguaggio permette anche di omettere le indicazioni di
 tipo (type-hinting) nella definizione di simboli; in caso non vi sia type-hinting per la definizione di un simbolo,
 il compilatore inferirà il tipo "più generale possibile" per il simbolo.
-\item["Everything is an expression"] tutti i costrutti all'interno di langgg possono essere considerati espressioni
+\item["Everything is an expression"] tutti i costrutti all'interno di Fex possono essere considerati espressioni
 prive di side-effects; non vi sono costrutti di controllo o costrutti che modificano variabili di stato esterne
 al contesto locale. I costrutti principali sono:
     \begin{enumerate}
@@ -183,7 +183,7 @@ al contesto locale. I costrutti principali sono:
         \item la fissità degli operatori.
         \end{enumerate}
     \end{enumerate}
-\item[Tipi di dati algebrici] langgg supporta anche i tipi di dati algebrici (che sono l'unico modo per definire nuovi
+\item[Tipi di dati algebrici] Fex supporta anche i tipi di dati algebrici (che sono l'unico modo per definire nuovi
 tipi). Con essi, vi è anche la nozione di \textit{data constructor}, ovvero un costrutto dotato di tipo che può essere
 accompagnato da dati. Per eseguire operazioni con i tipi di dati algebrici vi è il costrutto del pattern matching
 (cfr. grammatica delle espressioni) che permette di destrutturare un data constructor dai suoi dati associati.
@@ -302,7 +302,7 @@ non sono visibili le API dell'AST, in quanto esso si occupa soltanto del parsing
 della generazione dei token.
 
 \subsubsection{Parsing degli operatori}
-langgg permette di definire operatori che vengono trattati come simboli di variabili (funzioni). In questo contesto,
+Fex permette di definire operatori che vengono trattati come simboli di variabili (funzioni). In questo contesto,
 il linguaggio espone all'utente un costrutto particolare che permettere di definire le proprietà degli eventuali
 operatori. Questo costrutto viene valutato durante il parsing e definisce una categoria di operatori, ecco un esempio:
 
@@ -322,7 +322,7 @@ l'insieme di operatori che fanno parte della categoria. Infine, l'ultimo campo �
 degli operatori: infissa senza associazione, infissa con associazione a sinistra, infissa con associazione a destra,
 postfissa o prefissa. La versione infissa è solo per gli operatori binari, mentre postfissa e prefissa solo per gli
 operatori unari. Si può notare che nella lista di operatori vi è anche un simbolo di variabile preceduto dal simbolo
-di backtick; questo è possibile, in quanto langgg permette di utilizzare i simboli di variabili come operatori
+di backtick; questo è possibile, in quanto Fex permette di utilizzare i simboli di variabili come operatori
 facendoli precedere dal carattere backtick. La valutazione di questo costrutto è interamente integrata nel parser ed
 è obbligatorio per l'utente definire le categorie degli operatori all'inizio del sorgente. La libreria \texttt{Parsec}
 offre delle API anche per il parsing degli operatori; l'algoritmo di gestione delle categorie si occupa di costruire
@@ -394,7 +394,7 @@ anche conosciute come \textit{type constructor}. La condizione (2) è fondamenta
 Il codice risiede nel modulo \texttt{Compiler.Args}.
 
 \subsection{Eliminazione degli alias di tipo}
-langgg offre un costrutto che permette all'utente di definire alias di tipi. Ecco un esempio:
+Fex offre un costrutto che permette all'utente di definire alias di tipi. Ecco un esempio:
 
 \begin{lstlisting}
 alias CharAnd x = Tuple2 Char x
@@ -419,7 +419,7 @@ Se la sopracitata condizione non fosse vera, non sarebbe possibile effettuare l'
 kind-inference).
 
 \subsection{Eliminazione delle firme di funzioni}
-langgg espone un costrutto, detto \textit{signature} (in italiano "firma"), che permette di indicare il tipo di un
+Fex espone un costrutto, detto \textit{signature} (in italiano "firma"), che permette di indicare il tipo di un
 binding. Ad esempio:
 
 \begin{lstlisting}
@@ -526,7 +526,7 @@ data    TypedProgram a        --tabella dei bindings tipati
 Vedremo nel dettaglio ogni tabella nelle descrizioni delle varie fasi del compilatore. Tuttavia, è necessaria una nota
 su \texttt{TypesTable} e \texttt{ConstraintsTable}. Come si legge dai commenti, esse sono tabelle per memorizzare dei
 "modelli". Tali modelli sono necessari alla costruzione dei tipi e dei predicati all'interno di un programma. Ad esempio,
-date le seguenti definizioni in langgg:
+date le seguenti definizioni in Fex:
 \begin{lstlisting}
 type Box a = Boxing a
 property Stateful m =
@@ -571,7 +571,7 @@ accrescerà il grafo senza aggiornare i nodi preesistenti; in questo modo, non v
 grafo da zero.
 
 \subsection{Il sistema di tipi}
-In questo paragrafo, verrà presentato il sistema di tipi di langgg. Come è stato già menzionato in precedenza, il
+In questo paragrafo, verrà presentato il sistema di tipi di Fex. Come è stato già menzionato in precedenza, il
 linguaggio supporta il polimorfismo ad hoc e il polimorfismo parametrico; quest'ultimo viene implementato attraverso
 il concetto di variabile di tipo, la quale può essere considerata come un "placeholder" per i tipi.
 
@@ -589,7 +589,7 @@ data LangHigherType a =
       LTy (LangType a)
     | HApp [LangHigherType a] a
 \end{lstlisting}
-dove \texttt{LangType} rappresenta tutti i tipi che possono essere definiti in langgg. Si noti come vi è un secondo
+dove \texttt{LangType} rappresenta tutti i tipi che possono essere definiti in Fex. Si noti come vi è un secondo
 caso (\texttt{HApp}), il quale rappresenta il tipo funzione. Il costruttore \texttt{HApp} prende in input una lista
 di mono-tipi, tuttavia il tipo funzione può avere al massimo due argomenti, perciò il modulo \texttt{Compiler.Ast.Typed}
 si occupa internamente di rifiutare qualsiasi valore con costruttore \texttt{HApp} che abbia più di due argomenti.
@@ -601,7 +601,7 @@ in questo modo, è possibile esprimere senza difficoltà, all'interno del compil
 \end{itemize}
 
 \subsubsection{Tipi higher-kinded}
-langgg permette all'utente di utilizzare \textit{funzioni di tipo} (o \textit{costruttori di tipo}). A questo scopo,
+Fex permette all'utente di utilizzare \textit{funzioni di tipo} (o \textit{costruttori di tipo}). A questo scopo,
 viene introdotta la nozione di \textit{kind}, il quale rappresenta un'informazione aggiuntiva per i tipi. Informalmente,
 dato un type-system \textit{TS}, un kind-system \textit{KS} si può vedere come un type-system di livello "superiore"
 a \textit{TS}. Ora diamo una definizione più precisa di kind:
@@ -615,13 +615,13 @@ rappresenta tutti quei tipi che non hanno bisogno di parametri di tipi. Ecco alc
     \item $ \kappa_1 \mapsto \kappa_2 $ è il kind delle funzioni unarie che prendono in input una funzione di tipo
     di kind $ \kappa_1 $ e ritorna un'altra funzione di tipo di kind $ \kappa_2 $.
 \end{itemize}
-Data la presenza di tipi \textit{higher-kinded} all'interno di langgg, è doveroso fare un'ulteriore precisazione che
+Data la presenza di tipi \textit{higher-kinded} all'interno di Fex, è doveroso fare un'ulteriore precisazione che
 riguarda i mono-tipi: alla definizione di mono-tipo deve essere aggiunta la condizione sulla correttezza dei kind.
 Ad esempio, dato il tipo:
 \[ t_1 \mapsto t_2 \]
 sapendo che il kind del costruttore di tipo funzione è $ * \mapsto * \mapsto * $, è necessario, affinché il suddetto
 kind venga rispettato, che il kind di $ t_1 $ e $ t_2 $ sia $ * $.
-Nel codice sorgente, la definizione di kind nel compilatore langgg si trova in \texttt{Compiler.Ast.Typed}:
+Nel codice sorgente, la definizione di kind nel compilatore Fex si trova in \texttt{Compiler.Ast.Typed}:
 \begin{lstlisting}
 data LangKind =
       LKVar String
@@ -634,7 +634,7 @@ Il costruttore \texttt{LKVar} rappresenta le variabili di kind, il costruttore \
 \subsubsection{Subtyping: predicati e tipi qualificati}
 La nozione di mono-tipo ammette le variabili di tipo, le quali fungono da placeholder per qualsiasi tipo dello stesso
 kind della variabile. Tuttavia, solamente con la nozione di mono-tipo non è possibile fare asserzioni sulle variabili
-di tipi, se non, appunto, che sono placeholder adatti a qualsiasi tipo. langgg supporta anche una nozione di sottotipo.
+di tipi, se non, appunto, che sono placeholder adatti a qualsiasi tipo. Fex supporta anche una nozione di sottotipo.
 Prendiamo, ad esempio, la seguente variabile di tipo:
 \[ \alpha : * \]
 la notazione $ : * $ serve, in questo caso, per rendere esplicito il kind della variabile. $ \alpha $ è un placeholder
@@ -652,7 +652,7 @@ notazione:
 \[ P(\alpha) \Rightarrow \alpha \]
 Ora abbiamo una sintassi per descrivere \textit{predicati} o \textit{constraint} sulle variabili di tipo. Tale
 comportamento si può estendere a qualsiasi forma di tipo, non solo alle variabili di tipo, ma per farlo è necessario
-prima definire la sintassi dei predicati. In langgg, un predicato o constraint ha la seguente forma:
+prima definire la sintassi dei predicati. In Fex, un predicato o constraint ha la seguente forma:
 \[ C := P \; MT_1 \; ... \; MT_n \]
 dove $ P $ è il nome di una proprietà (cfr. polimorfismo ad hoc). Ora possiamo quindi definire un'estensione dei
 mono-tipi, in modo che su questi ultimi si possano aggiungere delle ipotesi. Per una definizione più generale possibile,
@@ -673,19 +673,19 @@ rappresentano un tipo fissato non ancora conosciuto. Per ottenere il polimorfism
 dei quantificatori, ad esempio, possiamo rifinire il tipo di $ map $ nel modo seguente:
 \[ map : \forall \alpha, \beta . \; (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
 A differenza di prima, in cui $ map $ aveva un tipo prefissato, qui può avere molteplici tipi. Ora diamo la definizione
-di \textit{schema di tipo} o \textit{poli-tipo} in langgg:
+di \textit{schema di tipo} o \textit{poli-tipo} in Fex:
 \[ PT := QT \; | \; \forall \alpha. \; PT \]
 Questa definizione lascia spazio alla presenza di \textit{variabili libere}, in quanto non necessariamente tutte le
 variabili di tipo che compaiono in un tipo qualificato sono legate a un quantificatore. Le variabili libere vengono
 trattate come costanti. Si noti come i quantificatori possono apparire solamente alla testa di un tipo, ad esempio, il
-seguente tipo non è accettato in langgg:
+seguente tipo non è accettato in Fex:
 \[ \forall \alpha . \; (\forall \alpha . \; \alpha \mapsto \alpha) \mapsto \alpha \]
 %TODO: System F
-La definizione di schema di tipo in langgg si trova nel modulo \texttt{Compiler.Ast.Typed}:
+La definizione di schema di tipo in Fex si trova nel modulo \texttt{Compiler.Ast.Typed}:
 \begin{lstlisting}
 data LangTypeScheme a = Forall [LangVarType a] (LangQualType a)
 \end{lstlisting}
-La politica sulla sintassi degli schemi di tipi di langgg è omettere il quantificatore $ \forall $. Per questo, ogni qual
+La politica sulla sintassi degli schemi di tipi di Fex è omettere il quantificatore $ \forall $. Per questo, ogni qual
 volta vi è un costrutto di type-hinting (firme comprese), il tipo viene considerato come uno schema di tipo in cui tutte
 le variabili di tipo che compaiono vengono legate a un quantificatore, ad esempio:
 \begin{lstlisting}
@@ -697,7 +697,7 @@ in questo caso la funzione \texttt{map} avrà il seguente tipo:
 \subsubsection{Test di uguaglianza tra tipi}
 Il test di uguaglianza tra tipi si differenzia parecchio tra le diverse nozioni di "tipo", inoltre, non sempre risulterà
 utile avere una definizione di uguaglianza tra alcune nozioni di tipo. Partendo dalla nozione di mono-tipo, due
-mono-tipi $ \tau $ e $ \tau' $ sono uguali se hanno i termini identici. Dato che langgg supporta la nozione di mono-tipo
+mono-tipi $ \tau $ e $ \tau' $ sono uguali se hanno i termini identici. Dato che Fex supporta la nozione di mono-tipo
 higher-kinded, è banale asserire che:
 \[ kindOf(\tau) \neq kindOf(\tau') \Longrightarrow \tau \neq \tau' \]
 Per quanto riguarda i tipi qualificati, è necessario prendere in considerazione anche i predicati che precedono un
@@ -717,8 +717,8 @@ basterebbe più definire il test di uguaglianza analizzando solamente i termini 
 a nessun'altra operazione.
 
 \subsection{Polimorfismo ad-hoc}
-langgg supporta il polimorfismo ad hoc esponendo costrutti chiamati \textit{proprietà}, le quali sono concettualmente
-molto simili alle \textit{type classes} di Haskell. Ecco un esempio di definizione di proprietà in langgg:
+Fex supporta il polimorfismo ad hoc esponendo costrutti chiamati \textit{proprietà}, le quali sono concettualmente
+molto simili alle \textit{type classes} di Haskell. Ecco un esempio di definizione di proprietà in Fex:
 \begin{lstlisting}
 property Eq a =
     val (==) : a -> a -> Bool
@@ -740,7 +740,7 @@ dove \textit{Pred} è un predicato e \textit{ty} è un tipo qualunque sulle vari
 Il polimorfismo ad hoc viene, dunque, supportato attraverso i predicati, i quali rappresentano delle ipotesi aggiuntive
 sui tipi. L'istanziazione di una proprietà consiste nel dichiarare dei tipi che fungeranno da "caso particolare" per i
 metodi di proprietà (i "modelli"), ad esempio, riprendendo la proprietà \texttt{Eq} del precedente pezzo di codice,
-in langgg possiamo definire un'istanza del tipo:
+in Fex possiamo definire un'istanza del tipo:
 \begin{lstlisting}
 instance Eq Char =
     <implementazioni>
@@ -754,7 +754,7 @@ val (/=) : Char -> Char -> Bool
 Si può notare come il predicato su \texttt{Eq} non esiste più.
 
 \subsubsection{Estensioni del polimorfismo ad hoc}
-Il meccanismo di polimorfismo ad hoc precedentemente presentato incontra numerose estensioni in langgg, alcune delle
+Il meccanismo di polimorfismo ad hoc precedentemente presentato incontra numerose estensioni in Fex, alcune delle
 quali impongono condizioni aggiuntive sul programma.
 
 \subparagraph{Numero arbitrario di argomenti delle proprietà}
@@ -770,7 +770,7 @@ property Stream s t =
 Si noti che \texttt{Stream} ha 2 argomenti.
 
 \subparagraph{Constraints sulle proprietà}
-\`E possibile definire in langgg una proprietà della forma:
+\`E possibile definire in Fex una proprietà della forma:
 \begin{lstlisting}
 property C1 a Char => C2 a =
     <metodi>
@@ -791,7 +791,7 @@ property Stream s t =
     val consume : s t -> (s t, t)
 ;;
 \end{lstlisting}
-Gli argomenti di una proprietà sono sempre variabili di tipo. Come è già stato menzionato in precedenza, langgg supporta
+Gli argomenti di una proprietà sono sempre variabili di tipo. Come è già stato menzionato in precedenza, Fex supporta
 tipi di kind arbitrari; gli argomenti delle proprietà non fanno eccezione da questo punto di vista, infatti, nell'esempio
 si può notare come la variabile \textit{s} abbia kind (utilizzando la rappresentazione dei kind di Haskell):
     \[ * \mapsto * \]
@@ -809,7 +809,7 @@ instance C a (Tuple3 a (T b) (m b)) =
     <implementazioni>
 ;;
 \end{lstlisting}
-Confrontando il precedente codice langgg con il seguente codice Haskell che può considerarsi quanto meno concettualmente
+Confrontando il precedente codice Fex con il seguente codice Haskell che può considerarsi quanto meno concettualmente
 equivalente:
 \begin{lstlisting}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -830,7 +830,7 @@ and each type variable appears at most once in the instance head.
 Use FlexibleInstances if you want to disable this.)
 \end{lstlisting}
 Come suggerisce l'ultima riga del messaggio d'errore, per definire un'istanza del genere in un programma Haskell è
-necessario utilizzare l'estensione \texttt{FlexibleInstances} [7]. In langgg, a differenza di Haskell, quel tipo di instanza
+necessario utilizzare l'estensione \texttt{FlexibleInstances} [7]. In Fex, a differenza di Haskell, quel tipo di instanza
 è accettato di default. Il seguente vincolo sulla forma dei tipi riportato nel messaggio d'errore viene dunque rilassato:
     \[ TyCon(\overline{\alpha}) \]
 dove $ \overline{\alpha} $ sono variabili di tipo distinte e $ TyCon $ è un costruttore di tipo. In seguito, verrà
@@ -875,7 +875,7 @@ Ora presentiamo le condizioni di Paterson:
     $ C' \Rightarrow TyCl \; t_1' ... t_n' $, non deve esistere una sostituzione $ \varphi $ tale che:
     $ \varphi(t_1) = \varphi(t_1') $, ..., $ \varphi(t_n) = \varphi(t_n') $.
 \end{itemize}
-Informalmente, l'obiettivo è avere sempre dei contesti più "piccoli" rispetto alle teste. La politica di langgg è
+Informalmente, l'obiettivo è avere sempre dei contesti più "piccoli" rispetto alle teste. La politica di Fex è
 simile e applica i seguenti vincoli:
 \begin{enumerate}
     \item Per ogni constraint $ c $, $ c $ deve contenere almeno una variabile di tipo, ovvero:
@@ -894,10 +894,10 @@ variabili di tipo (sommando il risultato per tutte le variabili di tipo incontra
 controlli risiede nel modulo \texttt{Compiler.Constraints.Check}.
 
 \subsection{Kind-inference}
-La kind-inference in langgg è necessaria per poter costruire i token che rappresentano i costruttori di tipi. Prima
-di entrare nei dettagli, è bene fare alcune precisazioni sui kind. Innanzitutto, langgg non espone all'utente alcuna
+La kind-inference in Fex è necessaria per poter costruire i token che rappresentano i costruttori di tipi. Prima
+di entrare nei dettagli, è bene fare alcune precisazioni sui kind. Innanzitutto, Fex non espone all'utente alcuna
 sintassi per manipolare i kind o per scrivere espressioni con i kind. Come conseguenza, la definizione di kind in
-langgg (cfr. Tipi higher-kinded) non viene estesa con una definizione di kind polimorfica. Questo non avviene per i tipi,
+Fex (cfr. Tipi higher-kinded) non viene estesa con una definizione di kind polimorfica. Questo non avviene per i tipi,
 infatti, la nozione di mono-tipo viene successivamente estesa con la nozione di schema di tipo, la quale introduce
 il polimorfismo parametrico.
 
@@ -960,7 +960,7 @@ dal token \texttt{ADTConstructor} - vengono trasformati nel token \texttt{NotedV
 \[ < dataConRep, type > \]
 dove $ dataConRep $ è la rappresentazione sotto forma di stringa del data constructor, mentre $ ty $ è il tipo del
 costruttore. Per quanto riguarda il tipo del costruttore, prendiamo in considerazione il seguente esempio di codice
-langgg:
+Fex:
 \begin{lstlisting}
 type Foo x y = Bar Int (M x) y
 \end{lstlisting}
@@ -1133,7 +1133,7 @@ Dopo l'ordinamento dei bindings, è garantito che, ogni qual volta verrà inferi
 della regola \textbf{Var} sia vera.
 
 \subsection{Type-inference}
-langgg permette all'utente di indicare o non indicare il tipo di una variabile. Nel caso non venga indicato, il
+Fex permette all'utente di indicare o non indicare il tipo di una variabile. Nel caso non venga indicato, il
 compilatore dovrà inferire il tipo della variabile definita, quindi dovrà fare una "scelta". Per farlo, dovrà prima
 inferire il tipo dell'espressione legata alla variabile, ad esempio:
 \begin{lstlisting}
@@ -1151,7 +1151,7 @@ denoterebbe un tipo fissato non ancora conosciuto. L'introduzione di uno schema 
 In questo caso, $ x $ può avere molteplici tipi.
 
 \subsubsection{Damas-Hindley-Milner}
-Come è stato già menzionato precedentemente, il sistema di tipi di langgg si basa sul type-system di Damas-Hindley-Milner.
+Come è stato già menzionato precedentemente, il sistema di tipi di Fex si basa sul type-system di Damas-Hindley-Milner.
 L'algoritmo di inferenza su cui si basa inferisce il tipo più \textit{generale} possibile. Tuttavia, nella letteratura,
 vengono presentati due algoritmi principali, ma nella pratica, solo uno di essi è implementato dai compilatori dei
 linguaggi di programmazione. Verranno entrambi menzionati, ma solo le regole di inferenza dell'algoritmo effettivamente
@@ -1228,7 +1228,7 @@ di output (si presume che le sostituzioni vengano tutte applicate).
 
 \paragraph{Unificazione}
 L'unificazione è quel processo di risoluzione di equazioni tra espressioni "simboliche". In generale, i mono-tipi nel
-type-system utilizzato in HM (e conseguentemente anche quello utilizzato da langgg) possono essere considerati come
+type-system utilizzato in HM (e conseguentemente anche quello utilizzato da Fex) possono essere considerati come
 termini di un'equazione. Si parla di mono-tipi, poiché l'unificazione non prevede la quantificazione delle variabili
 all'interno di un'equazione. Un problema di unificazione è un insieme finito di equazioni:
 \[ \{ \tau_1 = \tau_1' \; ... \; \tau_n = \tau_n' \} \]
@@ -1456,7 +1456,7 @@ infatti, il programma appena mostrato è \textit{ben tipato}, in quanto il tipo 
 
 \subsubsection{Implementazione delle regole di inferenza}
 Il codice sorgente che implementa le regole di inferenza (e quindi la type-inference) è situato nel modulo
-\texttt{Compiler.Types.Builder.Type}. Alcuni costrutti di langgg si ispirano a quelli del formalismo \textit{System-F},
+\texttt{Compiler.Types.Builder.Type}. Alcuni costrutti di Fex si ispirano a quelli del formalismo \textit{System-F},
 tuttavia, molti vengono estesi con sintassi differenti. Ad esempio, prendendo come riferimento la definizione del token
 dell'AST che rappresenta il costrutto di lambda-astrazione:
 \begin{lstlisting}
@@ -1471,7 +1471,7 @@ Con le dovute accortezze, l'algoritmo di inferenza considera questi costrutti co
 concatenati in \textit{System-F}. Ad esempio:
 \[ \texttt{lam x y z -> x + y + z} \equiv \lambda x. \; \lambda y. \; \lambda z. \; x + y + z \]
 
-Un altra nota è necessaria sulle definizioni di simboli in langgg. Infatti, langgg permette la definizione di simboli
+Un altra nota è necessaria sulle definizioni di simboli in Fex. Infatti, Fex permette la definizione di simboli
 globali e questo "rompe" la regola di inferenza del costrutto \textit{let..in}. Questo problema viene risolto
 considerando soltanto parte delle premesse del costrutto \textit{let..in}. Ad esempio:
 \begin{lstlisting}
@@ -1482,7 +1482,7 @@ generalizzazione, quindi $ x $ avrà tipo $ \forall \overline{\alpha}. \; \tau $
 compiere altre azioni e il binding $ x : \forall \overline{\alpha}. \; \tau $ può essere aggiunto nell'ambiente di
 tipizzazione.
 
-Il costrutto \textit{let..in} in langgg ha nella sintassi un'altra estensione rispetto al suo omonimo in \textit{System-F},
+Il costrutto \textit{let..in} in Fex ha nella sintassi un'altra estensione rispetto al suo omonimo in \textit{System-F},
 ovvero i bindings accettano anche argomenti:
 \begin{lstlisting}
 let f x y = (x, y)
@@ -1493,12 +1493,12 @@ di type-inference con \textit{System-F}:
 \[ \texttt{let f x y = (x, y)} \equiv let \; f = \lambda x. \; \lambda y. \; (x, y) \]
 
 \subsection{Estensioni dell'algoritmo di inferenza}
-langgg possiede numerosi costrutti che arricchiscono la sintassi di base di \textit{System-F}, inoltre, introduce
+Fex possiede numerosi costrutti che arricchiscono la sintassi di base di \textit{System-F}, inoltre, introduce
 concetti nuovi come i predicati o i tipi qualificati. Di conseguenza, l'algoritmo di inferenza di tipo di \textit{System-F}
 deve essere esteso.
 
 \subsubsection{Pattern matching}
-langgg possiede due costrutti diversi per il pattern matching (cfr. Caratteristiche del linguaggio). Il primo costrutto
+Fex possiede due costrutti diversi per il pattern matching (cfr. Caratteristiche del linguaggio). Il primo costrutto
 permette "ispezionare" il valore di una singola espressione, per esempio:
 \begin{lstlisting}
 type Maybe a = Nothing | Just a
@@ -1550,7 +1550,7 @@ L'algoritmo di inferenza di tale costrutto è il seguente:
 \end{itemize}
 
 \paragraph{Eliminazione del pattern matching "in larghezza"}
-Come è stato già menzionato precedentemente, langgg espone due sintassi diverse per effettuare il pattern matching,
+Come è stato già menzionato precedentemente, Fex espone due sintassi diverse per effettuare il pattern matching,
 una delle quali può possedere un numero arbitrario di case-expressions. Tuttavia, il token che rappresenta un
 \textit{caso} del costrutto di pattern matching può avere solamente una \textit{matching expression} (equivalente
 a una case expression), la sua definizione si trova in \texttt{Compiler.Ast.Typed}:
@@ -1558,7 +1558,7 @@ a una case expression), la sua definizione si trova in \texttt{Compiler.Ast.Type
 data NotedCase a = NotedCase (NotedMatchExpr a) (NotedExpr a) a
 \end{lstlisting}
 Questo rende necessaria una fase di desugaring che avviene subito dopo l'inferenza di un costrutto di pattern matching,
-quindi durante la fase di type-inference. Si consideri il seguente codice langgg:
+quindi durante la fase di type-inference. Si consideri il seguente codice Fex:
 \begin{lstlisting}
 type Maybe a = Nothing | Just a
 type Either a b = Left a | Right b
@@ -1569,18 +1569,30 @@ let f
     | _ (Right y) -> y
 \end{lstlisting}
 Dopo aver inferito il tipo dell'espressione legata ad \texttt{f}, vengono creati gli argomenti di \texttt{f}, i quali
-sono legati alle case expressions nell'espressione di pattern matching, siano essi \texttt{v1} e \texttt{v2}. %TODO
+sono legati alle case expressions nell'espressione di pattern matching, siano essi \texttt{v1} e \texttt{v2}. Dopodiché,
+vengono utilizzati i costruttori delle tuple per creare le case expressions nel costrutto di pattern matching:
 \begin{lstlisting}
+let f v1 v2 =
+    match (v1, v2) with
+          (Nothing, _) -> 42
+        | (Just x, Left y) -> x + y
+        | (_, Right y) -> y
 \end{lstlisting}
+Questo metodo ha una limitazione, ovvero non può superare il numero di argomenti massimo di un costruttore di una tupla
+di Haskell, quindi è dipendente da esso. Di solito il costruttore di tuple "più grande" in Haskell ha 62 argomenti, quindi
+questa limitazione viene accettata, in quanto difficilmente l'utente definisce funzioni con più di 62 argomenti, tuttavia,
+non è escluso che, in futuro, questa implementazione venga migliorata. \`E bene menzionare che vi è questa dipendenza da
+parte di Fex, in quanto le tuple in Fex sono implementate semplicemente come tuple in Haskell. Il codice sorgente che
+implementa questa funzionalità si trova in \texttt{Compiler.Desugar.BreadthPM}.
 
 \subsubsection{Constraints}
-La sintassi langgg permette di esprimere espressioni il cui tipo possiede dei predicati; ciò richiede che l'algoritmo
-classico di type-inference venga esteso. L'algoritmo esteso di langgg si ispira a [2], in cui Martin Sulzmann,
+La sintassi Fex permette di esprimere espressioni il cui tipo possiede dei predicati; ciò richiede che l'algoritmo
+classico di type-inference venga esteso. L'algoritmo esteso di Fex si ispira a [2], in cui Martin Sulzmann,
 Martin Odersky, Martin Wehr presentano un'estensione di HM che supporta anche tipi che possiedono predicati. I giudizi
 di tipo vengono estesi con un'ipotesi aggiuntiva sui constraints e avranno la forma:
 \[ CS, \Gamma \vdash_W e : \tau \]
 Perciò l'ambiente di tipizzazione viene esteso con un altro "attore", ovvero un contesto di soddisfabilità. Nel caso
-di langgg, il contesto di soddisfabilità è dato dall'insieme delle istanze.
+di Fex, il contesto di soddisfabilità è dato dall'insieme delle istanze.
 L'articolo presenta inizialmente il problema di come ridefinire le regole istanziazione (\textbf{Inst}) e generalizzazione
 (\textbf{Gen}). Sull'istanziazione di uno schema di tipo si arriva subito alla seguente conclusione:
 \[ \infer[\textbf{Inst}]{CS, \Gamma \vdash_W e : \{ \overline{\tau} / \overline{\alpha} \}\tau'}{CS, \Gamma \vdash_W e : \forall \overline{\alpha}. D \Rightarrow \tau' & CS \vdash^e \{ \overline{\tau} / \overline{\alpha} \} D} \]
@@ -1620,7 +1632,7 @@ Si ricordi che il test di unificazione può fallire. In generale, diremo che un 
 constraint $ C' $ se vale $ satisfy(C, C') $; viceversa, diremo che un constraint $ C $ \textit{è soddisfatto} da un
 constraint $ C' $ se valie $ satisfy(C', C) $.
 Si noti come, a causa dell'utilizzo dell'unificazione \textit{strict}, il test soddisfabilità tra constraints, non sia
-commutativo. Si osservi il seguente esempio in langgg:
+commutativo. Si osservi il seguente esempio in Fex:
 \begin{lstlisting}
 property Foo a b c =
     <metodi>
@@ -1644,7 +1656,7 @@ regola di generalizzazione. Nell'articolo [2] viene proposta la seguente regola:
 Si noti come vi è un nuovo quantificatore: $ \exists \overline{\alpha}. D $. Questa notazione è utile per quantificare
 le variabili di tipo all'interno di un constraint.
 
-Per quanto riguarda l'algoritmo utilizzato in langgg, vi è un ulteriore contesto/ambiente di cui è necessario tener conto,
+Per quanto riguarda l'algoritmo utilizzato in Fex, vi è un ulteriore contesto/ambiente di cui è necessario tener conto,
 ovvero quello dei problemi di constraints correnti. Questa ulteriore estensione dell'ambiente di tipizzazione è utile
 per mantenere i constraints che sono presenti nell'attuale contesto di inferenza. In seguito, vedremo in che modo
 viene utilizzato. Lo indicheremo con $ \Omega $.
@@ -1655,13 +1667,13 @@ di soddisfabilità dei constraints presenti in $ \Omega $. Questa azione è dett
 In [2], vi è la proposta di nuove regole di inferenza in cui la normalizzazione viene effettuata alla fine delle
 premesse di ogni regola di inferenza, eccetto quella della lambda-astrazione. Tuttavia, sempre nell'articolo, vi è
 un'ulteriore proposta nella quale la normalizzazione viene effettuata in maniera \textit{lazy}, ovvero appena dopo
-la generalizzazione ed è questa la politica utilizzata da langgg. Rimangono alcune questione aperte:
+la generalizzazione ed è questa la politica utilizzata da Fex. Rimangono alcune questione aperte:
 \begin{enumerate}
     \item quand'è che un predicato viene aggiunto a $ \Omega $?
     \item quali sono i constraints (se esistono) da normalizzare dopo che è stata effettuata la generalizzazione?
 \end{enumerate}
-Per rispondere a entrambe le domande, mostriamo come avviene l'inferenza di tipo in langgg in presenza di constraints.
-Osserviamo il seguente esempio di codice langgg:
+Per rispondere a entrambe le domande, mostriamo come avviene l'inferenza di tipo in Fex in presenza di constraints.
+Osserviamo il seguente esempio di codice Fex:
 \begin{lstlisting}
 property Foo a b c =
     val foo : a -> b -> c -> Char
@@ -1672,7 +1684,7 @@ let f x y z = foo x y z
 Andando a inferire l'espressione legata ad \texttt{f}, un token che viene incontrato è \texttt{foo}. Il suo schema di
 tipo associato è $ \forall a, b, c. \; Foo \; a \; b \; c \Rightarrow a \mapsto b \mapsto c \mapsto Char $. A questo
 punto, si può applicare la regola \textbf{Var}, che, a sua volta, applica la regola
-\textbf{Inst}. Si ricordi che la politica di langgg sulla normalizzazione è \textit{lazy}, perciò
+\textbf{Inst}. Si ricordi che la politica di Fex sulla normalizzazione è \textit{lazy}, perciò
 il constraint $ Foo \; a \; b \; c $ non viene normalizzato immediatamente, bensì viene aggiunto all'ambiente dei
 problemi di constraints. $ \Omega $ si rende quindi necessario proprio a questo fine, ovvero ritardare la normalizzazione.
 \`E bene notare che esso non compare nelle regole di inferenza; questo è possibile in quanto la politica \textit{lazy}
@@ -1729,7 +1741,7 @@ Tuttavia, è necessario perfezionare l'implementazione, in quanto, al momento, n
 che soddisfa il constraint (cfr. dispatch statico). L'istanza che soddisfa il constraint deve essere unica,
 in quanto, è necessario non avere ambiguità sull'implementazione da scegliere. Chiaramente, se non vi sono istanze
 che soddisfano un constraint, il programma viene respinto con un errore. Bisogna, quindi, fissare una semantica
-di inferenza di istanza nel caso in cui vi siano due o più istanze che soddisfano un constraint. La scelta di langgg è
+di inferenza di istanza nel caso in cui vi siano due o più istanze che soddisfano un constraint. La scelta di Fex è
 quella di selezionare l'istanza "più specializzata". Definiamo ora una relazione d'ordine parziale tra constraints,
 siano $ C $ e $ C' $ due constraints:
 \begin{itemize}
@@ -1751,16 +1763,16 @@ Il fatto che la relazione d'ordine sia parziale non rappresenta un problema, inf
 se la relazione d'ordine è definita.
 
 \paragraph{Confronto con Haskell}
-langgg ha un sistema di tipi molto simile a quello di Haskell, il quale, a sua volta, possiede un constraint-system
-"costruito" sopra HM. Anche Haskell ha una politica \textit{lazy} di risoluzione delle istanze, ma, a differenza di langgg,
+Fex ha un sistema di tipi molto simile a quello di Haskell, il quale, a sua volta, possiede un constraint-system
+"costruito" sopra HM. Anche Haskell ha una politica \textit{lazy} di risoluzione delle istanze, ma, a differenza di Fex,
 in caso di molteplici istanze soddisfatte, l'azione di default è quella di rifiutare il programma, a meno che l'utente
-non utilizzi alcune estensioni del linguaggio (cfr. [13]). La politica di langgg è più elastica e permette all'utente
+non utilizzi alcune estensioni del linguaggio (cfr. [13]). La politica di Fex è più elastica e permette all'utente
 di avere più istanze valide per certi constraints, tuttavia, ciò rappresenta una responsabilità in più da parte
 dell'utente, il quale deve essere consapevole di come avviene l'inferenza di istanza. Vi è quindi un tradeoff tra
 elasticità e consapevolezza dell'utente.
 
 \subsubsection{Type-hinting}
-langgg permette all'utente di indicare il tipo di un'espressione (o di un simbolo). Questo comporta una modifica
+Fex permette all'utente di indicare il tipo di un'espressione (o di un simbolo). Questo comporta una modifica
 all'algoritmo di inferenza di tipo. Data un'espressione con type-hinting, lo schema generale è inferire prima
 l'espressione e successivamente "applicare" il type-hinting. Per quanto riguarda i casi ricorsivi delle espressioni
 (tutti i casi fuorché i simboli, i letterali e i data-constructors), il tipo proveniente dal type-hinting viene
@@ -1774,7 +1786,7 @@ unfoldType(ty):
         _ -> [ty]
 \end{lstlisting}
 Questa operazione è molto utile, ad esempio, nell'inferenza della lambda astrazione. Si osservi il seguente sorgente
-langgg:
+Fex:
 \begin{lstlisting}
 (lam x -> f x) : Char -> String
 \end{lstlisting}
@@ -1801,7 +1813,7 @@ all'ambiente di tipizzazione. Un'operazione che, in generale, è piuttosto dispe
 Il lambda-calcolo polimorfico (\textit{System-F}) non ammette la ricorsione, inoltre, non è nemmeno possibile
 trovare il tipo per il cosiddetto \textit{combinatore Y}, un modo per definire la ricorsione in linguaggi che
 generalmente non la supportano. Questo rende \textit{System-F} non Turing-completo, in quanto qualsiasi programma
-termina. langgg (come anche Haskell e molti altri linguaggi funzionali) ammette, invece, una sintassi per la ricorsione.
+termina. Fex (come anche Haskell e molti altri linguaggi funzionali) ammette, invece, una sintassi per la ricorsione.
 Questo fatto porta con sé alcune conseguenze molto importanti. Innanzitutto, la premessa della regola \textbf{Var}
 non è vera per le funzioni ricorsive, in quanto con la presenza della ricorsione i simboli possono apparire in un
 programma prima ancora che il loro tipo venga generalizzato. Inoltre, sarebbe impossibile ordinare i bindings in base
@@ -1815,7 +1827,7 @@ dove:
 \[ \Gamma' = v_1 : \tau_1, ..., v_n : \tau_n \]
 \[ \Gamma'' = v_1 : \overline{\Gamma}(\tau_1), ..., v_n : \overline{\Gamma}(\tau_n) \]
 La regola inferisce prima tutte le espressioni $ e_i $ e poi applica la regola di generalizzazione \textbf{Gen} soltanto
-alla fine. Nell'algoritmo di inferenza di langgg, prima di inferire un cluster di bindings ricorsivi, vengono creati
+alla fine. Nell'algoritmo di inferenza di Fex, prima di inferire un cluster di bindings ricorsivi, vengono creati
 nuovi mono-tipi della forma di variabili di tipo, i quali vengono assegnati ai bindings del cluster. Durante l'inferenza,
 questi mono-tipi possono essere specializzati. In questo modo, si può applicare la regola
 \textbf{Var} ad ogni occorrenza di simbolo ricorsivo. L'istanziazione di un mono-tipo non rappresenta un problema
@@ -1859,7 +1871,7 @@ Di seguito, lo schema delle fasi finali del compilatore:
 \subsubsection{Dispatch statico}
 Il polimorfismo ad-hoc viene implementato attraverso il meccanismo delle type-classes (cfr. Polimorfismo ad-hoc).
 La sintassi Core non possiede, però, costrutti per i metodi delle type-classes e per i bindings delle istanze.
-La politica del compilatore langgg è quella di aggiungere i bindings delle istanze ai bindings del programma,
+La politica del compilatore Fex è quella di aggiungere i bindings delle istanze ai bindings del programma,
 cambiando i nomi degli stessi metodi di istanze diverse (cfr. Costruzione delle istanze). Questa politica ha
 importanti implicazioni: innanzitutto, nelle espressioni del programma, i metodi delle istanze possono essere chiamati,
 ma essi possono essere nominati solamente tramite gli identificatori dei metodi delle proprietà. Ad esempio:
@@ -1877,7 +1889,7 @@ let f x = (x, foo "42")
 Come è stato già esposto in precedenza, il metodo \texttt{foo} dell'istanza \texttt{Foo Int} avrà un identificatore
 diverso da \texttt{foo}. Tuttavia, \texttt{foo} viene nominato nell'espressione legata a \texttt{f}. \`E necessario,
 quindi, un modo per trasformare, eventualmente, le occorrenze dei metodi di proprietà con i giusti metodi di istanza.
-Si pensi a quest'altro pezzo di codice langgg:
+Si pensi a quest'altro pezzo di codice Fex:
 \begin{lstlisting}
 type Box a = Box a
 
@@ -1893,8 +1905,8 @@ metodo di dispatch statico. Il polimorfismo ad-hoc permette di creare funzioni c
 seconda del loro tipo. Il dispatch statico si occupa di "scegliere" correttamente le funzioni a disposizione nel
 programma (i metodi d'istanza) che implementano i relativi metodi di proprietà nel programma. A differenza di molti
 linguaggi object-oriented, in cui la selezione dei metodi avviene a run-time attraverso meccanismi di dispatch dinamici,
-in langgg la selezione viene risolta completamente a compile-time, evitando così l'overhead che può essere causato
-da un algortimo di dispatch dinamico. In particolare, il dispatch statico in langgg viene implementato attraverso
+in Fex la selezione viene risolta completamente a compile-time, evitando così l'overhead che può essere causato
+da un algortimo di dispatch dinamico. In particolare, il dispatch statico in Fex viene implementato attraverso
 la \textit{monomorfizzazione} [11], già introdotta, in realtà, nella costruzione delle istanze. Ora renderemo la
 monomorfizzazione generale a tutte le funzioni del programma; l'implementazione che seguirà si ispira a un articolo
 sul blog di Jeremy Mikkola [12]. Si ripensi alla precedente funzione \texttt{g}. Il suo
@@ -1906,8 +1918,8 @@ val g : Foo (Box a) -> a -> Box a
 \end{lstlisting}
 \`E necessario estendere la definizione di tipo qualificato:
 \[ QT := MT \; | \; C \; | \; C \Rightarrow QT \]
-Quindi, un tipo qualificato in langgg può possedere soltanto constraints. Questa eventualità viene tuttavia limitata
-a pochi casi possibili e, comunque, langgg non espone una sintassi per esprimere tipi qualificati che possiedono
+Quindi, un tipo qualificato in Fex può possedere soltanto constraints. Questa eventualità viene tuttavia limitata
+a pochi casi possibili e, comunque, Fex non espone una sintassi per esprimere tipi qualificati che possiedono
 soltanto constraints.
 
 Sempre durante la fase di type-inference, ogni volta che la funzione \texttt{g} viene utilizzata nel programma, oltre
@@ -1972,7 +1984,7 @@ espressione l'espressione legata del binding. Si ricordi che, durante la type in
 vengono trattati come argomenti di un costrutto di lambda-astrazione (cfr. Implementazione delle regole di inferenza).
 
 \subsubsection{Rimozione del pattern matching profondo}
-Si consideri il seguente sorgente langgg:
+Si consideri il seguente sorgente Fex:
 \begin{lstlisting}
 type Success = Ok200
 type Error = Undefined | Err401 | Err404 | Err500
@@ -2029,7 +2041,7 @@ let f x y =
 \end{lstlisting}
 Nell'espressione legata ad \texttt{f}, le variabili di scrutinio sono \texttt{a} e \texttt{b}, mentre la variabile
 \texttt{v} non lo è. Ciò che avviene nella fase di desugaring è la trasformazione delle case-expressions in modo che
-una sola variabile di scrutinio venga utilizzata, quindi il codice langgg precedentemente mostrato diventerà:
+una sola variabile di scrutinio venga utilizzata, quindi il codice Fex precedentemente mostrato diventerà:
 \begin{lstlisting}
 let f x y =
     match g x y with
@@ -2041,9 +2053,9 @@ Si noti che le variabili delle sotto-espressioni vengono opportunamente aggiorna
 
 \subsection{Generazione del codice Core}
 Core è una rappresentazione intermedia utilizzata da GHC come rappresentazione intermedia di Haskell. La generazione
-del codice Core è la fase finale del front-end del compilatore langgg. Core è un linguaggio minimale ed è una variante
-esplicitamente tipata (a differenza di Haskell e langgg) del formalismo \textit{System-F} [3]. L'obiettivo del compilatore
-langgg è costruire dei token tipati e manipolarli in modo che la traduzione dal programma tipato langgg all'equivalente
+del codice Core è la fase finale del front-end del compilatore Fex. Core è un linguaggio minimale ed è una variante
+esplicitamente tipata (a differenza di Haskell e Fex) del formalismo \textit{System-F} [3]. L'obiettivo del compilatore
+Fex è costruire dei token tipati e manipolarli in modo che la traduzione dal programma tipato Fex all'equivalente
 Core sia più lineare possibile. GHC espone al cliente delle API che permettono di utilizzare le funzionalità del
 compilatore [14], comprese quelle per creare e manipolare un programma Core. Di seguito vi è il tipo di dato algebrico
 utilizzato nelle API di GHC per rappresentare un'espressione Core:
@@ -2086,10 +2098,10 @@ type CoreBndr = Var
 Il tipo \texttt{Var} è rappresenta le variabili in Core con un informazione sul loro tipo. Nel contesto di Core, con il
 \textit{variabile} si intende un concetto di ampio spettro, infatti, \texttt{Var} comprende le variabili di un programma,
 le variabili di tipo, le variabili di kind, etc.. Come si può notare dalle strutture dati utilizzate nelle API di GHC e
-dalle fasi precedenti del compilatore Core, l'obiettivo del compilatore langgg è creare token tipati che possano essere
+dalle fasi precedenti del compilatore Core, l'obiettivo del compilatore Fex è creare token tipati che possano essere
 successivamente trasformati in token Core nel modo più lineare possibile. Alcuni esempi sono:
 \begin{itemize}
-    \item la definizione di binding di Core è molto simile a quella utilizzata dal compilatore langgg (cfr.
+    \item la definizione di binding di Core è molto simile a quella utilizzata dal compilatore Fex (cfr.
     Approccio a tabelle);
     \item i costrutti di pattern matching, dopo le varie fasi di desugaring, non possiedono costruttori innestati nelle
     case expressions, come si può notare dal costruttore di un \textit{caso} in Core:
@@ -2102,24 +2114,24 @@ type Alt b = (AltCon, [b], Expr b)
 | Case  (Expr b) b Type [Alt b]
     \end{lstlisting}
     Il fatto che gli scrutini siano stati tutti unificati rappresenta un vantaggio in termini di implementazione;
-    \item i bindings non hanno la nozione di argomenti, infatti, in langgg gli argomenti dei bindings sono stati
+    \item i bindings non hanno la nozione di argomenti, infatti, in Fex gli argomenti dei bindings sono stati
     trasformati in argomenti dei costrutti di lambda-astrazione (cfr. Lambda-astrazione);
-    \item Le definizioni dei token tipati in langgg portano con sè l'informazione sul proprio tipo in modo che i token
+    \item Le definizioni dei token tipati in Fex portano con sè l'informazione sul proprio tipo in modo che i token
     Core possano essere costruiti. Si ricordi che Core è un linguaggio esplicitamente tipato, quindi ogni costrutto che
     ha la nozione di tipo, ha il tipo esplicitato nella sintassi.
 \end{itemize}
 I dettagli implementativi dell'effettiva traduzione si trovano nel modulo \texttt{Compiler.Codegen.ToCore}.
 
 \paragraph{Traduzione dei tipi e dei costruttori}
-Il modulo \texttt{Compiler.Codegen.Type} si occupa di trasformare i token di langgg che rappresentano i tipi nei
+Il modulo \texttt{Compiler.Codegen.Type} si occupa di trasformare i token di Fex che rappresentano i tipi nei
 corrispettivi token di Core [16]. Il tipo di dato algebrico nelle API di GHC per rappresentare un tipo in Core è
-\texttt{Type}. A differenza di langgg in cui per ogni nozione diversa di tipo è stato creato un token diverso,
+\texttt{Type}. A differenza di Fex in cui per ogni nozione diversa di tipo è stato creato un token diverso,
 \texttt{Type} racchiude molte nozioni di tipo, tra cui: mono-tipo, schema di tipo, variabili di tipo, etc.. Dal
 punto di vista delle API di GHC, \texttt{Type} è un tipo di dato astratto, infatti, sempre il modulo \texttt{Type}
 espone una serie di funzioni per costruire i tipi in Core. Altri tipi di dati fondamentali in Core sono \texttt{TyCon} e
 \texttt{DataCon}, definiti rispettivamente in [17] e [18], i quali rappresentano rispettivamente i type-constructors e
 i data-constructors. In precedenza, quando è stato presentato il tipo di approccio (a tabelle) che utilizza il
-compilatore langgg
+compilatore Fex
 per costruire e salvare i token tipati, è stato fatto un confronto con GHC (cfr. Confronto con GHC) che utilizza un
 approccio molto diverso. Infatti, in GHC i token vengono salvati in una struttura a grafo. Questo metodo si
 ripercuote soprattutto a livello programmatico, infatti, prendendo in considerazione \texttt{TyCon} e \texttt{DataCon},
@@ -2130,7 +2142,7 @@ si ricordi che Haskell è un linguaggio con un modello di valutazione delle espr
 prevenire la ricorsione infinita in codice mutualmente ricorsivo.
 
 \subsection{Back-end}
-La fase finale di compilazione di un programma langgg consiste nel compilare un programma Core in target differenti.
+La fase finale di compilazione di un programma Fex consiste nel compilare un programma Core in target differenti.
 La pagina di documentazione ufficiale di GHC espone nei dettagli il ciclo di compilazione di un programma Haskell (e
 di conseguenza di un programma Core) [19]. Lo schema semplificato è il seguente:
 \newline
@@ -2164,7 +2176,7 @@ I tre target principali sono:
 \end{itemize}
 
 \section{Sviluppi futuri}
-langgg è un linguaggio sperimentale in evoluzione. Vi sono alcune \textit{features} che arricchiscono il linguaggio che
+Fex è un linguaggio sperimentale in evoluzione. Vi sono alcune \textit{features} che arricchiscono il linguaggio che
 potrebbero essere implementate in futuro. Di seguito, sono elencate alcune caratteristiche ritenute interessanti da
 aggiungere al linguaggio. In particolare, nella presentazione delle funzionalità aggiuntive, verranno analizzate prima le
 basi teoretiche, discutendo i vantaggi che vengono portati al linguaggio (e, eventualmente, svantaggi) e i problemi
@@ -2176,7 +2188,7 @@ interessante, la quale porta numerosi vantaggi all'utente in termini pratici, tu
 largamente adottata nei linguaggi mainstream. Vi è stata una proposta di implementazione in GHC [20] che ha
 successivamente dato vita a un'estensione di Haskell. Questa sezione si ispirerà alla proposta che è stata fatta per GHC:
 verranno date alcune definizioni al fine di introdurre la nozione di \textit{tipo lineare} e verrà, a sua volta, proposta una
-bozza di implementazione nel compilatore langgg. Due vantaggi pratici che offre un sistema di tipi lineari sono: l'utilizzo
+bozza di implementazione nel compilatore Fex. Due vantaggi pratici che offre un sistema di tipi lineari sono: l'utilizzo
 e il controllo della mutabilità con interfacce \textit{pure}; maggiore controllo in computazioni che riguardano l'IO.
 In generale, i tipi lineari offrono maggiori garanzie all'utente programmatore.
 
@@ -2255,16 +2267,16 @@ di applicazione, è necessario guardare la
 molteplicità della freccia (nel tipo dell'espressione che applica) e a seconda della sua molteplcità, le variabili libere
 nell'argomento dell'applicazione dovranno essere utilizzate con la stessa molteplicità.
 
-\paragraph{Bozza di implementazione in langgg}
-Ora che è stato presentato un sistema di tipi lineari, si può delineare una bozza di implementazione in langgg.
-Il sistema di tipi lineari da aggiungere a quello già esistente di langgg si ispira a quello appena presentato,
-riutilizzando le varie nozioni incontrate. Ma prima di aggiornare il sistema di tipi di langgg, è doveroso definire
-la politica di valutazione delle espressioni in langgg (al momento indefinita e dipendente dall'implementazione).
+\paragraph{Bozza di implementazione in Fex}
+Ora che è stato presentato un sistema di tipi lineari, si può delineare una bozza di implementazione in Fex.
+Il sistema di tipi lineari da aggiungere a quello già esistente di Fex si ispira a quello appena presentato,
+riutilizzando le varie nozioni incontrate. Ma prima di aggiornare il sistema di tipi di Fex, è doveroso definire
+la politica di valutazione delle espressioni in Fex (al momento indefinita e dipendente dall'implementazione).
 Una scelta che può essere coerente con il sistema di tipi lineari da aggiungere è quella di una politica \textit{lazy}
 come quella di Haskell. Questo comporta che la traduzione dei token tipati in codice Core sia tale che le espressioni
-di langgg legate alle variabili non vengano valutate al momento della definizione delle variabili, bensì, la loro
+di Fex legate alle variabili non vengano valutate al momento della definizione delle variabili, bensì, la loro
 valutazione venga ritardata fin quando ci sarà una computazione all'interno del programma che necessiterà il loro
-valore. Fatta questa importante premessa, ora è possibile discutere l'estensione del sistema di tipi di langgg.
+valore. Fatta questa importante premessa, ora è possibile discutere l'estensione del sistema di tipi di Fex.
 Un primo aggiornamento che può essere effettuato è alla nozione di mono-tipo:
 \[ MT \; := \; \alpha \; | \; T \; | \; MT \; MT \; | \; MT \mapsto_{\pi} MT \]
 Dove $ \pi $ è la nozione di molteplicità fornita in precedenza (anch'essa da aggiungere al sistema di tipi).
@@ -2274,7 +2286,7 @@ Dopodiché, sarà necessario estendere l'algoritmo di type inference, in partico
     token una molteplicità. Anche in questo ambiente sarà necessario tener conto delle variabili libere, in quanto
     la nozione di molteplicità stessa può possedere variabili di molteplicità;
     \item estendere le regole di inferenza in modo che, oltre alla normale type inference, eseguano anche l'inferenza
-    di molteplicità. Si presume che, come per i tipi, in langgg le molteplicità possano o non possano essere esplicitate;
+    di molteplicità. Si presume che, come per i tipi, in Fex le molteplicità possano o non possano essere esplicitate;
     \item per quanto riguarda le regole di inferenza, al momento della generalizzazione, sarà necessario generalizzare
     anche le eventuali variabili di molteplicità che non compaiono libere in $ \Pi $.
 \end{itemize}
@@ -2288,7 +2300,7 @@ L'idea alla base è avere un sistema di tipi che comprende una nuovo insieme di 
 grado di inglobare l'insieme di \textit{operazioni} che portano \textit{side-effects} (di qualsiasi genere). Linguaggi
 come Koka [21] implementano un sistema di tipi che supporta anche gli \textit{effetti}. In questa sezione, verranno
 discusse le principali caratteristiche di un sistema di \textit{effetti}, seguendo l'articolo [22], poi verrà proposta
-un'implementazione nel compilatore langgg, analizzando i cambiamenti da portare e gli eventuali ostacoli.
+un'implementazione nel compilatore Fex, analizzando i cambiamenti da portare e gli eventuali ostacoli.
 
 Nell'articolo [22] viene, innazitutto, fissato un linguaggio. L'approccio utilizzato qui è lo stesso, tuttavia, il
 linguaggio che verrà definito sarà leggermente diverso da quello nell'articolo:
@@ -2325,13 +2337,13 @@ di computazione. Le regole di inferenza per il formalismo in questione sono abba
 (esse sono comunque definite in [22]). I tipi delle computazioni racchiudono le possibili operazioni che fanno parte
 dell'effetto. Questo fatto permette di catturare in maniera precisa i side-effects prodotti dalle operazioni.
 
-\paragraph{Bozza di implementazione in langgg}
-Un sistema di effetti offre un meccanismo generale per gestire le computazioni impure. langgg è un linguaggio
+\paragraph{Bozza di implementazione in Fex}
+Un sistema di effetti offre un meccanismo generale per gestire le computazioni impure. Fex è un linguaggio
 funzionale puro e, al momento, non ha un meccanismo per gestire tutto ciò che non riguarda il "mondo puro". Un sistema
 di effetti potrebbe essere un modo per aggiungere computazioni impure, come input/output, eccezioni, multi-threading,
 mantenendo separato il "mondo puro" da quello "impuro".
 
-Per aggiungere un sistema di effetti a langgg, è necessario, innanzitutto, aggiungere una nuova sintassi per tutti quei
+Per aggiungere un sistema di effetti a Fex, è necessario, innanzitutto, aggiungere una nuova sintassi per tutti quei
 costrutti necessari all'implementazione degli effetti, in particolare bisogna aggiungere:
 \begin{itemize}
     \item una sintassi per definire gli effetti, ovvero i tipi delle computazioni. Questo diventa opzionale se alcuni
@@ -2346,7 +2358,7 @@ costrutti necessari all'implementazione degli effetti, in particolare bisogna ag
 Dopodiché, è necessario definire un sistema di effetti. Un possibile approccio è quello di Koka [23], il quale, potendo
 inferire tutti i side-effects in una computazione, connota il tipo ritorno con gli effetti opportuni. In particolare,
 l'assenza di side-effects è connotata con $ total $, l'effetto per le funzioni matematiche. In ogni caso, si rende
-necessaria un'estensione del sistema di tipi di langgg, infatti, dati i nuovi costrutti del linguaggio, bisogna quanto
+necessaria un'estensione del sistema di tipi di Fex, infatti, dati i nuovi costrutti del linguaggio, bisogna quanto
 meno avere un tipo per le computazioni e un tipo per gli handler. L'aggiornamento delle regole di inferenza avviene di
 conseguenza, tuttavia, per quanto riguarda queste ultime, vale la pena fare alcune precisazioni. Per tipizzare
 una computazione nel modo giusto, è necessario eseguire un'analisi statica della computazione e individuare tutte le
@@ -2354,7 +2366,7 @@ operazioni definite in un effetto. Inoltre, è possibile eseguire l'analisi stat
 gestisce tutte le operazioni utilizzate in una computazione. Tuttavia, se, come in Koka, vi sono effetti che comprendono,
 ad esempio, anche la divergenza di un programma, non esiste un'operazione specifica associata all'effetto di divergenza.
 In questo caso, è necessario un'analisi statica specifica, infatti, l'unico "costrutto" con cui si ottiene la divergenza
-in langgg è la ricorsione,
+in Fex è la ricorsione,
 quindi, ogni qual volta vi sono uno o più bindings ricorsivi, il loro tipo può essere l'effetto divergenza.
 Il fatto che un qualche simbolo $ f $ abbia come tipo l'effetto divergenza non implica che la valutazione di $ f $
 provochi l'effettiva divergenza del programma. Questo perché il problema della fermata non è decidibile.
@@ -2377,10 +2389,10 @@ programmazione e viene risolto anche dai linguaggi orientati agli oggetti tramit
 ereditarietà, tuttavia, le varianti polimorfe costituiscono un modo più conciso ed elegante di estendere i tipi.
 Esse sono state implementate in OCaml, ma non sono diffuse in molti altri linguaggi di programmazione. Esse rompono
 il vincolo informale secondo il quale un data-constructor appartiene a uno e un solo type-constructor; si ricordi che
-tale vincolo è valido in langgg e Haskell. L'implementazione OCaml offre anche una nuova sintassi per contraddistinguere
+tale vincolo è valido in Fex e Haskell. L'implementazione OCaml offre anche una nuova sintassi per contraddistinguere
 le varianti polimorfe (il loro identificatore è preceduto dal carattere backtick \`).
 In questa sezione, verranno brevemente presentati i principali vantaggi delle varianti polimorfe, dopodiché, non verrà
-presentata un'implementazione in langgg, bensì verranno discusse alcune proposte di implementazioni provenienti da
+presentata un'implementazione in Fex, bensì verranno discusse alcune proposte di implementazioni provenienti da
 altre fonti.
 
 Come mostra Garrigue in [24], uno dei vantaggi principali delle varianti polimorfe è quello già citato precedentemente:
