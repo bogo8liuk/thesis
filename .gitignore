@@ -2,3 +2,8 @@
 *.pdf
 *.aux
 *.out
+# Indexing stuff
+*.idx
+*.ilg
+*.ind
+*.toc
