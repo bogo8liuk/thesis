@@ -2446,7 +2446,7 @@ alle librerie di essere indipendenti tra loro.
 In letteratura, vi sono numerose proposte di implementazione delle varianti polimorfe. Di seguito, ne elencheremo alcune,
 analizzando eventuali vantaggi e svantaggi:
 \begin{itemize}
-    \item come propone inzialmente Garrigue [24], una possibile compilazione delle varianti polimorfe può essere effettuata
+    \item come propone inizialmente Garrigue [24], una possibile compilazione delle varianti polimorfe può essere effettuata
     facendo un mapping da varianti a valori numerici interi. Questa soluzione è semplice da implementare e piuttosto
     efficiente, tuttavia, presenta un grosso svantaggio: è necessario conoscere tutte le varianti polimorfe di un programma.
     Il problema nasce se il linguaggio permette la compilazione separata di sorgenti, infatti, a quel punto non è possibile
@@ -2470,12 +2470,29 @@ variant cs => a in VariantName ts where
     ...
     Constr_m :: ty_m1 -> ... -> ty_mn -> a
 \end{lstlisting}
-\end{itemize}
-    Le varianti polimorfe sono rappresentate dai simboli \texttt{Constr_*}, i quali hanno degli identificatori che
-    iniziano con una lettera maiuscola. Si può notare come la dichiarazione di una variante sia molto simile a quella
+    Le varianti polimorfe sono rappresentate dai simboli con suffisso \texttt{Constr}, i quali hanno degli identificatori
+    che iniziano con una lettera maiuscola. Si può notare come la dichiarazione di una variante sia molto simile a quella
     di un type-class. Tuttavia, vi è una restrizione, ovvero che la variabile di tipo \texttt{a} deve apparire come tipo
     di ritorno di ogni variante polimorfa. Il contesto \texttt{cs} specifica le superclassi, che, a loro volta, dovranno
-    essere delle varianti. \texttt{ts} è una sequenza di argomenti (variabili di tipo) come per le type-classes. %TODO: cfh
+    essere delle varianti. \texttt{ts} è una sequenza di argomenti (variabili di tipo) come per le type-classes.
+    Il costrutto per definire una variante subisce la seguente trasformazione:
+    \newline
+    prima:
+\begin{lstlisting}
+variant cs => a in VariantName ts
+\end{lstlisting}
+    dopo:
+\begin{lstlisting}
+class cs => VariantName a ts | a -> ts
+\end{lstlisting}
+    Come si nota dal codice, sono state utilizzate due estensioni (le quali hanno buon supporto da parte dei compilatori
+    Haskell): \texttt{MultiParamTypeClasses} e \texttt{FunctionalDependencies}.
+    Kagawa [25] estende, successivamente, la sintassi Haskell con altri due tipi di
+    dichiarazioni (i record e le istanze di varianti) e spiega come sia necessario un aggiornamento dell'algoritmo di
+    inferenza di tipo. In ogni caso, questo metodo di implementazione ha il vantaggio di essere direttamente traducibile
+    (escludendo la modifica all'algoritmo di inferenza di tipo) in codice Haskell, quindi, risulta essere solamente
+    zucchero sintattico.
+\end{itemize}
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
