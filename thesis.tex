@@ -97,20 +97,27 @@ Corso di Laurea in Nome corso di Laurea }}
 %TODO: dove viene descritto il problema, la subsection può essere rimossa
 \subsection{Il linguaggio}
 
-\subsection{Haskell come modello}
+\subsection{Haskell e System-F come modelli}
 Il compilatore è stato sviluppato mediante il linguaggio \textit{Haskell}, anch'esso linguaggio di programmazione funzionale.
-Inoltre, il linguaggio target di Fex è \textit{Core}, un formalismo fortemente basato su \textit{System F}, una
-variante tipata del lambda-calcolo che introduce un meccanismo di quantificazione universale sui tipi. Core, inoltre,
+Inoltre, il linguaggio target di Fex è \textit{Core}, un formalismo fortemente basato su \textit{System-F} (cfr. System-F).
+Core, inoltre,
 viene utilizzato da GHC (compilatore Haskell) come rappresentazione intermedia di Haskell. All'interno di questo
-contesto, GHC espone delle API che permettono al cliente di utilizzare le funzionalità del compilatore (cfr. [3]); è quindi
+contesto, GHC espone delle API che permettono al cliente di utilizzare le funzionalità del compilatore [3]; è quindi
 possibile creare e manipolare programmi Core mediante le API, le quali sono state scritte in Haskell. Per quest'ultimo
 motivo, Haskell è stato scelto come linguaggio di implementazione del compilatore di Fex, tuttavia, nel contesto
 del progetto, Haskell ha anche un altro importante ruolo: alcune delle sue funzionalità sono state, direttamente
 o indirettamente, fonte di ispirazione per il design di Fex. Nel prossimo paragrafo vengono presentate le principali
 caratteristiche di Fex ed è possibile ritrovare la maggior parte di esse anche in Haskell. Un altro linguaggio
 che è stato fonte di ispirazione, ma con minore impatto, è \textit{OCaml}, linguaggio multi-paradigma (funzionale non
-puro), soprattutto per la sintassi di Fex e per il costrutto delle polymorphic variants (cfr. paragrafo sugli
-sviluppi futuri).
+puro), soprattutto per la sintassi di Fex e per il costrutto delle polymorphic variants (cfr. Varianti polimorfe).
+
+\paragraph{System-F}
+I costrutti principali di Fex si basano su System-F, una versione tipata del lambda-calcolo che introduce un meccanismo di
+quantificazione universale sui tipi. Esso è definito con i seguenti quattro costrutti:
+\[ e := x \; | \; e_1 \; e_2 \; | \; \lambda x. \; e \; | \; let \; x = e_1 \; in \; e_2 \]
+Come vedremo in seguito (cfr. Ricorsione), questo formalismo risulta non essere Turing-completo. Fex (come lo stesso
+Haskell) basa i propri costrutti e il proprio type-system, nonché il suo algoritmo di inferenza dei tipi, su questo
+formalismo, tuttavia, quest'ultimo viene esteso con altri costrutti che offrono una maggiore espressività.
 
 \subsection{Caratteristiche del linguaggio}
 Tra le principali caratteristiche del linguaggio vi sono:
@@ -573,7 +580,9 @@ grafo da zero.
 \subsection{Il sistema di tipi}
 In questo paragrafo, verrà presentato il sistema di tipi di Fex. Come è stato già menzionato in precedenza, il
 linguaggio supporta il polimorfismo ad hoc e il polimorfismo parametrico; quest'ultimo viene implementato attraverso
-il concetto di variabile di tipo, la quale può essere considerata come un "placeholder" per i tipi.
+il concetto di variabile di tipo, la quale può essere considerata come un "placeholder" per i tipi. Il sistema di tipi
+che verrà presentato è fortemente basato su quello di System-F, tuttavia, vi sono alcune estensioni che permettono una
+maggiore espressività.
 
 \subsubsection{Mono-tipo}
 Di seguito, viene definito il concetto di \textit{mono-tipo}:
@@ -669,7 +678,7 @@ Finora abbiamo trattato mono-tipi e tipi qualificati, tuttavia, la sola presenza
 a costruire tipi "polimorfi". Si consideri il seguente esempio:
 \[ map : (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
 In questo caso, il tipo della funzione $ map $ non è polimorfo, in quanto le variabili di tipo $ \alpha $ e $ \beta $
-rappresentano un tipo fissato non ancora conosciuto. Per ottenere il polimorfismo, è necessario introdurre
+rappresentano un tipo fissato non ancora conosciuto. Per ottenere il polimorfismo parametrico, è necessario introdurre
 dei quantificatori, ad esempio, possiamo rifinire il tipo di $ map $ nel modo seguente:
 \[ map : \forall \alpha, \beta . \; (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
 A differenza di prima, in cui $ map $ aveva un tipo prefissato, qui può avere molteplici tipi. Ora diamo la definizione
@@ -680,7 +689,6 @@ variabili di tipo che compaiono in un tipo qualificato sono legate a un quantifi
 trattate come costanti. Si noti come i quantificatori possono apparire solamente alla testa di un tipo, ad esempio, il
 seguente tipo non è accettato in Fex:
 \[ \forall \alpha . \; (\forall \alpha . \; \alpha \mapsto \alpha) \mapsto \alpha \]
-%TODO: System F
 La definizione di schema di tipo in Fex si trova nel modulo \texttt{Compiler.Ast.Typed}:
 \begin{lstlisting}
 data LangTypeScheme a = Forall [LangVarType a] (LangQualType a)
