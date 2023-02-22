@@ -274,7 +274,7 @@ m Int
 \end{lstlisting}
 dove \textit{m} è una variabile di tipo a cui viene applicata il tipo \textit{Int}.
 
-\paragraph{Polimorfismo ad hoc}
+\paragraph{Polimorfismo ad-hoc}
 Attraverso il meccanismo delle type-classes (all'interno del linguaggio vengono chiamate
 proprietà), è possibile creare funzioni polimorfe che possono essere applicate ad argomenti di tipi differenti e, a
 seconda dei tipi degli argomenti, viene "selezionata" un'implementazione. Ogni proprietà può avere uno, ma anche
@@ -574,11 +574,10 @@ type T a1 a2 = C1 Int a1 | C2 a1 (T a1 a2)
 Il motivo di questo renaming verrà descritto in seguito (cfr. \hyperlink{Kind-inference}{Kind-inference}). Il codice
 risiede nel modulo \texttt{Compiler.Desugar.TyVars}.
 
-%TODO: cfh
 \section{Generazione dei token "tipati"}
-Dopo la generazione dell'albero di sintassi astratta e alcune fasi di desugaring, questa seconda macro componente del
+Dopo la generazione dell'albero di sintassi astratta e alcune fasi di desugaring, questa seconda componente del
 compilatore si occupa della generazione dei token "tipati". Questi ultimi prendono questa nomea in quanto, a questo
-livello, compaiono le nozioni di tipo e di kind del linguaggio.
+livello, compare la nozione di tipo del linguaggio.
 \newline
 
 \begin{tikzpicture}[node distance=2cm]
@@ -603,9 +602,9 @@ livello, compaiono le nozioni di tipo e di kind del linguaggio.
 \draw [arrow] (desugar) -- (tyBindings);
 \end{tikzpicture}
 
-\subsection{Approccio a tabelle}
-A differenza della prima macro componente del compilatore, dove l'unica struttura dati di primo livello era l'AST, in
-questo caso vi sono molteplici strutture dati di primo livello. Innanzitutto, nel modulo \texttt{Compiler.Ast.Typed},
+\subsection{Approccio a tabelle}\hypertarget{Approccio a tabelle}
+A differenza della prima componente del compilatore, dove l'unica struttura dati di primo livello era l'AST, in
+questo caso vi sono molteplici strutture dati. Innanzitutto, nel modulo \texttt{Compiler.Ast.Typed},
 vi sono le definizioni di tutti i token tipati e le operazioni su di essi; proprio in questo modulo compaiono:
 \begin{enumerate}
     \item le nozioni che riguardano i tipi del linguaggio:
@@ -627,8 +626,8 @@ data NotedExpr a          --expressioni
     \item operazioni che riguardano la manipolazione dei tipi quali unificazione, test di specificità, specializzazione,
     instanziazione, generalizzazione. Inoltre, vi sono le funzioni e le strutture dati per gestire il dispatch statico.
 \end{enumerate}
-Nonostante la presenza di token tipati, non esiste una corrispondente versione tipata dell'AST con un unico entry point,
-bensì le informazioni che riguardano un programma vengono memorizzate in "tabelle" (cfr. modulo
+Nonostante la presenza di token tipati, non esiste una corrispondente versione tipata dell'AST con un unico entry-point,
+bensì le informazioni che riguardano un programma vengono memorizzate in tabelle (cfr. modulo
 \texttt{Compiler.Types.Tables}):
 \begin{lstlisting}
 newtype TypesTable a          --tabella dei "modelli" di tipi
@@ -649,7 +648,7 @@ property Stateful m =
     val getState : m a -> a
 ;;
 \end{lstlisting}
-Verranno creati dei token (presenti in \texttt{Compiler.Ast.Typed}) dei tipi:
+Verranno creati dei token (presenti in \texttt{Compiler.Ast.Typed}):
 \begin{lstlisting}
 data LangNewType a            --type constructor
 data LangNewConstraint a      --constraint constructor
@@ -665,13 +664,15 @@ data TypedBinding a =
     | TyRec [BindingSingleton a]
 \end{lstlisting}
 Osservando l'implementazione di \texttt{TypedBinding}, si nota come esistano due tipi di binding. Il primo è per i binding
-non ricorsivi, mentre il secondo è per i binding che sono mutualmente ricorsivi fra loro (cfr. type-inference).
+non ricorsivi, mentre il secondo è per i binding che sono mutualmente ricorsivi fra loro
+(cfr. \hyperlink{Type-inference}{Type-inference}). In seguito, vedremo perché si rende necessaria questa distinzione.
 
-\subsubsection{Confronto con GHC}
+\subsubsection{Confronto con GHC}\hypertarget{Confronto con GHC}
 Come è stato detto precedentemente, l'approccio del compilatore è quello di costruire tabelle man mano che le informazioni
 vengono inferite dall'AST. GHC (the Glasgow Haskell Compiler) utilizza un approccio differente, in quanto non utilizza
-alcuna "symbol table", bensì ogni token tipato (di GHC) nella compilazione di un programma Haskell da parte di GHC può
-textit{puntare} ad altri token tipati [5]. Si crea così un grafo di strutture dati tipate. Ad esempio, GHC, per gestire
+alcuna "symbol table", bensì ogni token tipato (di GHC) nella compilazione di un programma Haskell può
+textit{puntare} ad altri token tipati \hyperlink{bibl5}{[5]}. Si crea così un grafo di strutture dati tipate.
+Ad esempio, GHC, per gestire
 le entità di type constructor e data constructor, utilizza rispettivamente i token \texttt{TyCon} e \texttt{DataCon} (si
 ricordi che GHC è scritto in Haskell):
 \begin{lstlisting}
@@ -679,7 +680,7 @@ data TyCon
 data DataCon
 \end{lstlisting}
 Ogni token di tipo \texttt{TyCon} punterà a una lista di \texttt{DataCon} che, a loro volta, conterranno la referenza
-al loro costruttore di tipo. Come puntualizza Edward Y. Zang nell'introduzione dell'articolo [6],
+al loro costruttore di tipo. Come puntualizza Edward Y. Zang nell'introduzione dell'articolo \hyperlink{bibl6}{[6]},
 uno svantaggio di questo approccio è che il grafo è immutabile e quindi, per poter
 aggiornare i nodi del grafo è necessario ricostruire il grafo da zero. Tuttavia, questo problema è mitigato, in quanto
 gli aggiornamenti del grafo sono parecchio rari, inoltre, man mano che GHC ottiene informazioni dal programma Haskell,
@@ -687,13 +688,13 @@ accrescerà il grafo senza aggiornare i nodi preesistenti; in questo modo, non v
 grafo da zero.
 
 \subsection{Il sistema di tipi}\hypertarget{Il sistema di tipi}
-In questo paragrafo, verrà presentato il sistema di tipi di Fex. Come è stato già menzionato in precedenza, il
+In questa sezione, verrà presentato il sistema di tipi di Fex. Come è stato già menzionato in precedenza, il
 linguaggio supporta il polimorfismo ad hoc e il polimorfismo parametrico; quest'ultimo viene implementato attraverso
 il concetto di variabile di tipo, la quale può essere considerata come un "placeholder" per i tipi. Il sistema di tipi
 che verrà presentato è fortemente basato su quello di System-F, tuttavia, vi sono alcune estensioni che permettono una
 maggiore espressività.
 
-\subsubsection{Mono-tipo}
+\subsubsection{Mono-tipo}\hypertarget{Mono-tipo}
 Di seguito, viene definito il concetto di \textit{mono-tipo}:
 \[ MT \; := \; \alpha \; | \; T \; | \; MT \; MT \; | \; MT \mapsto MT \]
 dove $ \alpha $ è una variabile di tipo e $ T $ è un costruttore di tipo. Come si può dedurre dalla definizione stessa,
@@ -710,7 +711,7 @@ data LangHigherType a =
 dove \texttt{LangType} rappresenta tutti i tipi che possono essere definiti in Fex. Si noti come vi è un secondo
 caso (\texttt{HApp}), il quale rappresenta il tipo funzione. Il costruttore \texttt{HApp} prende in input una lista
 di mono-tipi, tuttavia il tipo funzione può avere al massimo due argomenti, perciò il modulo \texttt{Compiler.Ast.Typed}
-si occupa internamente di rifiutare qualsiasi valore con costruttore \texttt{HApp} che abbia più di due argomenti.
+si occupa internamente di rifiutare qualsiasi valore con costruttore \texttt{HApp} che ha più di due argomenti.
 La causa per la quale non vi è un numero fissato di argomenti è la presenza delle funzioni di tipo, infatti,
 in questo modo, è possibile esprimere senza difficoltà, all'interno del compilatore, tipi come:
 \begin{itemize}
@@ -718,14 +719,14 @@ in questo modo, è possibile esprimere senza difficoltà, all'interno del compil
 \item \texttt{(->)}
 \end{itemize}
 
-\subsubsection{Tipi higher-kinded}
+\subsubsection{Tipi higher-kinded}\hypertarget{Tipi higher-kinded}
 Fex permette all'utente di utilizzare \textit{funzioni di tipo} (o \textit{costruttori di tipo}). A questo scopo,
 viene introdotta la nozione di \textit{kind}, il quale rappresenta un'informazione aggiuntiva per i tipi. Informalmente,
 dato un type-system \textit{TS}, un kind-system \textit{KS} si può vedere come un type-system di livello "superiore"
 a \textit{TS}. Ora diamo una definizione più precisa di kind:
 \[ K \; := \; \kappa \; | \; * \; | \; K \mapsto K \]
 dove $ \kappa $ è una variabile di kind e $ * $ è la costante primitiva di kind (detta anche "tipo"), il quale
-rappresenta tutti quei tipi che non hanno bisogno di parametri di tipi. Ecco alcuni esempi:
+rappresenta tutti quei tipi che non hanno bisogno di parametri. Ecco alcuni esempi:
 \begin{itemize}
     \item $ * \mapsto * $ è il kind delle funzioni di tipo unarie;
     \item $ (* \mapsto *) \mapsto * \mapsto * $ è il kind delle funzioni di tipo binarie che prendono in input una
@@ -749,7 +750,7 @@ data LangKind =
 Il costruttore \texttt{LKVar} rappresenta le variabili di kind, il costruttore \texttt{LKConst} rappresenta il kind
 \textit{tipo} $ * $, mentre il costruttore \texttt{SubLK} rappresenta l'applicazione di kinds.
 
-\subsubsection{Subtyping: predicati e tipi qualificati}
+\subsubsection{Subtyping: predicati e tipi qualificati}\hypertarget{Subtyping: predicati e tipi qualificati}
 La nozione di mono-tipo ammette le variabili di tipo, le quali fungono da placeholder per qualsiasi tipo dello stesso
 kind della variabile. Tuttavia, solamente con la nozione di mono-tipo non è possibile fare asserzioni sulle variabili
 di tipi, se non, appunto, che sono placeholder adatti a qualsiasi tipo. Fex supporta anche una nozione di sottotipo.
@@ -757,14 +758,15 @@ Prendiamo, ad esempio, la seguente variabile di tipo:
 \[ \alpha : * \]
 la notazione $ : * $ serve, in questo caso, per rendere esplicito il kind della variabile. $ \alpha $ è un placeholder
 adatto a tipi quali, ad esempio, \texttt{Int}, \texttt{List b} oppure \texttt{List Char} poiché hanno tutti kind $ * $.
-Potrebbe essere "comodo" fare asserzioni su $ \alpha $, ad esempio, si può asserire che $ \alpha $ è un placeholder
-valido per tutti quei tipi $ S $ che sono sottotipi di un certo tipo $ T $. Una definizione lasca di sottotipo è la
+$ \alpha $ è un placeholder molto lasco, in quanto è adatto per tutti quei tipi di kind $ * $, quindi si potrebbero fare
+asserzioni su $ \alpha $, ad esempio, si può asserire che $ \alpha $ è un placeholder
+valido per tutti quei tipi $ S $ che sono sottotipi di un certo tipo $ T $. Una definizione informale di sottotipo è la
 seguente: se $ S $ è sottotipo di $ T $ (scriviamo $ S \leq T $), allora ogni termine di $ S $ può essere utilizzato
 in maniera \textit{safe} in ogni \textit{contesto} in cui un termine di $ T $ è richiesto, dove le definizioni di
 \textit{safe} e \textit{contesto} sono dipendenti dal formalismo.
 Aggiungiamo una notazione per descrivere questa nozione:
 \[ \alpha \leq T . \; \alpha \]
-Possiamo quindi "restringere" i possibili tipi adatti a "riempire" il placeholder rappresentato da $ \alpha $. Più in
+Possiamo quindi restringere i possibili tipi adatti a "riempire" il placeholder rappresentato da $ \alpha $. Più in
 generale, possiamo considerare $ \alpha \leq T $ come un predicato $ P $ su $ \alpha $. Utilizzeremo, quindi, la seguente
 notazione:
 \[ P(\alpha) \Rightarrow \alpha \]
@@ -772,7 +774,8 @@ Ora abbiamo una sintassi per descrivere \textit{predicati} o \textit{constraint}
 comportamento si può estendere a qualsiasi forma di tipo, non solo alle variabili di tipo, ma per farlo è necessario
 prima definire la sintassi dei predicati. In Fex, un predicato o constraint ha la seguente forma:
 \[ C := P \; MT_1 \; ... \; MT_n \]
-dove $ P $ è il nome di una proprietà (cfr. polimorfismo ad hoc). Ora possiamo quindi definire un'estensione dei
+dove $ P $ è il nome di una proprietà (cfr. \hyperlink{Polimorfismo ad-hoc}{Polimorfismo ad-hoc}). Ora possiamo quindi
+definire un'estensione dei
 mono-tipi, in modo che su questi ultimi si possano aggiungere delle ipotesi. Per una definizione più generale possibile,
 ammettiamo che su un mono-tipo si possa applicare un numero arbitrario di predicati:
 \[ QT := MT \; | \; C \Rightarrow QT \]
@@ -782,11 +785,12 @@ Questa appena data è la nozione di \textit{tipo qualificato}. La definizione si
 data LangQualType a = Qual [LangSpecConstraint a] (LangHigherType a)
 \end{lstlisting}
 
-\subsubsection{Schemi di tipi e polimorfismo parametrico}
+\subsubsection{Schemi di tipo e polimorfismo parametrico}\hypertarget{Schemi di tipi e polimorfismo parametrico}
 Finora abbiamo trattato mono-tipi e tipi qualificati, tuttavia, la sola presenza delle variabili di tipo non è sufficiente
-a costruire tipi "polimorfi". Si consideri il seguente esempio:
+a costruire \textit{schemi di tipi}. Si consideri il seguente esempio:
 \[ map : (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
-In questo caso, il tipo della funzione $ map $ non è polimorfo, in quanto le variabili di tipo $ \alpha $ e $ \beta $
+In questo caso, il tipo della funzione $ map $ non è uno \textit{schema di tipo}, in quanto le variabili di tipo
+$ \alpha $ e $ \beta $
 rappresentano un tipo fissato non ancora conosciuto. Per ottenere il polimorfismo parametrico, è necessario introdurre
 dei quantificatori, ad esempio, possiamo rifinire il tipo di $ map $ nel modo seguente:
 \[ map : \forall \alpha, \beta . \; (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
@@ -798,11 +802,14 @@ variabili di tipo che compaiono in un tipo qualificato sono legate a un quantifi
 trattate come costanti. Si noti come i quantificatori possono apparire solamente alla testa di un tipo, ad esempio, il
 seguente tipo non è accettato in Fex:
 \[ \forall \alpha . \; (\forall \alpha . \; \alpha \mapsto \alpha) \mapsto \alpha \]
+Non si confonda la nozione di poli-tipo (schema di tipo) con quella di tipo polimorfo, infatti, un tipo polimorfo, benché
+in esso possano apparire variabili di tipo, non ammette quantificatori.
 La definizione di schema di tipo in Fex si trova nel modulo \texttt{Compiler.Ast.Typed}:
 \begin{lstlisting}
 data LangTypeScheme a = Forall [LangVarType a] (LangQualType a)
 \end{lstlisting}
-La politica sulla sintassi degli schemi di tipi di Fex è omettere il quantificatore $ \forall $. Per questo, ogni qual
+La politica sulla sintassi degli schemi di tipi di Fex è omettere il quantificatore $ \forall $ nelle indicazione sul tipo.
+Per questo, ogni qual
 volta vi è un costrutto di type-hinting (firme comprese), il tipo viene considerato come uno schema di tipo in cui tutte
 le variabili di tipo che compaiono vengono legate a un quantificatore, ad esempio:
 \begin{lstlisting}
@@ -811,7 +818,7 @@ val map : (a -> b) -> List a -> List b
 in questo caso la funzione \texttt{map} avrà il seguente tipo:
 \[ map : \forall \alpha, \beta . \; (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
 
-\subsubsection{Test di uguaglianza tra tipi}
+\subsubsection{Test di uguaglianza tra tipi}\hypertarget{Test di uguaglianza tra tipi}
 Il test di uguaglianza tra tipi si differenzia parecchio tra le diverse nozioni di "tipo", inoltre, non sempre risulterà
 utile avere una definizione di uguaglianza tra alcune nozioni di tipo. Partendo dalla nozione di mono-tipo, due
 mono-tipi $ \tau $ e $ \tau' $ sono uguali se hanno i termini identici. Dato che Fex supporta la nozione di mono-tipo
@@ -819,8 +826,8 @@ higher-kinded, è banale asserire che:
 \[ kindOf(\tau) \neq kindOf(\tau') \Longrightarrow \tau \neq \tau' \]
 Per quanto riguarda i tipi qualificati, è necessario prendere in considerazione anche i predicati che precedono un
 mono-tipo. Definiamo, quindi, il test di uguaglianza tra predicati. Siano $ (C \; \tau_1 \; ... \; \tau_n) $ e
-$ (C' \; \tau_1' \; ... \; \tau_n') $ due constraints, essi sono uguali se:
-\[ C = C' \wedge \forall i \in \{1, ..., n\}. \; \tau_i = \tau_i' \]
+$ (C' \; \tau_1' \; ... \; \tau_m') $ due constraints, essi sono uguali se:
+\[ C = C' \wedge n = m \wedge \forall i \in \{1, ..., n\}. \; \tau_i = \tau_i' \]
 Ora possiamo definire il test uguaglianza per i tipi qualificati. Siano $ (P_1, ..., P_n \Rightarrow \tau) $ e
 $ (Q_1, ..., Q_m \Rightarrow \tau') $ due tipi qualificati, essi sono uguali se:
 \begin{enumerate}
@@ -833,8 +840,8 @@ basterebbe più definire il test di uguaglianza analizzando solamente i termini 
 \texttt{Compiler.Ast.Typed}, non vi è alcuna definizione di uguaglianza tra schemi di tipo poiché questa non è necessaria
 a nessun'altra operazione.
 
-\subsection{Polimorfismo ad-hoc}
-Fex supporta il polimorfismo ad hoc esponendo costrutti chiamati \textit{proprietà}, le quali sono concettualmente
+\subsection{Polimorfismo ad-hoc}\hypertarget{Polimorfismo ad-hoc}
+Fex supporta il polimorfismo ad-hoc esponendo costrutti chiamati \textit{proprietà}, le quali sono concettualmente
 molto simili alle \textit{type classes} di Haskell. Ecco un esempio di definizione di proprietà in Fex:
 \begin{lstlisting}
 property Eq a =
@@ -854,8 +861,8 @@ All'inizio della dicitura dei tipi effettivi, si può notare un \textit{constrai
 freccia, la quale è intesa come implicazione. I tipi dei metodi di proprietà avranno quindi la forma:
     \[ Pred(\overline{\alpha}) \Rightarrow ty(\overline{\alpha}) \]
 dove \textit{Pred} è un predicato e \textit{ty} è un tipo qualunque sulle variabili $ \overline{\alpha} $.
-Il polimorfismo ad hoc viene, dunque, supportato attraverso i predicati, i quali rappresentano delle ipotesi aggiuntive
-sui tipi. L'istanziazione di una proprietà consiste nel dichiarare dei tipi che fungeranno da "caso particolare" per i
+Il polimorfismo ad-hoc viene, dunque, supportato attraverso i predicati, i quali rappresentano delle ipotesi aggiuntive
+sui tipi. L'istanziazione di una proprietà consiste nel dichiarare dei tipi che fungeranno da "caso specifico" per i
 metodi di proprietà (i "modelli"), ad esempio, riprendendo la proprietà \texttt{Eq} del precedente pezzo di codice,
 in Fex possiamo definire un'istanza del tipo:
 \begin{lstlisting}
@@ -868,13 +875,14 @@ I dettagli implementativi al momento sono omessi. In ogni caso, i metodi di ista
 val (==) : Char -> Char -> Bool
 val (/=) : Char -> Char -> Bool
 \end{lstlisting}
-Si può notare come il predicato su \texttt{Eq} non esiste più.
+Si può notare come il predicato su \texttt{Eq} non esista più e ciò è dovuto all'istanziazione, ovvero è stato fissato
+un tipo per il quale vale il predicato \texttt{Eq}.
 
-\subsection{Estensioni del polimorfismo ad hoc}
-Il meccanismo di polimorfismo ad hoc precedentemente presentato incontra numerose estensioni in Fex, alcune delle
+\subsection{Estensioni del polimorfismo ad-hoc}\hypertarget{Estensioni del polimorfismo ad-hoc}
+Il meccanismo di polimorfismo ad-hoc precedentemente presentato incontra numerose estensioni in Fex, alcune delle
 quali impongono condizioni aggiuntive sul programma.
 
-\subsubsection{Numero arbitrario di argomenti delle proprietà}
+\subsubsection{Numero arbitrario di argomenti delle proprietà}\hypertarget{Numero arbitrario di argomenti delle proprietà}
 Nell'esempio con \texttt{Eq}, la proprietà possedeva soltanto un argomento, tuttavia, è possibile definire proprietà
 con un numero arbitrario (ma fissato alla definizione) di argomenti ad esempio:
 \begin{lstlisting}
@@ -886,7 +894,7 @@ property Stream s t =
 \end{lstlisting}
 Si noti che \texttt{Stream} ha 2 argomenti.
 
-\subsubsection{Constraints sulle proprietà}
+\subsubsection{Constraints sulle proprietà}\hypertarget{Constraints sulle proprietà}
 \`E possibile definire in Fex una proprietà della forma:
 \begin{lstlisting}
 property C1 a Char => C2 a =
@@ -899,7 +907,7 @@ Semanticamente, questo impone la seguente condizione sul programma:
 dove $ inst(C, \overline{t}) $ è, banalmente, l'instanza con nome di proprietà $ C $ e tipi $ \overline{t} $. \`E
 possibile aggiungere più di un predicato alla stessa proprietà.
 
-\subsubsection{Polimorfismo higher-kinded}
+\subsubsection{Polimorfismo higher-kinded}\hypertarget{Polimorfismo higher-kinded}
 Riprendiamo il precedente esempio con \texttt{Stream}:
 \begin{lstlisting}
 property Stream s t =
@@ -910,12 +918,12 @@ property Stream s t =
 \end{lstlisting}
 Gli argomenti di una proprietà sono sempre variabili di tipo. Come è già stato menzionato in precedenza, Fex supporta
 tipi di kind arbitrari; gli argomenti delle proprietà non fanno eccezione da questo punto di vista, infatti, nell'esempio
-si può notare come la variabile \textit{s} abbia kind (utilizzando la rappresentazione dei kind di Haskell):
-    \[ * \mapsto * \]
+si può notare come la variabile \textit{s} abbia kind:
+\[ * \mapsto * \]
 mentre la variabile \textit{t} ha kind:
-   \[ * \]
+\[ * \]
 
-\subsubsection{Argomenti arbitrari delle istanze}
+\subsubsection{Argomenti arbitrari delle istanze}\hypertarget{Argomenti arbitrari delle istanze}
 Gli argomenti di un'istanza possono essere tipi di forma arbitraria, ad esempio:
 \begin{lstlisting}
 property C x y =
@@ -947,13 +955,14 @@ and each type variable appears at most once in the instance head.
 Use FlexibleInstances if you want to disable this.)
 \end{lstlisting}
 Come suggerisce l'ultima riga del messaggio d'errore, per definire un'istanza del genere in un programma Haskell è
-necessario utilizzare l'estensione \texttt{FlexibleInstances} [7]. In Fex, a differenza di Haskell, quel tipo di instanza
+necessario utilizzare l'estensione \texttt{FlexibleInstances} \hyperlink{bibl7}[7]. In Fex, a differenza di Haskell,
+quel tipo di instanza
 è accettato di default. Il seguente vincolo sulla forma dei tipi riportato nel messaggio d'errore viene dunque rilassato:
     \[ TyCon(\overline{\alpha}) \]
 dove $ \overline{\alpha} $ sono variabili di tipo distinte e $ TyCon $ è un costruttore di tipo. In seguito, verrà
-mostrato quali vincoli che riguardano i constraints e le istanze possono essere rilassati e con quali conseguenze.
+mostrato quali vincoli (che riguardano i constraints e le istanze) possono essere rilassati e con quali conseguenze.
 
-\subsubsection{Constraints sulle istanze}
+\subsubsection{Constraints sulle istanze}\hypertarget{Constraints sulle istanze}
 L'utente ha anche la facoltà di definire istanze con uno o più predicati, ad esempio:
 \begin{lstlisting}
 instance Monad m => Stream m String =
@@ -968,28 +977,29 @@ val consume : Monad m => m String -> (m String, String)
 \end{lstlisting}
 Il constraint sull'istanza viene quindi applicato al tipo dei metodi di istanza.
 
-\subsection{Condizioni sui constraints}
+\subsection{Condizioni sui constraints}\hypertarget{Condizioni sui constraints}
 I constraints rappresentano un modo per "restringere" i possibili tipi che possono istanziare una o più variabili di
-tipo. I tipi nelle firme delle variabili (nonché i type-hinting) possono possedere zero o più constraint; lo stesso
+tipo. I tipi nelle firme delle variabili (nonché nei type-hinting) possono possedere zero o più constraint; lo stesso
 vale, come viene mostrato nei paragrafi precedenti, anche per le proprietà e per le istanze. Esistono, però, dei
-vincoli sulla forma dei constraint. Come viene mostrato in [8] e [9], esistono condizioni (di Paterson) sufficienti
+vincoli sulla forma dei constraint. Come viene mostrato in \hyperlink{bibl8}[8] e \hyperlink{bibl9}[9], esistono
+condizioni sufficienti
 affinché l'algoritmo di risoluzione delle istanze di Haskell termini. Prima di presentarle, diamo alcune notazioni:
-\newline Dato un costrutto $ K $ in cui compaiono dei constraints $ C \Rightarrow D $, definiamo
+\newline Dato un costrutto $ K $ della forma $ C \Rightarrow D $, definiamo
 \begin{itemize}
     \item $ C $ come \textit{Contesto} del costrutto $ K $;
     \item $ H $ come \textit{Testa} del costrutto $ K $.
 \end{itemize}
-Ora presentiamo le condizioni di Paterson:
+Ora presentiamo le \textit{condizioni di Paterson}:
 \begin{itemize}
     \item il contesto \textit{C} di una dichiarazione di type-class può menzionare solamente variabili di tipo e
     le variabili di tipo sono distinte in ogni singolo constraint in \textit{C};
-    \item Per ogni dichiarazione di istanza $ C \Rightarrow TyCl \; t_1 ... t_n $, nessuna variabile di tipo ha
-    più occorrenze nel contesto $ C $ rispetto alla testa $ TyCl \; t_1 ... t_n $.
-    \item Per ogni dichiarazione di istanza $ C \Rightarrow TyCl \; t_1 ... t_n $, ogni constraint nel contesto
+    \item Per ogni dichiarazione di istanza $ C \Rightarrow TyCl \; t_1 \; ... \; t_n $, nessuna variabile di tipo ha
+    più occorrenze nel contesto $ C $ rispetto alla testa $ TyCl \; t_1 \; ... \; t_n $.
+    \item Per ogni dichiarazione di istanza $ C \Rightarrow TyCl \; t_1 \; ... \; t_n $, ogni constraint nel contesto
     $ C $ ha meno costruttori e variabili di tipo (presi insieme e contando le ripetizioni) rispetto alla testa
     $ TyCl \; t_1 ... t_n $.
-    \item Per ogni due dichiarazioni di istanze $ C \Rightarrow TyCl \; t_1 ... t_n $,
-    $ C' \Rightarrow TyCl \; t_1' ... t_n' $, non deve esistere una sostituzione $ \varphi $ tale che:
+    \item Per ogni due dichiarazioni di istanze $ C \Rightarrow TyCl \; t_1 \; ... \; t_n $,
+    $ C' \Rightarrow TyCl \; t_1' \; ... \; t_n' $, non deve esistere una sostituzione $ \varphi $ tale che:
     $ \varphi(t_1) = \varphi(t_1') $, ..., $ \varphi(t_n) = \varphi(t_n') $.
 \end{itemize}
 Informalmente, l'obiettivo è avere sempre dei contesti più "piccoli" rispetto alle teste. La politica di Fex è
@@ -1001,20 +1011,21 @@ simile e applica i seguenti vincoli:
     $ ctx $ deve essere minore o uguale rispetto al numero di occorrenze di $ v $ nella testa $ h $, ovvero:
     \[ \forall \; instance =: (ctx \Rightarrow h).\; \forall \; tyvar =: v.\; v \in instance
     \Longrightarrow occ(v, ctx) \leq occ(v, h) \]
+    dove $ occ(v, k) $ è la funzione che conta le occorrenze della variabile di tipo $ v $ nel costrutto $ k $;
     \item Per ogni istanza $ ctx \Rightarrow h $, le variabili di tipo di $ ctx $ devono essere innestate in meno
     costruttori di tipo rispetto alle variabili di tipo di $ h $ (contando le variabili tutte insieme), ovvero: \newline
     \[ \forall \; instance =: (ctx \Rightarrow h).\; countWrapVars(ctx) < countWrapVars(h) \]
+    dove $ countWrapVars(k) $ è la funzione che conta in quanti costruttori di tipo nel costrutto $ k $ sono innestate le
+    variabili di tipo (sommando il risultato per tutte le variabili di tipo incontrate).
 \end{enumerate}
-dove $ occ(v, k) $ è la funzione che conta le occorrenze della variabile di tipo $ v $ nel costrutto $ k $ e
-$ countWrapVars(k) $ è la funzione che conta in quanti costruttori di tipo nel costrutto $ k $ sono innestate le
-variabili di tipo (sommando il risultato per tutte le variabili di tipo incontrate). Il codice che implementa questi
-controlli risiede nel modulo \texttt{Compiler.Constraints.Check}.
+Il codice che implementa questi controlli risiede nel modulo \texttt{Compiler.Constraints.Check}.
 
-\subsection{Kind-inference}
+\subsection{Kind-inference}\hypertarget{Kind-inference}
 La kind-inference in Fex è necessaria per poter costruire i token che rappresentano i costruttori di tipi. Prima
 di entrare nei dettagli, è bene fare alcune precisazioni sui kind. Innanzitutto, Fex non espone all'utente alcuna
 sintassi per manipolare i kind o per scrivere espressioni con i kind. Come conseguenza, la definizione di kind in
-Fex (cfr. Tipi higher-kinded) non viene estesa con una definizione di kind polimorfica. Questo non avviene per i tipi,
+Fex (cfr. \hyperlink{Tipi higher-kinded}{Tipi higher-kinded}) non viene estesa con dei quantificatori.
+Questo non avviene per i tipi,
 infatti, la nozione di mono-tipo viene successivamente estesa con la nozione di schema di tipo, la quale introduce
 il polimorfismo parametrico.
 
@@ -1024,7 +1035,7 @@ In generale, l'inferenza di kind avviene "osservando" le definizioni dei tipi di
 guardando le definizioni dei data-constructors. La definizione di un data-constructor ha la seguente forma:
 \[ C \; ty_1 \; ... \; ty_n \]
 Supponendo che il data-constructor $ C $ \textit{costruisca} il tipo $ T \; \alpha_1 \; ... \; \alpha_m $, allora
-$ C $ avrà tipo:
+$ C $ avrà tipo (cfr \hyperlink{Data-constructors}):
 \[ ty_1 \mapsto ... \mapsto ty_n \mapsto T \; \alpha_1 \; ... \; \alpha_m \]
 Come conseguenza dell'ipotesi HK si ha che:
 \[ \forall i \in \{ 1, ..., n \}. \; ty_i : * \]
@@ -1032,15 +1043,16 @@ e:
 \[ T \; \alpha_1 \; ... \; \alpha_m : * \]
 Si ricordi che le variabili di tipo che compaiono nei tipi $ ty_i $ sono legate ai binders
 $ \alpha_1 \; ... \; \alpha_m $. Una volta che tutti i data-constructors sono stati visitati, i kind delle variabili di
-tipo saranno noti, quindi si può inferire il kind del costruttore di tipo $ T $. Durante la kind-inference viene
-utilizzato un ambiente di tipizzazione (che connoteremo con $ \Delta $) in cui vengono salvati le coppie della forma:
-\[ < tipo, kind > \]
+tipo saranno noti, quindi si può inferire il kind del costruttore di tipo $ T $. Durante la kind-inference, viene
+utilizzato un ambiente di tipizzazione (che connoteremo con $ \Delta $) in cui vengono salvate le coppie della forma:
+\[ \langle tipo, kind \rangle \]
 dove il $ tipo $ è il nome di un qualsiasi tipo che compare senza parametri; sono comprese le variabili di tipo.
 In questo contesto, i nomi dei tipi non hanno uno \textit{scope} in quanto è garantito che non ci siano tipi diversi con
-nomi di uguali nel programma.
+identificatori uguali nel programma.
 Questa condizione è banalmente garantita per i tipi concreti in quanto non è possibile definire tipi molteplici con nomi
 uguali, mentre, per quanto riguarda le variabili di tipo, il renaming
-delle variabili di tipo (cfr. Renaming delle variabili di tipo) garantisce la condizione. Inoltre, la sintassi degli
+delle variabili di tipo (cfr. \hyperlink{Renaming delle variabili di tipo}{Renaming delle variabili di tipo}) garantisce
+la condizione. Inoltre, la sintassi degli
 identificatori garantisce che non vi siano variabili di tipo e tipi concreti con nomi uguali.
 In generale, vengono visitate tutte le definizioni di data-constructors nelle definizioni di tipo, seguendo queste regole:
 \begin{itemize}
@@ -1061,20 +1073,20 @@ In generale, vengono visitate tutte le definizioni di data-constructors nelle de
     \item se un tipo $ arg $ compare come argomento i-esimo di un costruttore di tipo $ tycon $, se $ tycon \in \Delta $,
     allora sia $ K $ il suo kind, il kind inferito di $ arg $ sarà quello dell'i-esimo argomento di $ K $. Se
     $ tycon \notin \Delta $, allora viene creata una variabile di kind $ \kappa $ e in $ \Delta $ viene inserito il
-    binding $ < arg, \kappa > $;
+    binding $ \langle arg, \kappa \rangle $;
     \item le variabili di tipo che compaiono soltanto nei binders avranno kind $ * $;
     \item dopo che tutte le definizioni di tipo sono state visitate, le variabili di tipo in $ \Delta $ che hanno
-    variabili di kind come kind associato, acquisiscono il kind $ * $;
+    variabili di kind come kind associato, acquisiscono il kind $ * $. Questo previene un ulteriore livello di polimorfismo;
     \item ogni qual volta un tipo che ha una variabile di kind $ \kappa $ come kind associato acquisisce un nuovo kind
     $ K $, le occorrenze di $ \kappa $ in $ \Delta $ come variabili libere devono essere $ specializzate $ con $ K $.
 \end{itemize}
 
-\subsection{Data constructors}
+\subsection{Data-constructors}\hypertarget{Data-constructors}
 Una delle tabelle di simboli che appare nel modulo \texttt{Compiler.Types.Table} è \texttt{DataConsTable}. In essa
 vengono salvati i \textit{data constructor} associati ai loro tipi. I costruttori - che nell'AST vengono rappresentati
 dal token \texttt{ADTConstructor} - vengono trasformati nel token \texttt{NotedVal} presente nel modulo
 \texttt{Compiler.Ast.Typed} che consiste nella seguente coppia:
-\[ < dataConRep, type > \]
+\[ \langle dataConRep, type \rangle \]
 dove $ dataConRep $ è la rappresentazione sotto forma di stringa del data constructor, mentre $ ty $ è il tipo del
 costruttore. Per quanto riguarda il tipo del costruttore, prendiamo in considerazione il seguente esempio di codice
 Fex:
@@ -1087,8 +1099,8 @@ Il tipo di ritorno è sempre dato dalla definizione del tipo. Il modulo che si o
 \texttt{ADTConstructor} in \texttt{NotedVal} e aggiungerli nella tabella \texttt{DataConsTable} è
 \texttt{Compiler.Types.Builder.Cons}.
 
-\subsection{Constraint constructors}
-Dopo il check sui constraints e la generazione di data constructors, il compilatore si occupa di generare i cosiddetti
+\subsection{Constraint constructors}\hypertarget{Constraint constructors}
+Dopo il check sui constraints e la generazione di data-constructors, il compilatore si occupa di generare i cosiddetti
 "\textit{constraint constructors}", ovvero token che fungono da modelli per la costruzione di predicati. Il modulo
 che li genera è \texttt{Compiler.Types.Tables}; esso prende in input i token dell'AST che rappresentano le proprietà
 (\texttt{Interface}) e da essi costruisce i token tipati \texttt{LangNewConstraint} e li inserisce nella tabella
@@ -1105,7 +1117,7 @@ property Foo (K x Char) => Bar x y =
 \end{lstlisting}
 Si noti come i vincoli sui constraints vengano tutti rispettati.
 
-\subsection{Costruzione delle istanze}
+\subsection{Costruzione delle istanze}\hypertarget{Costruzione delle istanze}
 Nel modulo \texttt{Compiler.Types.Builder.Instances} vengono create le seguenti 3 tabelle:
 \begin{itemize}
     \item \texttt{InstsTable}, ovvero la tabella che contiene i bindings (sotto forma di token dell'AST) delle istanze;
@@ -1125,49 +1137,52 @@ constraint deve avere almeno una variabile di tipo), infatti l'istanza viene sal
 (\texttt{LangSpecConstraint}).
 Le tre tabelle vengono create in un unico modulo per una questione di efficienza (i token delle istanze vengono visitati
 una sola volta). Inoltre, in questo
-modulo viene effettuato il controllo del vincolo sull'esistenza dei predicati delle proprietà (cfr. paragrafo "constraints
-delle proprietà" in "Estensioni del polimorfismo ad hoc"). Prima di inserire i bindings delle istanze nella
+modulo viene effettuato il controllo del vincolo sull'esistenza dei predicati delle proprietà (cfr.
+\hyperlink{Constraints sulle proprietà}). Prima di inserire i bindings delle istanze nella
 tabella \texttt{InstsTable}, viene eseguita una fase di desugaring su di essi. Il problema nasce dal fatto che, data
 una proprietà, può esistere un numero arbitrario di istanze e con esse, un numero arbitrario di metodi con lo stesso
 nome, perciò è necessario identificare univocamente i metodi di ogni singoli istanza. Il modulo
 \texttt{Compiler.Desugar.Names} si occupa di, dato il nome di una variabile e una sequenza di constraints (gli argomenti
 di un'istanza), creare un identificatore univoco che non può essere uguale a nessun altro identificatore nel programma.
 
-\subsection{Preparazione alla type-inference}
-Prima di effettuare la type-inference è necessario fare alcune considerazioni ed effettuare alcune computazioni.
+\subsection{Preparazione alla type-inference}\hypertarget{Preparazione alla type-inference}
+Prima di effettuare la type-inference è necessario fare alcune considerazioni ed eseguire alcune computazioni.
 Innazitutto, il type-system di riferimento è \textit{Hindley-Milner} (o Damas-Hindley-Milner, in seguito lo indicheremo con HM)
 con alcune estensioni che riguardano il costrutto del pattern matching, l'inferenza di definizioni ricorsive e la
 risoluzione delle istanze. Il modulo che si occupa della preparazione alla type-inference è \texttt{Compiler.Types.Prepare}
-Introdurremo il type-system in modo preciso prossimamente (cfr. Type-inference), tuttavia, ora presentiamo alcune
+Introdurremo il type-system in modo preciso nella sezione \hypertarget{Type-inference}{Type-inference}, tuttavia, ora
+presentiamo alcune
 caratteristiche del type-system che è bene conoscere come premessa alla preparazione della type-inference.
 Innanzitutto, HM viene descritto formalmente da un insieme di \textit{regole} le quali si occupano di "tipare"
-espressioni di un formalismo fissato: una versione del lambda-calcolo estesa con un costrutto di espressioni "let..in".
-Una delle regole è quella sull'inferenza del tipo di un simbolo (la regola la chiameremo chiamiamo \textbf{Var})
+espressioni di un formalismo fissato: una versione del lambda-calcolo estesa con il costrutto "let..in".
+Una delle regole è quella sull'inferenza del tipo di un simbolo (la regola la chiameremo \textbf{Var})
 la quale, informalmente, sostiene che: data l'ipotesi di un simbolo $ x $ con schema di tipo $ \sigma $ nel contesto di
 un ambiente di tipizzazione $ \Gamma $ e $ \tau $ l'istanziazione del tipo $ \sigma $, si conclude che il simbolo
-$ x $ ha tipo $ \tau $.
+$ x $ ha tipo $ \tau $. Quindi, si ha che nel momento in cui viene incontrato un simbolo $ x $ in un'espressione, esso deve
+essere presente nell'ambiente di tipizzazione $ \Gamma $, al quale, informalmente, si può pensare come una mappa di
+simboli e tipi associati ai simboli.
 Un'altra regola utile è quella
 sull'inferenza delle definizioni mutualmente ricorsive. In particolare, essa sostiene che, l'inferenza di definizioni
 mutualmente ricorsive avviene in "gruppo", ovvero un insieme $ {f_1, ..., f_n} $ di simboli mutualmente ricorsivi
-tra loro vengono considerati nel loro insieme e non singolarmente (regola \textbf{Rec}) (cfr. Ricorsione).
+tra loro viene considerato come un'unic definizione (regola \textbf{Rec}) (cfr. \hyperlink{Ricorsione}{Ricorsione}).
 Queste regole serviranno come premessa ad alcune fasi nella preparazione della type inference.
 
-\subsubsection{Bindings delle istanze}
+\subsubsection{Bindings delle istanze}\hypertarget{Bindings delle istanze}
 \`E bene notare come in Core non esista un costrutto particolare per i bindings delle istanze, inoltre, il
 costrutto di GHC che rappresenta le istanze (\texttt{ClsInst}) non porta con sè informazioni che riguardano i
-bindings [10].
+bindings \hyperlink{bibl10}{[10]}.
 Perciò, è in un qualche modo necessario gestire i bindings delle istanze. La politica del compilatore è quella di
 aggiungerli nell'insieme di bindings da dare in input all'algoritmo di type-inference. La presenza di bindings con lo
 stesso identificatore è stata già risolta (cfr. Costruzione delle istanze e dispatch statico).
 
-\subsubsection{Simboli innestati univoci}
+\subsubsection{Simboli innestati univoci}\hypertarget{Simboli innestati univoci}
 Prima della type-inference, vengono visitate tutte le espressioni dei bindings e vengono creati nuovi identificatori
 per ogni definizione innestata di variabile (costrutto \texttt{let..in}). I nuovi identificatori sono resi univoci in
-tutto il programma. Il modulo che crea e garantisce che i nuovi identificatori sono univoci è
+tutto il programma. Il modulo che crea e garantisce che i nuovi identificatori siano univoci è
 \texttt{Compiler.Desugar.Names}. La proprietà di unicità degli identificatori innestati è molto importante, vedremo in
-seguito il motivo (cfr. type-inference).
+seguito il motivo (cfr. \hyperlink{Type-inference}{Type-inference}).
 
-\subsubsection{Clusters di definizioni mutualmente ricorsive}
+\subsubsection{Clusters di definizioni mutualmente ricorsive}\hypertarget{Clusters di definizioni mutualmente ricorsive}
 Come è stato già menzionato precedentemente, le definizioni mutualmente ricorsive devono essere considerate come insiemi
 e non singolarmente. Perciò è necessario distinguere due tipi di bindings, quelli mutualmente ricorsivi e i restanti:
 \begin{lstlisting}
@@ -1179,10 +1194,11 @@ La precedente definizione è nel modulo \texttt{Compiler.Types.Prepare.Lib} e di
 non ricorsivi e bindings mutualmente ricorsivi. Rimane, quindi, da dividere i bindings del programma. Prima di presentare
 l'algoritmo, bisogna effettuare una precisazione molto importante. In precedenza, abbiamo aggiunto i bindings delle
 istanze alla lista dei bindings del programma, cambiando, però, gli identificatori, rendendoli univoci all'interno del
-programma. Per dividere riconoscere i bindings mutualmente ricorsivi è necessaria una funzione che calcoli le dipendenze
+programma. Per riconoscere i bindings mutualmente ricorsivi è necessaria una funzione che calcoli le dipendenze
 di una definizione. Nelle espressioni, in generale, possono essere menzionati i metodi delle proprietà, ma non possono,
 in alcun modo, essere menzionati i metodi delle istanze. Inoltre, il tipo dei metodi delle proprietà è sempre noto a
-priori e non è possibile, prima della type-inference, inferire le istanze (cfr. static dispatch) giuste dei metodi.
+priori e non è possibile, prima della type-inference, inferire le istanze (cfr. \hyperlink{Static dispatch}{Static dispatch})
+corrette dei metodi.
 Nel calcolo delle dipendenze, i metodi di proprietà possono, quindi, essere esclusi. La funzione \textit{depsOf}, la quale
 prende in input un binding \texttt{b} dell'AST e la tabella \texttt{PropMethodsTable}, calcolerà le dipendenze di
 \texttt{b}, escludendo le dipendenze che provengono dalla tabella dei metodi di proprietà. L'insieme dei bindings di
@@ -1193,16 +1209,17 @@ un programma può essere visto come un grafo orientato $ G $ in cui:
 \end{itemize}
 Il problema di trovare i clusters di definizioni mutualmente ricorsive corrisponde a trovare le \textit{componenti
 fortemente connesse} del grafo $ G $. Il modulo che implementa l'algoritmo è \texttt{Compiler.Types.Prepare.Recursion}
-e utilizza la libreria \texttt{Data.Graph}.
+e utilizza la libreria \texttt{Data.Graph} (\hyperlink{bibl26}[26]).
 
-\subsubsection{Sorting dei bindings}
+\subsubsection{Sorting dei bindings}\hypertarget{Sorting dei bindings}
 A questo punto, abbiamo una lista di \texttt{RawBinding}. Possiamo fare la seguente osservazione: i bindings possono
 essere visti come un grafo orientato aciclico $ G $, in cui, come prima:
 \begin{itemize}
     \item i nodi sono i bindings;
     \item gli archi sono le dipendenze di un binding.
 \end{itemize}
-L'unica differenza è sull'aciclicità del grafo. Questa proprietà è garantita dal seguente fatto: se esistesse un ciclo
+L'unica differenza rispetto a prima è l'aciclicità del grafo. Questa proprietà è garantita dal seguente fatto: se
+esistesse un ciclo
 in $ G $, allora l'algoritmo di raggruppamento dei clusters l'avrebbe trovato e avrebbe creato un cluster di definizioni
 mutualmente ricorsive tra loro. La regola di inferenza \textbf{Var} impone che si conosca sempre lo schema di tipo di
 un simbolo, perciò, è necessario, prima di effettuare la type-inference, ordinare i bindings in base alle loro dipendenze.
@@ -1249,7 +1266,7 @@ successiva. Il codice si trova nel modulo \texttt{Compiler.Types.Prepare.Sort}.
 Dopo l'ordinamento dei bindings, è garantito che, ogni qual volta verrà inferito un binding, la premessa
 della regola \textbf{Var} sia vera.
 
-\subsection{Type-inference}
+\subsection{Type-inference}\hypertarget{Type-inference}
 Fex permette all'utente di indicare o non indicare il tipo di una variabile. Nel caso non venga indicato, il
 compilatore dovrà inferire il tipo della variabile definita, quindi dovrà fare una "scelta". Per farlo, dovrà prima
 inferire il tipo dell'espressione legata alla variabile, ad esempio:
@@ -1261,21 +1278,24 @@ Si può affermare che l'espressione legata alla variabile $ x $ abbia tipo $ May
 deve scegliere un tipo da sostituire alla variabile di tipo $ \alpha $. Se la scelta fosse arbitraria, ad esempio
 $ Int $, l'utilizzo di $ x $ sarebbe limitato solo a un tipo ovvero $ Maybe \; Int $. Un'altra possibile soluzione
 potrebbe essere associare a $ x $ il tipo $ Maybe \; a $. Tuttavia, anche questa scelta risulterebbe limitante in quanto,
-come è stato già esposto nella sezione sul type-system (cfr. Schemi di tipi), la variabile di tipo $ \alpha $
-denoterebbe un tipo fissato non ancora conosciuto. L'introduzione di uno schema di tipo rappresenta una scelta
-"più generale":
+come è stato già esposto nella sezione sul type-system
+(cfr. \hyperlink{Schemi di tipi e polimorfismo parametrico}{Schemi di tipi e polimorfismo parametrico}), la variabile di
+tipo $ \alpha $ denoterebbe un tipo fissato non ancora conosciuto. L'introduzione di uno schema di tipo rappresenta una
+scelta "più generale":
 \[ x : \forall \alpha. \; Maybe \; \alpha \]
 In questo caso, $ x $ può avere molteplici tipi.
 
-\subsubsection{Damas-Hindley-Milner}
-Come è stato già menzionato precedentemente, il sistema di tipi di Fex si basa sul type-system di Damas-Hindley-Milner.
+\subsubsection{Damas-Hindley-Milner}\hypertarget{Damas-Hindley-Milner}
+Come è stato già menzionato precedentemente, il sistema di tipi di Fex si basa sul type-system di Damas-Hindley-Milner
+(cfr. \hyperlink{bibl27}{[27]} \hyperlink{bibl28}{[28]} \hyperlink{bibl29}{[29]}).
 L'algoritmo di inferenza su cui si basa inferisce il tipo più \textit{generale} possibile. Tuttavia, nella letteratura,
 vengono presentati due algoritmi principali, ma nella pratica, solo uno di essi è implementato dai compilatori dei
 linguaggi di programmazione. Verranno entrambi menzionati, ma solo le regole di inferenza dell'algoritmo effettivamente
 implementato verranno esposte:
 \begin{itemize}
     \item \textit{Algoritmo W}, è l'algoritmo effettivamente utilizzato dalle implementazioni, in quanto tiene traccia
-    delle sostituzioni generate dalle eventuali unificazioni (cfr. Unificazione) e le applica all'ambiente di
+    delle sostituzioni generate dalle eventuali unificazioni (cfr. \hyperlink{Unificazione}{Unificazione}) e le applica
+    all'ambiente di
     tipizzazione. Proprio a causa della gestione delle sostituzioni, la complessità computazionale dell'algoritmo
     nel caso peggiore è esponenziale.
     \item \textit{Algoritmo J}, è un algoritmo più efficiente di \textit{W} (complessità lineare nella lunghezza
@@ -1287,8 +1307,8 @@ implementato verranno esposte:
 Come è stato già anticipato, HM viene presentato sotto forma di \textit{regole}, le quali hanno la seguente forma:
 \newline
 \[ \infer[\textbf{Regola}]{Conclusione}{Premesse} \]
-dove le premesse sono un insieme di \textit{giudizi} e \textit{predicati} e la conclusione è un \textit{giudizio}. Un
-\textit{giudizio} è un'affermazione sul tipo di un simbolo, ad esempio:
+dove le premesse sono un insieme di \textit{giudizi} e \textit{predicati} (non nel senso di constraints) e la conclusione
+è un \textit{giudizio}. Un \textit{giudizio} è un'affermazione sul tipo di un simbolo, ad esempio:
 \[ x : \sigma \]
 afferma che il simbolo $ x $ ha tipo $ \tau $. HM necessita, inoltre, di un modo per "tener traccia" dei giudizi,
 ovvero un modo per accoppiare un simbolo con un tipo. Introduciamo, quindi,
@@ -1298,8 +1318,8 @@ del contesto, infatti avranno la seguente forma:
 questa scritta afferma che sotto le ipotesi in $ \Gamma $, il token $ x $ ha tipo $ \sigma $.
 Ora verranno elencate le regole di inferenza.
 
-\subsubsection{Inferenza di variabile}
-Prima di presentare di la regola d'inferenza delle variabili è necessario due ulteriori regole. La prima è la
+\subsubsection{Inferenza di variabile}\hypertarget{Inferenza di variabile}
+Prima di presentare la regola d'inferenza delle variabili è necessario introdurre due ulteriori regole. La prima è la
 regola di specializzazione e introduce una nozione d'ordine parziale tra tipi:
 \[ \infer[\textbf{Spec}]{\forall \alpha_1 ... \forall \alpha_n. \; \tau \sqsubseteq \forall \beta_1 ... \beta_m. \; \tau'}{\tau' = \{ \alpha_i \mapsto \tau_i \}\tau & \beta_i \notin free(\forall \alpha_1 ... \forall \alpha_n . \; \tau)} \]
 Questa regola sostiene che se esiste una sostituzione $ S = \{ \alpha_i \mapsto \tau_i \} $ tale che $ \tau' = S \tau $,
@@ -1307,7 +1327,7 @@ allora la versione "quantificata" dei mono-tipi $ \tau $ e $ \tau' $ rispetta la
 $ \sqsubseteq $. Nella premessa vi è un'ulteriore condizione che afferma che le variabili quantificate di $ \tau' $
 non devono apparire come variabili libere in $ \forall \alpha_1 ... \alpha_n. \; \tau $; questo perché le variabili
 non legate da un quantificatore (quindi libere) non devono essere sostituite, bensì devono essere trattate come costanti.
-All'interno del codice, i token tipati che implementano la type-class \texttt{SpecType} in \texttt{Compiler.Ast.Typed}
+All'interno del codice, i token tipati che implementano la type-class \texttt{SpecType} definita in \texttt{Compiler.Ast.Typed}
 permettono l'applicazione di una sostituzione al loro tipo.
 La prossima regola rappresenta l'algoritmo di instanziazione:
 \[ \infer[\textbf{Inst}]{\Gamma \vdash_W e : \tau}{\Gamma \vdash_W e : \sigma & \sigma \sqsubseteq \tau} \]
@@ -1319,7 +1339,7 @@ in maniera informale.
 \`E doveroso notare che nella conclusione, oltre al giudizio sul tipo della variabile, vi è un altro valore in "output",
 ovvero le eventuali sostituzioni generate dall'inferenza dei costrutti coinvolti. In questo non vi è alcuna sostituzione.
 
-\subsubsection{Inferenza di applicazione}
+\subsubsection{Inferenza di applicazione}\hypertarget{Inferenza di applicazione}
 La prossima regola serve per inferire l'applicazione di due espressioni:
 \[ \infer[\textbf{App}]{\Gamma \vdash_W e_0 \; e_1 : S_2\tau', \; S_2S_1S_0}{\Gamma \vdash_W e_0 : \tau_0, \; S_0 & S_0\Gamma \vdash_W e_1 : \tau_1, \; S_1 & \tau' = newvar & S_2 = mgu(S_1\tau_0, \tau1 \mapsto \tau')} \]
 Vi sono due nuovi operatori:
@@ -1343,8 +1363,8 @@ La sostituzione $ S_0 $ viene, quindi, spostata dall'output direttamente all'amb
 di applicare la sostituzione all'ambiente di tipizzazione due volte: una prima di inferire $ e_1 $, una dopo il risultato
 di output (si presume che le sostituzioni vengano tutte applicate).
 
-\subsubsection{Unificazione}
-L'unificazione è quel processo di risoluzione di equazioni tra espressioni "simboliche". In generale, i mono-tipi nel
+\subsubsection{Unificazione}\hypertarget{Unificazione}
+L'unificazione è quel processo di risoluzione di equazioni tra espressioni simboliche. In generale, i mono-tipi nel
 type-system utilizzato in HM (e conseguentemente anche quello utilizzato da Fex) possono essere considerati come
 termini di un'equazione. Si parla di mono-tipi, poiché l'unificazione non prevede la quantificazione delle variabili
 all'interno di un'equazione. Un problema di unificazione è un insieme finito di equazioni:
@@ -1429,7 +1449,7 @@ rawUnify monoTy monoTy' isSpecTest =
         <resto del codice>
 --$ rm this when building
 \end{lstlisting}
-I commenti nel codice sorgente sono stati rimossi per evitare confusione. Come è stato fatto notare in precedenza,
+I commenti nel codice sorgente sono stati rimossi. Come è stato fatto notare in precedenza,
 l'algoritmo prende in input tre argomenti, di cui i primi due sono i mono-tipi sui quali si vuole calcolare l'unificazione.
 Il terzo argomento è un flag booleano che denota se \texttt{rawUnify} deve essere un test di specializzazione
 (\texttt{True}) o semplicemente l'algoritmo di unificazione (\texttt{False}). Un test di specializzazione è l'equivalente
@@ -1516,16 +1536,16 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
 --$ rm this when building
     \end{lstlisting}
     Nel quinto caso viene controllato se entrambi i mono-tipi hanno variabili di tipo come testa e se il numero di
-    argomenti del secondo mono-tipo sono strettamente maggiori di quelli del primo. In questo caso, vi è un'operazione
+    argomenti del secondo mono-tipo è strettamente maggiore di quello del primo. In questo caso, vi è un'operazione
     di \textit{swap} e la conseguente chiamata ricorsiva. Come prima, se l'unificazione è \textit{strict},
-    l'operazione di \textit{swap} non può essere effettuata.
+    l'operazione di \textit{swap} non può essere effettuata e viene restituito un errore.
     \item
     \begin{lstlisting}
 | otherwise =
     argsUnification lhty lhty' vvars
     \end{lstlisting}
-    Nell'ultimo caso, vengono valutati tutti i casi restanti: quello che viene eseguito è un'azione di decompose sugli
-    argomenti dei due mono-tipi.
+    Nell'ultimo caso, vengono valutati tutti i casi restanti: quello che viene eseguito è un'azione di \textit{decompose}
+    sugli argomenti dei due mono-tipi.
 \end{enumerate}
 
 La funzione \texttt{argsUnification} implementa l'azione di \textit{decompose}. Per farlo, è necessario "accoppiare" gli
@@ -1548,14 +1568,15 @@ implementa questa parte è \texttt{twoChancesUnifyArgs}. Chiaramente, come si pu
 \texttt{argsUnification}, se l'unificazione è \textit{strict}, allora il "secondo tentativo" non può essere effettuato,
 in quanto vi è prima un'azione di \textit{swap} che dovrebbe essere eseguita.
 
-\subsubsection{Inferenza di lambda astrazione}
+\subsubsection{Inferenza di lambda astrazione}\hypertarget{Inferenza di lambda astrazione}
 La seguente regola inferisce il tipo del costrutto di lambda-astrazione:
 \[ \infer[\textbf{Abs}]{\Gamma \vdash_W \lambda x. e : S\tau \mapsto \tau', S}{\tau = newvar & \Gamma, \; x : \tau \vdash_W e : \tau', \; S} \]
 Nell'inferenza di questo costrutto, l'argomento $ x $ ha come tipo una nuova variabile di tipo, alla quale viene
-successivamente applicata la sostituzione derivante dall'inferenza dell'espressione $ e $.
+successivamente applicata la sostituzione derivante dall'inferenza dell'espressione $ e $. Dalla regola, si rende evidente
+la necessità di un tipo che consista nella "mappatura" di un tipo verso un altro tipo.
 
-\subsubsection{Inferenza del costrutto "let..in"}
-Prima di presentare la regola di inferenza, è necessario introdurre la regola di generalizzazione:
+\subsubsection{Inferenza del costrutto "let..in"}\hypertarget{Inferenza del costrutto "let..in"}
+Prima di presentare la regola di inferenza, è necessario introdurre la regola di \textit{generalizzazione}:
 \[ \infer[\textbf{Gen}]{\Gamma \vdash_W e : \forall \alpha. \; \tau}{\Gamma \vdash_W e : \tau & \alpha \notin free(\Gamma)} \]
 Questa regola quantifica le variabili di tipo che non compaiono già come variabili libere nell'ambiente di tipizzazione.
 Per il costrutto \textit{let..in}, per indicare la generalizzazione, utilizzeremo la seguente notazione:
@@ -1563,20 +1584,20 @@ Per il costrutto \textit{let..in}, per indicare la generalizzazione, utilizzerem
 Ora possiamo presentare la regola di inferenza del costrutto \textit{let..in}:
 \[ \infer[\textbf{Let}]{\Gamma \vdash_W let \; x = e_0 \; in \; e_1 : \tau', \; S_1S_0}{\Gamma \vdash_W e_0 : \tau, \; S_0 & S_0\Gamma, x : \overline{S_0\Gamma}(\tau) \vdash_W e_1 : \tau', \; S_1} \]
 \`E doveroso spiegare il motivo dell'esistenza del costrutto \textit{let..in}. Osserviamo il seguente esempio di
-programma scritto nel formalismo System-F:
+espressione scritta nel formalismo System-F:
 \[ (\lambda id. \; (id \; True, id \; 42)) (\lambda x. \; x) \]
-un tale programma non può essere tipato, in quanto il tipo della variabile \textit{id} non è polimorfo. Si ricordi,
+un tale programma non può essere tipato, in quanto il tipo della variabile \textit{id} non è uno schema di tipo. Si ricordi,
 infatti, che nel costrutto della lambda-astrazione, il tipo dell'argomento è un mono-tipo. Per questo motivo, è
 necessario il costrutto \textit{let..in}:
 \[ let \; id = \lambda x. \; x \; in \; (id \; True, id \; 42) \]
 infatti, il programma appena mostrato è \textit{ben tipato}, in quanto il tipo di \textit{id} è uno schema di tipo.
 
-\subsubsection{Implementazione delle regole di inferenza}
+\subsubsection{Implementazione delle regole di inferenza}\hypertarget{Implementazione delle regole di inferenza}
 Il codice sorgente che implementa le regole di inferenza (e quindi la type-inference) è situato nel modulo
 \texttt{Compiler.Types.Builder.Type}. Alcuni costrutti di Fex si ispirano a quelli del formalismo \textit{System-F},
 tuttavia, molti vengono estesi con sintassi differenti.
 
-\paragraph{Lambda-astrazione in Fex}
+\paragraph{Lambda-astrazione in Fex}\hypertarget{Lambda-astrazione in Fex}
 Prendendo come riferimento la definizione del token
 dell'AST che rappresenta il costrutto di lambda-astrazione:
 \begin{lstlisting}
@@ -1591,10 +1612,10 @@ Con le dovute accortezze, l'algoritmo di inferenza considera questi costrutti co
 concatenati in \textit{System-F}. Ad esempio:
 \[ \texttt{lam x y z -> x + y + z} \equiv \lambda x. \; \lambda y. \; \lambda z. \; x + y + z \]
 
-\paragraph{Simboli globali in Fex}
+\paragraph{Simboli globali in Fex}\hypertarget{Simboli globali in Fex}
 Un altra nota è necessaria sulle definizioni di simboli in Fex. Infatti, Fex permette la definizione di simboli
 globali e questo "rompe" la regola di inferenza del costrutto \textit{let..in}. Questo problema viene risolto
-considerando soltanto parte delle premesse del costrutto \textit{let..in}. S consideri, ad esempio:
+considerando soltanto parte delle premesse del costrutto \textit{let..in}. Si consideri, ad esempio:
 \begin{lstlisting}
 let x = e
 \end{lstlisting}
@@ -1603,7 +1624,7 @@ generalizzazione, quindi $ x $ avrà tipo $ \forall \overline{\alpha}. \; \tau $
 compiere altre azioni e il binding $ x : \forall \overline{\alpha}. \; \tau $ può essere aggiunto nell'ambiente di
 tipizzazione.
 
-\paragraph{Costrutto "let..in" in Fex}
+\paragraph{Costrutto "let..in" in Fex}\hypertarget{Costrutto "let..in" in Fex}
 Il costrutto \textit{let..in} in Fex ha nella sintassi un'altra estensione rispetto al suo omonimo in \textit{System-F},
 ovvero i bindings accettano anche argomenti:
 \begin{lstlisting}
@@ -1614,14 +1635,15 @@ di un costrutto di lambda-astrazione (cfr. Lambda-astrazione), quindi, si può p
 di type-inference con \textit{System-F}:
 \[ \texttt{let f x y = (x, y)} \equiv let \; f = \lambda x. \; \lambda y. \; (x, y) \]
 
-\subsection{Estensioni dell'algoritmo di inferenza}
+\subsection{Estensioni dell'algoritmo di inferenza}\hypertarget{Estensioni dell'algoritmo di inferenza}
 Fex possiede numerosi costrutti che arricchiscono la sintassi di base di \textit{System-F}, inoltre, introduce
-concetti nuovi come i predicati o i tipi qualificati. Di conseguenza, l'algoritmo di inferenza di tipo di \textit{System-F}
+concetti nuovi come i predicati e i tipi qualificati. Di conseguenza, l'algoritmo di inferenza di tipo di \textit{System-F}
 deve essere esteso.
 
-\subsubsection{Pattern matching}
-Fex possiede due costrutti diversi per il pattern matching (cfr. Caratteristiche del linguaggio). Il primo costrutto
-permette "ispezionare" il valore di una singola espressione, per esempio:
+\subsubsection{Pattern matching}\hypertarget{Pattern matching}
+Fex possiede due costrutti diversi per il pattern matching
+(cfr. \hyperlink{Caratteristiche del linguaggio}{Caratteristiche del linguaggio}). Il primo costrutto
+permette di "ispezionare" il valore di una singola espressione, per esempio:
 \begin{lstlisting}
 type Maybe a = Nothing | Just a
 
@@ -1638,16 +1660,16 @@ let f
     | Nothing _ -> "Error_404"
     | (Just _) _ -> "Ok_200"
 \end{lstlisting}
-In qualsiasi caso, vi sono sempre uno o più valori da ispezionare e uno o più casi, i quali hanno uno o più \textit{case
-expressions} (nel codice, spesso vengono nominate come \textit{matching expressions}) e un'espressione di ritorno.
-Quindi abbiamo un costrutto della forma:
+In qualsiasi caso, vi sono sempre uno o più valori da ispezionare e uno o più casi, i quali sono costituiti da una o più
+\textit{case expressions} a sinistra della freccia (nel codice, spesso vengono nominate come \textit{matching expressions})
+e un'espressione di ritorno a destra della freccia. Quindi abbiamo un costrutto della forma:
 \[ match \; val_1 \; ... \; val_n \; with \; case_1 \; ... \; case_m \]
-dove $ val_i $ è un token che definiremo come \textit{token top-level} o \textit{token di scrutinio} e
-$ case_j $, che chiameremo \textit{caso}, ha la forma:
+dove $ val_i $ è un token che definiamo come \textit{token top-level} o \textit{token di scrutinio} e
+$ case_j $, che chiameremo semplicemente \textit{caso}, ha la forma:
 \[ me_{1j}, \; ... \; me_{nj} \rightarrow e_j \]
 L'algoritmo di inferenza di tale costrutto è il seguente:
 \begin{itemize}
-    \item Inferisci $ val_i $, applica le sostituzioni all'ambiente di tipizzazione e poi fai lo stesso con $ val_{i+1} $,
+    \item inferisci $ val_i $, applica le sostituzioni all'ambiente di tipizzazione e poi fai lo stesso con $ val_{i+1} $,
     finché non termina la lista di token di scrutinio;
     \item nell'inferenza dei casi, dovrà valere:
         \[ \forall j. \; typeOf(val_i) \sqsubseteq typeOf(me_{ij}) \]
@@ -1671,7 +1693,7 @@ L'algoritmo di inferenza di tale costrutto è il seguente:
     \end{itemize}
 \end{itemize}
 
-\paragraph{Eliminazione del pattern matching "in larghezza"}
+\paragraph{Eliminazione del pattern matching "in larghezza"}\hypertarget{Eliminazione del pattern matching "in larghezza"}
 Come è stato già menzionato precedentemente, Fex espone due sintassi diverse per effettuare il pattern matching,
 una delle quali può possedere un numero arbitrario di case-expressions. Tuttavia, il token che rappresenta un
 \textit{caso} del costrutto di pattern matching può avere solamente una \textit{matching expression} (equivalente
@@ -1703,28 +1725,31 @@ let f v1 v2 =
 Questo metodo ha una limitazione, ovvero non può superare il numero di argomenti massimo di un costruttore di una tupla
 di Haskell, quindi è dipendente da esso. Di solito il costruttore di tuple "più grande" in Haskell ha 62 argomenti, quindi
 questa limitazione viene accettata, in quanto difficilmente l'utente definisce funzioni con più di 62 argomenti, tuttavia,
-non è escluso che, in futuro, questa implementazione venga migliorata. \`E bene menzionare che vi è questa dipendenza da
+non è escluso che in futuro questa implementazione venga migliorata. \`E bene menzionare che vi è questa dipendenza da
 parte di Fex, in quanto le tuple in Fex sono implementate semplicemente come tuple in Haskell. Il codice sorgente che
 implementa questa funzionalità si trova in \texttt{Compiler.Desugar.BreadthPM}.
 
-\subsubsection{Constraints}
+\subsubsection{Constraints}\hypertarget{Constraints}
 La sintassi Fex permette di esprimere espressioni il cui tipo possiede dei predicati; ciò richiede che l'algoritmo
-classico di type-inference venga esteso. L'algoritmo esteso di Fex si ispira a [2], in cui Martin Sulzmann,
+classico di type-inference venga esteso. L'algoritmo esteso di Fex si ispira a \hyperlink{bibl2}{[2]}, in cui Martin Sulzmann,
 Martin Odersky, Martin Wehr presentano un'estensione di HM che supporta anche tipi che possiedono predicati. I giudizi
 di tipo vengono estesi con un'ipotesi aggiuntiva sui constraints e avranno la forma:
 \[ CS, \Gamma \vdash_W e : \tau \]
-Perciò l'ambiente di tipizzazione viene esteso con un altro "attore", ovvero un contesto di soddisfabilità. Nel caso
+Perciò l'ambiente di tipizzazione viene esteso con un altro "attore", ovvero un contesto di soddisfabilità, il quale sarà
+utile a capire quali constraints possono essere accettati e quali vengono rifiutati. Nel caso
 di Fex, il contesto di soddisfabilità è dato dall'insieme delle istanze.
-L'articolo presenta inizialmente il problema di come ridefinire le regole istanziazione (\textbf{Inst}) e generalizzazione
-(\textbf{Gen}). Sull'istanziazione di uno schema di tipo si arriva subito alla seguente conclusione:
+L'articolo \hyperlink{bibl2}{[2]} presenta inizialmente il problema di come ridefinire le regole istanziazione
+(\textbf{Inst}) e generalizzazione (\textbf{Gen}).
+Sull'istanziazione di uno schema di tipo si arriva subito alla seguente conclusione:
 \[ \infer[\textbf{Inst}]{CS, \Gamma \vdash_W e : \{ \overline{\tau} / \overline{\alpha} \}\tau'}{CS, \Gamma \vdash_W e : \forall \overline{\alpha}. D \Rightarrow \tau' & CS \vdash^e \{ \overline{\tau} / \overline{\alpha} \} D} \]
 Questa regola sostiene che, quando si istanzia uno schema di tipo $ \forall \overline{\alpha}. D \Rightarrow \tau $, gli
 unici mono-tipi validi sono quelli della forma $ \{ \overline{\tau} / \overline{\alpha} \} \tau' $ e tali che il constraint
-$ \{ \overline{\tau} / \overline{\alpha} \}D $ \textit{soddisfa} uno o più constraints nel contesto di soddisfabilità $ CS $.
+$ \{ \overline{\tau} / \overline{\alpha} \}D $ \textit{è soddisfatto} da uno o più constraints nel contesto di
+soddisfabilità $ CS $.
 Di seguito è riportato in pseudo-codice l'algoritmo di soddisfabilità dei constraints, definito in
 \texttt{Compiler.Ast.Typed}. Esso si basa sull'unificazione \textit{strict}:
 \begin{lstlisting}
-satisfy(C => args, C' => args'):
+isSatisfied(C => args, C' => args'):
     C == C' and
     areEq(args, args')
 \end{lstlisting}
@@ -1750,10 +1775,11 @@ moreSpecOneByOne(args, args', resArgs):
 la funzione \texttt{apply} prende in input una sostituzione e uno o più token che vengono ritornati dopo che è stata
 applicata loro la sostituzione. La funzione \texttt{isMoreSpec} è invece il test di specializzazione (unificazione
 \textit{strict}) tra due mono-tipi; infatti, come da definizione, gli argomenti dei constraints sono mono-tipi.
-Si ricordi che il test di unificazione può fallire. In generale, diremo che un constraint $ C $ \textit{soddisfa} un
-constraint $ C' $ se vale $ satisfy(C, C') $; viceversa, diremo che un constraint $ C $ \textit{è soddisfatto} da un
-constraint $ C' $ se valie $ satisfy(C', C) $.
-Si noti come, a causa dell'utilizzo dell'unificazione \textit{strict}, il test soddisfabilità tra constraints, non sia
+Si ricordi che il test di unificazione può fallire. In generale, diremo che un constraint $ C $ \textit{è soddisfatto} da
+un constraint $ C' $ se vale $ isSatisfied(C, C') $; viceversa, diremo che un constraint $ C $ \textit{soddisfa} un
+constraint $ C' $ se vale $ isSatisfied(C', C) $. Inoltre, dato il contesto di soddisfabilità $ CS $ e un constraint $ C $,
+diremo che $ C $ \textit{è soddisfatto} se esiste $ C' \in CS $ tale che $ C $ è soddisfatto da $ C' $.
+Si noti come, a causa dell'utilizzo dell'unificazione \textit{strict}, il test soddisfabilità tra constraints non sia
 commutativo. Si osservi il seguente esempio in Fex:
 \begin{lstlisting}
 property Foo a b c =
@@ -1767,13 +1793,14 @@ Foo Int Int Int
 Foo a String Int
 \end{lstlisting}
 Il constraint \texttt{Foo String String Int} è soddisfatto in quanto esiste l'istanza \texttt{Foo a String Int} che
-soddisfa il constraint. La non-commutatività si nota subito, infatti, \texttt{Foo String String Int} non soddisfa
-texttt{Foo a String Int}, in quanto la variabile di tipo \texttt{a} non è più specializzata (o meno generale) rispetto
+lo soddisfa. La non-commutatività si nota subito, infatti, \texttt{Foo a String Int} non sarebbe soddisfatto da
+texttt{Foo String String Int}, in quanto la variabile di tipo \texttt{a} non è più specializzata (o meno generale) rispetto
 al tipo concreto \texttt{String}. Il constraint \texttt{Foo x Char y}, invece, non è soddisfatto in quanto nessuna
 delle tre istanze lo soddisfa.
 
-Ora che è stata presentata formalmente la nozione di soddisfabilità, possiamo procedere con la ridefinizione della
-regola di generalizzazione. Nell'articolo [2] viene proposta la seguente regola:
+Ora che è stata presentata formalmente la nozione di soddisfabilità di un constraint, possiamo procedere
+con la ridefinizione della
+regola di generalizzazione. Nell'articolo \hyperlink{bibl2}{[2]} viene proposta la seguente regola:
 \[ \infer[\textbf{Gen}]{CS \wedge \exists \overline{\alpha}. D, \Gamma \vdash_W e : \forall \overline{\alpha}. D \Rightarrow \tau}{CS \wedge D, \Gamma \vdash_W e : \tau & \overline{\alpha} \notin free(\Gamma) \cup free(CS)} \]
 Si noti come vi è un nuovo quantificatore: $ \exists \overline{\alpha}. D $. Questa notazione è utile per quantificare
 le variabili di tipo all'interno di un constraint.
@@ -1786,9 +1813,10 @@ viene utilizzato. Lo indicheremo con $ \Omega $.
 Indipendentemente dalle regole \textbf{Inst} e \textbf{Gen} ridefinite, è necessario fissare un comportamento che
 riguarda le altre regole di inferenza. In particolare, è necessario decidere il momento in cui viene eseguito l'algoritmo
 di soddisfabilità dei constraints presenti in $ \Omega $. Questa azione è detta anche \textit{normalizzazione}.
-In [2], vi è la proposta di nuove regole di inferenza in cui la normalizzazione viene effettuata alla fine delle
-premesse di ogni regola di inferenza, eccetto quella della lambda-astrazione. Tuttavia, sempre nell'articolo, vi è
-un'ulteriore proposta nella quale la normalizzazione viene effettuata in maniera \textit{lazy}, ovvero appena dopo
+In \hyperlink{bibl2}{[2]}, vi è la proposta di nuove regole di inferenza in cui la normalizzazione viene effettuata alla
+fine delle premesse di ogni regola di inferenza, eccetto quella della lambda-astrazione, in cui la normalizzazione non viene
+effettuata affatto. Tuttavia, sempre nell'articolo,
+vi è un'ulteriore proposta nella quale la normalizzazione viene effettuata in maniera \textit{lazy}, ovvero appena dopo
 la generalizzazione ed è questa la politica utilizzata da Fex. Rimangono alcune questione aperte:
 \begin{enumerate}
     \item quand'è che un predicato viene aggiunto a $ \Omega $?
@@ -1853,24 +1881,25 @@ Al momento della generalizzazione, si ha che:
 Di conseguenza, il constraint $ Bar \; a1 \; a2 $ può essere aggiunto allo schema di tipo, mentre
 $ Foo \; a1 \; a2 \; b $ deve essere normalizzato in quanto la variabile di tipo $ b $ non compare nel mono-tipo $ \tau $.
 
-\paragraph{Normalizzazione}
-Per quanto riguarda la normalizzazione, è stato già menzionato che essa corrisponde alla seguente operazione:
+\paragraph{Normalizzazione}\hypertarget{Normalizzazione}
+Per quanto riguarda la normalizzazione, essa corrisponde alla seguente operazione:
 \begin{lstlisting}
 normalize(C, instances):
-    isSatisfiable(C, instances)
+    any (fun C' -> isSatisfied(C, C')) in instances
 \end{lstlisting}
 Tuttavia, è necessario perfezionare l'implementazione, in quanto, al momento, non è possibile selezionare l'istanza
-che soddisfa il constraint (cfr. dispatch statico). L'istanza che soddisfa il constraint deve essere unica,
-in quanto, è necessario non avere ambiguità sull'implementazione da scegliere. Chiaramente, se non vi sono istanze
+che soddisfa il constraint (cfr. \hyperlink{Dispatch statico}{Dispatch statico}). L'istanza che soddisfa il constraint,
+infatti, deve essere unica,
+in quanto è necessario non avere ambiguità sull'implementazione da scegliere. Chiaramente, se non vi sono istanze
 che soddisfano un constraint, il programma viene respinto con un errore. Bisogna, quindi, fissare una semantica
 di inferenza di istanza nel caso in cui vi siano due o più istanze che soddisfano un constraint. La scelta di Fex è
 quella di selezionare l'istanza "più specializzata". Definiamo ora una relazione d'ordine parziale tra constraints,
 siano $ C $ e $ C' $ due constraints:
 \begin{itemize}
-    \item se $ satisfy(C, C') \wedge satisfy(C', C) $, allora $ C = C' $;
-    \item se $ satisfy(C, C') \wedge \neg(satisfy(C', C)) $, allora $ C > C' $;
-    \item se $ \neg(satisfy(C, C')) \wedge satisfy(C', C) $, allora $ C < C' $;
-    \item se $ \neg(satisfy(C, C')) \wedge \neg(satisfy(C', C)) $, allora la relazione d'ordine è indefinita.
+    \item se $ isSatisfied(C, C') \wedge isSatisfied(C', C) $, allora $ C = C' $;
+    \item se $ isSatisfied(C, C') \wedge \neg(isSatisfied(C', C)) $, allora $ C > C' $;
+    \item se $ \neg(isSatisfied(C, C')) \wedge isSatisfied(C', C) $, allora $ C < C' $;
+    \item se $ \neg(isSatisfied(C, C')) \wedge \neg(isSatisfied(C', C)) $, allora la relazione d'ordine è indefinita.
 \end{itemize}
 dove l'operatore $ \neg $ è la naturale negazione booleana. Di seguito, vi è definito l'algoritmo di selezione dell'istanza
 ispirato da [13]:
@@ -1884,23 +1913,24 @@ ispirato da [13]:
 Il fatto che la relazione d'ordine sia parziale non rappresenta un problema, infatti, le istanze vengono scartate solo
 se la relazione d'ordine è definita.
 
-\paragraph{Confronto con Haskell}
+\paragraph{Confronto con Haskell}\hypertarget{Confronto con Haskell}
 Fex ha un sistema di tipi molto simile a quello di Haskell, il quale, a sua volta, possiede un constraint-system
 "costruito" sopra HM. Anche Haskell ha una politica \textit{lazy} di risoluzione delle istanze, ma, a differenza di Fex,
-in caso di molteplici istanze soddisfatte, l'azione di default è quella di rifiutare il programma, a meno che l'utente
-non utilizzi alcune estensioni del linguaggio (cfr. [13]). La politica di Fex è più elastica e permette all'utente
+in caso di molteplici istanze che soddisfano un constraint, l'azione di default è quella di rifiutare il programma,
+a meno che l'utente non utilizzi alcune estensioni del linguaggio (cfr. \hyperlink{bibl13}{[13]}).
+La politica di Fex è più elastica e permette all'utente
 di avere più istanze valide per certi constraints, tuttavia, ciò rappresenta una responsabilità in più da parte
 dell'utente, il quale deve essere consapevole di come avviene l'inferenza di istanza. Vi è quindi un tradeoff tra
 elasticità e consapevolezza dell'utente.
 
-\subsubsection{Type-hinting}
+\subsubsection{Type-hinting}\hypertarget{Type-hinting}
 Fex permette all'utente di indicare il tipo di un'espressione (o di un simbolo). Questo comporta una modifica
 all'algoritmo di inferenza di tipo. Data un'espressione con type-hinting, lo schema generale è inferire prima
 l'espressione e successivamente "applicare" il type-hinting. Per quanto riguarda i casi ricorsivi delle espressioni
-(tutti i casi fuorché i simboli, i letterali e i data-constructors), il tipo proveniente dal type-hinting viene
-"scomposto" in più sotto-tipi che vengono utilizzati come type-hinting nell'inferenza dei casi ricorsivi. Tale
+(tutti i casi fuorché i casi di base: variabili, letterali e data-constructors), il tipo proveniente dal type-hinting
+viene "scomposto" in più sotto-tipi che vengono utilizzati come type-hinting nell'inferenza dei casi ricorsivi. Tale
 scomposizione è definita sui tipi funzione ed è chiamata, all'interno del codice sorgente, operazione di
-\textit{unfold}:
+\textit{unfolding}:
 \begin{lstlisting}
 unfoldType(ty):
     match ty with
@@ -1924,15 +1954,15 @@ Per quanto riguarda, invece, i casi di base, lo schema è:
     \item effettua l'unificazione \textit{strict} tra $ \pi $ e $ \tau $; si ricordi che tale operazione, a differenza
     dell'unificazione originale, non gode della proprietà commutativa, in quanto l'azione di \textit{swap} non è
     ammessa. Il mono-tipo $ \pi $ non può essere modificato dopo la sostituzione;
-    \item applica l'unificazione all'ambiente di tipizzazione e al token tipato.
+    \item applica la sostituzione all'ambiente di tipizzazione e al token tipato.
 \end{itemize}
 La regola è molto simile a quella senza type-hinting, tuttavia, viene effettuata un'unificazione in più.
 Dato che l'insieme dei letterali e dei data-constructors all'interno del linguaggio non può avere variabili libere,
 un'ottimizzazione che viene applicata ai loro casi è non applicare la sostituzione
 all'ambiente di tipizzazione. Un'operazione che, in generale, è piuttosto dispendiosa.
 
-\subsubsection{Ricorsione}
-Il lambda-calcolo polimorfico (\textit{System-F}) non ammette la ricorsione, inoltre, non è nemmeno possibile
+\subsubsection{Ricorsione}\hypertarget{Ricorsione}
+Il formalismo System-F non ammette la ricorsione, inoltre, non è nemmeno possibile
 trovare il tipo per il cosiddetto \textit{combinatore Y}, un modo per definire la ricorsione in linguaggi che
 generalmente non la supportano. Questo rende \textit{System-F} non Turing-completo, in quanto qualsiasi programma
 termina. Fex (come anche Haskell e molti altri linguaggi funzionali) ammette, invece, una sintassi per la ricorsione.
@@ -1940,7 +1970,8 @@ Questo fatto porta con sé alcune conseguenze molto importanti. Innanzitutto, la
 non è vera per le funzioni ricorsive, in quanto con la presenza della ricorsione i simboli possono apparire in un
 programma prima ancora che il loro tipo venga generalizzato. Inoltre, sarebbe impossibile ordinare i bindings in base
 alle loro dipendenze. Per questo motivo, i bindings ricorsivi vengono raggruppati
-(cfr. Clusters di definizioni mutualmente ricorsive) e considerati come un unico binding della forma:
+(cfr. \hyperlink{Clusters di definizioni mutualmente ricorsive}{Clusters di definizioni mutualmente ricorsive}) e
+considerati come un unico binding della forma:
 \[ rec \; v_1 = e_1 \; and \; v_2 = e_2 \; and \; ... \; v_n = e_n \]
 Tuttavia, il problema della regola \textbf{Var} non è ancora risolto, quindi è necessario definire una nuova regola
 che riguarda i bindings ricorsivi:
@@ -1950,13 +1981,14 @@ dove:
 \[ \Gamma'' = v_1 : \overline{\Gamma}(\tau_1), ..., v_n : \overline{\Gamma}(\tau_n) \]
 La regola inferisce prima tutte le espressioni $ e_i $ e poi applica la regola di generalizzazione \textbf{Gen} soltanto
 alla fine. Nell'algoritmo di inferenza di Fex, prima di inferire un cluster di bindings ricorsivi, vengono creati
-nuovi mono-tipi della forma di variabili di tipo, i quali vengono assegnati ai bindings del cluster. Durante l'inferenza,
+nuovi mono-tipi della forma di singole variabili di tipo, i quali vengono assegnati ai bindings del cluster.
+Durante l'inferenza,
 questi mono-tipi possono essere specializzati. In questo modo, si può applicare la regola
 \textbf{Var} ad ogni occorrenza di simbolo ricorsivo. L'istanziazione di un mono-tipo non rappresenta un problema
 in quanto le variabili libere non vengono istanziate. In questo caso, l'algoritmo di istanziazione corrisponde
 alla funzione identità.
 
-\section{Generazione del codice}
+\section{Generazione del codice}\hypertarget{Generazione del codice}
 L'output dell'algoritmo di type inference è un \texttt{TypedProgram}, una tabella che mantiene i bindings tipati.
 La generazione del codice consiste in tre sotto-fasi:
 \begin{enumerate}
@@ -1989,13 +2021,16 @@ Di seguito, lo schema delle fasi finali del compilatore:
 \end{tikzpicture}
 
 \subsection{Fasi di desugaring}\hypertarget{Fasi di desugaring}
-.
+Prima della vera e propria generazione del codice, sono necessarie alcune fasi di desugaring. Esse vengono eseguite
+dopo la fase di type-inference poiché, se il programma non può essere tipato, i messaggi d'errore risultano più comprensibili
+per l'utente.
 
 \subsubsection{Dispatch statico}\hypertarget{Dispatch statico}
 Il polimorfismo ad-hoc viene implementato attraverso il meccanismo delle type-classes.
 La sintassi Core non possiede, però, costrutti per i metodi delle type-classes e per i bindings delle istanze.
 La politica del compilatore Fex è quella di aggiungere i bindings delle istanze ai bindings del programma,
-cambiando i nomi degli stessi metodi di istanze diverse (cfr. Costruzione delle istanze). Questa politica ha
+cambiando i nomi degli stessi metodi di istanze diverse
+(cfr. \hyperlink{Costruzione delle istanze}{Costruzione delle istanze}). Questa politica ha
 importanti implicazioni: innanzitutto, nelle espressioni del programma, i metodi delle istanze possono essere chiamati,
 ma essi possono essere nominati solamente tramite gli identificatori dei metodi delle proprietà. Ad esempio:
 \begin{lstlisting}
@@ -2010,7 +2045,7 @@ instance Foo String =
 let f x = (x, foo "42")
 \end{lstlisting}
 Come è stato già esposto in precedenza, il metodo \texttt{foo} dell'istanza \texttt{Foo Int} avrà un identificatore
-diverso da \texttt{foo}. Tuttavia, \texttt{foo} viene nominato nell'espressione legata a \texttt{f}. \`E necessario,
+diverso da \texttt{foo}. Tuttavia, \texttt{foo} compare nell'espressione legata a \texttt{f}. \`E necessario,
 quindi, un modo per trasformare, eventualmente, le occorrenze dei metodi di proprietà con i giusti metodi di istanza.
 Si pensi a quest'altro pezzo di codice Fex:
 \begin{lstlisting}
@@ -2030,9 +2065,10 @@ programma (i metodi d'istanza) che implementano i relativi metodi di proprietà 
 linguaggi object-oriented, in cui la selezione dei metodi avviene a run-time attraverso meccanismi di dispatch dinamici,
 in Fex la selezione viene risolta completamente a compile-time, evitando così l'overhead che può essere causato
 da un algortimo di dispatch dinamico. In particolare, il dispatch statico in Fex viene implementato attraverso
-la \textit{monomorfizzazione} [11], già introdotta, in realtà, nella costruzione delle istanze. Ora renderemo la
+la \textit{monomorfizzazione} \hyperlink{bibl11}{[11]}, già introdotta, in realtà, nella costruzione delle istanze.
+Ora renderemo la
 monomorfizzazione generale a tutte le funzioni del programma; l'implementazione che seguirà si ispira a un articolo
-sul blog di Jeremy Mikkola [12]. Si ripensi alla precedente funzione \texttt{g}. Il suo
+sul blog di Jeremy Mikkola \hyperlink{bibl12}{[12]}. Si ripensi alla precedente funzione \texttt{g}. Il suo
 schema di tipo ha con sè dei predicati. In questo caso, durante la fase di type-inference, alla funzione \texttt{g}
 verrà aggiunto un parametro che corrisponderà al predicato \texttt{Foo (Box a)}, ovvero stiamo trattando il tipo di
 \texttt{g} come se fosse:
@@ -2048,13 +2084,17 @@ soltanto constraints.
 Sempre durante la fase di type-inference, ogni volta che la funzione \texttt{g} viene utilizzata nel programma, oltre
 alla normale applicazione della regola di inferenza \textbf{Var} e alla generazione del token tipato che rappresenta
 una variabile, verrà generata e applicata a \texttt{g} un'ulteriore variabile. Quest'ultima viene associata al
-relativo problema di constraint e viene salvata nell'ambiente di tipizzazione. Al momento della generalizzazione,
+relativo problema di constraint e viene salvata nell'ambiente di tipizzazione $ \Omega $. Quindi, gli elementi in
+$ \Omega $ hanno, in realtà, la seguente forma:
+\[ \rangle C, v \langle \]
+dove $ C $ è un constraint e $ v $ è l'identificatore di una variabile, detta anche \textit{variabile di dispatch}.
+Al momento della generalizzazione,
 dai problemi di constraint non normalizzati vengono estratte le variabili associate, le quali diventano parte degli
 argomenti del binding. Ad esempio, l'implementazione della funzione \texttt{h} a livello di token tipati sarà:
 \begin{lstlisting}
 let h v1 x = g v1 x
 \end{lstlisting}
-dove \texttt{v1} è la variabile precedentemente menzionata, detta anche \textit{variabile di dispatch}. Le espressioni
+dove \texttt{v1} è una variabile di dispatch. Le espressioni
 che contengono le variabili di dispatch sono definite in \texttt{Compiler.Ast.Typed}:
 \begin{lstlisting}
 data DispatchTok a =
@@ -2067,9 +2107,9 @@ per "selezionare" l'implementazione giusta di una funzione.
 
 La fase di type-inference, oltre a un programma tipato, ritorna anche una sequenza di nomi di simboli da ridefinire.
 Questi ultimi sono tutti quei simboli che compaiono nel programma nella cui espressione vi sono valori di constraints.
-Se in un'espressione un simbolo ha solo valori di dispatch applicati (e non variabili di dispatch), allora è necessario
+Se in un'espressione un simbolo ha solo valori di dispatch applicati (e quindi non variabili di dispatch), allora è necessario
 generare un nuovo simbolo il cui identificatore univoco viene creato a partire dai valori di dispatch, come è avvenuto
-per i metodi di istanza.
+per i metodi di istanza (cfr. \hyperlink{Costruzione delle istanze}{Costruzione delle istanze}).
 Nel modulo \texttt{Compiler.Desugar.AdHoc} viene implementato un algoritmo di monomorfizzazione che, ricorsivamente,
 cerca nelle espressioni tutte le occorrenze di simboli a cui sono applicati valori di constraints e
 genera le conseguenti implementazioni.
@@ -2080,8 +2120,9 @@ quindi l'algoritmo agisce ricorsivamente finché non esistono più implementazio
     \item $ \forall b \in bs $, vengono cercati, nell'espressione legata a $ b $, tutte le occorrenze di simboli che
     hanno applicati solo valori di dispatch;
     \item ogni occorrenza viene sostituita con un nuovo identificatore univoco in tutto il programma costituito da:
-        \[<symid><dispatchval_1>...<dispatchval_n>\]
-    dove $ <symid> $ è l'identificatore originale e $ <dispatchval_i> $ è l'i-esimo valore di dispatch applicato;
+        \[\langle symid \rangle \langle dispatchval_1 \rangle ... \langle dispatchval_n \rangle \]
+    dove $ \langle symid \rangle $ è l'identificatore originale e $ \langle dispatchval_i \rangle $ è l'i-esimo valore di
+    dispatch applicato;
     \item $ \forall sym $ che viene sostituito, $ sym $ viene aggiunto alla lista $ rs $ di simboli da creare, con le
     informazioni sui valori di dispatch che servono per creare il nuovo identificatore;
     \item $ \forall r \in rs $, viene creato un nuovo binding in cui:
@@ -2095,7 +2136,7 @@ quindi l'algoritmo agisce ricorsivamente finché non esistono più implementazio
     \item ripeti (5) finché non terminano i simboli in $ rs $.
 \end{enumerate}
 
-\subsubsection{Lambda-astrazione}
+\subsubsection{Lambda-astrazione}\hypertarget{Lambda-astrazione}
 Riportiamo la definizione di binding:
 \begin{lstlisting}
 type BindingSingleton a = (NotedVar a, [NotedVar a], NotedExpr a)
@@ -2104,9 +2145,10 @@ Come si può notare dalla definizione, un binding è una tripla costituita da un
 un'espressione. In questa fase, vengono modificate tutte le espressioni in modo da eliminare gli argomenti dalla
 tripla. Di preciso, gli argomenti del binding diventano argomenti di un costrutto di lambda-astrazione che ha come
 espressione l'espressione legata del binding. Si ricordi che, durante la type inference, gli argomenti di un binding
-vengono trattati come argomenti di un costrutto di lambda-astrazione (cfr. Implementazione delle regole di inferenza).
+vengono trattati come argomenti di un costrutto di lambda-astrazione
+(cfr. \hyperlink{Lambda-astrazione in Fex}{Lambda-astrazione in Fex}).
 
-\subsubsection{Rimozione del pattern matching profondo}
+\subsubsection{Rimozione del pattern matching profondo}\hypertarget{Rimozione del pattern matching profondo}
 Si consideri il seguente sorgente Fex:
 \begin{lstlisting}
 type Success = Ok200
@@ -2144,14 +2186,16 @@ let f x =
             )
 \end{lstlisting}
 La differenza tra le due versioni è che nella seconda i data-constructors appaiono solo come teste (e non come argomenti)
-nelle \textit{case expressions}. In seguito, vedremo perché è importante che valga questa proprietà (cfr. Generazione del
-codice Core). Questa fase di desugaring trasforma le espressioni di pattern matching, modificando le
-\textit{case expressions}, in modo che ad ogni loro argomento che contiene un data-contructor, viene creata una nuova
+nelle case expressions. In seguito, vedremo perché è importante che valga questa proprietà
+(cfr. \hyperlink{Generazione del codice Core}{Generazione del codice Core}). Questa fase di desugaring trasforma le
+espressioni di pattern matching, modificando le
+case expressions, in modo che ad ogni loro argomento che contiene un data-contructor, viene creata una nuova
 expressione di pattern matching innestata. Il codice relativo a questa fase si trova in \texttt{Compiler.Desugar.DeepPM}.
 
-\subsubsection{Unificazione degli scrutini}
+\subsubsection{Unificazione degli scrutini}\hypertarget{Unificazione degli scrutini}
 Questa è un'altra fase di desugaring che riguarda le espressioni di pattern matching. Le motivazioni di questa
-fase verranno chiarite in seguito (cfr. Generazione del codice Core). Prima di entrare nei dettagli di questa fase,
+fase verranno chiarite in seguito (cfr. \hyperlink{Generazione del codice Core}{Generazione del codice Core}). Prima di
+entrare nei dettagli di questa fase,
 è necessario definire cosa sono le \textit{variabili di scrutinio} o più semplicemente \textit{scrutini}. Sia
 $ match \; e \; with \; m_1 \rightarrow e_1 \; ... \; m_n \rightarrow e_n $ un'espressione di pattern matching,
 chiameremo \textit{scrutinio} la variabile legata direttamente al valore dell'espressione $ e $. Ad esempio:
@@ -2174,14 +2218,15 @@ let f x y =
 \end{lstlisting}
 Si noti che le variabili delle sotto-espressioni vengono opportunamente aggiornate.
 
-\subsection{Generazione del codice Core}
-Core è una rappresentazione intermedia utilizzata da GHC come rappresentazione intermedia di Haskell. La generazione
-del codice Core è la fase finale del front-end del compilatore Fex. Core è un linguaggio minimale ed è una variante
-esplicitamente tipata (a differenza di Haskell e Fex) del formalismo \textit{System-F} [3]. L'obiettivo del compilatore
+\subsection{Generazione del codice Core}\hypertarget{Generazione del codice Core}
+Core è un linguaggio minimale utilizzato da GHC come rappresentazione intermedia di Haskell. La generazione
+del codice Core è la fase finale del front-end del compilatore Fex. Core è una variante
+esplicitamente tipata (a differenza di Haskell e Fex) del formalismo System-F \hyperlink{bibl3}{[3]}. L'obiettivo del
+compilatore
 Fex è costruire dei token tipati e manipolarli in modo che la traduzione dal programma tipato Fex all'equivalente
 Core sia più lineare possibile. GHC espone al cliente delle API che permettono di utilizzare le funzionalità del
-compilatore [14], comprese quelle per creare e manipolare un programma Core. Di seguito vi è il tipo di dato algebrico
-utilizzato nelle API di GHC per rappresentare un'espressione Core:
+compilatore \hyperlink{bibl14}{[14]}, comprese quelle per creare e manipolare un programma Core. Di seguito vi è il tipo
+di dato algebrico utilizzato nelle API di GHC per rappresentare un'espressione Core:
 \begin{lstlisting}
 data Expr b
   = Var   Id
@@ -2207,7 +2252,8 @@ data AltCon
 data Bind b = NonRec b (Expr b)
             | Rec [(b, (Expr b))]
 \end{lstlisting}
-I commenti sono stati rimossi, cfr. [15] per il codice sorgente originale. Il tipo \texttt{Expr} rappresenta
+I commenti sono stati rimossi, cfr. \hyperlink{bibl15}{[15]} per il codice sorgente originale. Il tipo \texttt{Expr}
+rappresenta
 un'espressione Core, mentre l'alias di tipo \texttt{Alt} rappresenta un \textit{caso} del costrutto di pattern matching.
 Il tipo \texttt{Bind}, invece, rappresenta i bindings di Core.
 L'obiettivo finale è costruire un token \texttt{CoreProgram}:
@@ -2225,7 +2271,7 @@ dalle fasi precedenti del compilatore Core, l'obiettivo del compilatore Fex è c
 successivamente trasformati in token Core nel modo più lineare possibile. Alcuni esempi sono:
 \begin{itemize}
     \item la definizione di binding di Core è molto simile a quella utilizzata dal compilatore Fex (cfr.
-    Approccio a tabelle);
+    \hyperlink{Approccio a tabelle}{Approccio a tabelle});
     \item i costrutti di pattern matching, dopo le varie fasi di desugaring, non possiedono costruttori innestati nelle
     case expressions, come si può notare dal costruttore di un \textit{caso} in Core:
     \begin{lstlisting}
@@ -2236,26 +2282,30 @@ type Alt b = (AltCon, [b], Expr b)
     \begin{lstlisting}
 | Case  (Expr b) b Type [Alt b]
     \end{lstlisting}
-    Il fatto che gli scrutini siano stati tutti unificati rappresenta un vantaggio in termini di implementazione;
-    \item i bindings non hanno la nozione di argomenti, infatti, in Fex gli argomenti dei bindings sono stati
-    trasformati in argomenti dei costrutti di lambda-astrazione (cfr. Lambda-astrazione);
+    Il fatto che gli scrutini siano stati tutti unificati
+    (cfr. \hyperlink{Unificazione degli scrutini}{Unificazione degli scrutini}) rappresenta un vantaggio in termini di
+    implementazione;
+    \item i bindings non hanno la nozione di argomenti, infatti, gli argomenti dei bindings di Fex sono stati
+    trasformati in argomenti dei costrutti di lambda-astrazione (cfr. \hyperlink{Lambda-astrazione}{Lambda-astrazione});
     \item Le definizioni dei token tipati in Fex portano con sè l'informazione sul proprio tipo in modo che i token
     Core possano essere costruiti. Si ricordi che Core è un linguaggio esplicitamente tipato, quindi ogni costrutto che
     ha la nozione di tipo, ha il tipo esplicitato nella sintassi.
 \end{itemize}
 I dettagli implementativi dell'effettiva traduzione si trovano nel modulo \texttt{Compiler.Codegen.ToCore}.
 
-\paragraph{Traduzione dei tipi e dei costruttori}
+\paragraph{Traduzione dei tipi e dei costruttori}\hypertarget{Traduzione dei tipi e dei costruttori}
 Il modulo \texttt{Compiler.Codegen.Type} si occupa di trasformare i token di Fex che rappresentano i tipi nei
-corrispettivi token di Core [16]. Il tipo di dato algebrico nelle API di GHC per rappresentare un tipo in Core è
-\texttt{Type}. A differenza di Fex in cui per ogni nozione diversa di tipo è stato creato un token diverso,
+corrispettivi token di Core \hyperlink{bibl16}[16]. Il tipo di dato algebrico nelle API di GHC per rappresentare un tipo
+in Core è \texttt{Type}. A differenza di Fex in cui per ogni nozione diversa di tipo è stato creato un token diverso,
 \texttt{Type} racchiude molte nozioni di tipo, tra cui: mono-tipo, schema di tipo, variabili di tipo, etc.. Dal
 punto di vista delle API di GHC, \texttt{Type} è un tipo di dato astratto, infatti, sempre il modulo \texttt{Type}
 espone una serie di funzioni per costruire i tipi in Core. Altri tipi di dati fondamentali in Core sono \texttt{TyCon} e
-\texttt{DataCon}, definiti rispettivamente in [17] e [18], i quali rappresentano rispettivamente i type-constructors e
+\texttt{DataCon}, definiti rispettivamente in \hyperlink{bibl17}[17] e \hyperlink{bibl18}[18], i quali rappresentano
+rispettivamente i type-constructors e
 i data-constructors. In precedenza, quando è stato presentato il tipo di approccio (a tabelle) che utilizza il
 compilatore Fex
-per costruire e salvare i token tipati, è stato fatto un confronto con GHC (cfr. Confronto con GHC) che utilizza un
+per costruire e salvare i token tipati, è stato fatto un confronto con GHC
+(cfr. \hyperlink{Confronto con GHC}{Confronto con GHC}) che utilizza un
 approccio molto diverso. Infatti, in GHC i token vengono salvati in una struttura a grafo. Questo metodo si
 ripercuote soprattutto a livello programmatico, infatti, prendendo in considerazione \texttt{TyCon} e \texttt{DataCon},
 vi è una mutua dipendenza tra i due token. Questo implica che per costruire un costruttore di tipo è
@@ -2264,10 +2314,10 @@ disposizione il costruttore di tipo associato. La conseguenza è la scrittura di
 si ricordi che Haskell è un linguaggio con un modello di valutazione delle espressioni \textit{lazy} e questo aiuta a
 prevenire la ricorsione infinita in codice mutualmente ricorsivo.
 
-\subsection{Back-end}
+\subsection{Back-end}\hypertarget{Back-end}
 La fase finale di compilazione di un programma Fex consiste nel compilare un programma Core in target differenti.
 La pagina di documentazione ufficiale di GHC espone nei dettagli il ciclo di compilazione di un programma Haskell (e
-di conseguenza di un programma Core) [19]. Lo schema semplificato è il seguente:
+di conseguenza di un programma Core) \hyperlink{bibl19}{[19]}. Lo schema semplificato è il seguente:
 \newline
 
 \begin{tikzpicture}[node distance=2cm]
@@ -2298,25 +2348,26 @@ I tre target principali sono:
     \item Codice Llvm, portabile e ottimizzato per molte architetture.
 \end{itemize}
 
-\section{Sviluppi futuri}
+\section{Sviluppi futuri}\hypertarget{Sviluppi futuri}
 Fex è un linguaggio sperimentale in evoluzione. Vi sono alcune \textit{features} che arricchiscono il linguaggio che
 potrebbero essere implementate in futuro. Di seguito, sono elencate alcune caratteristiche ritenute interessanti da
-aggiungere al linguaggio. In particolare, nella presentazione delle funzionalità aggiuntive, verranno analizzate prima le
-basi teoretiche, discutendo i vantaggi che vengono portati al linguaggio (e, eventualmente, svantaggi) e i problemi
-che vengono risolti grazie alle suddette funzionalità aggiuntive.
+aggiungere al linguaggio. Nella presentazione delle funzionalità aggiuntive, verranno analizzate prima le
+basi teoretiche, discutendo i vantaggi (e, eventualmente, gli svantaggi) che vengono portati al linguaggio e i problemi
+che vengono risolti, dopodiché, in ogni sezione, verranno discusse una o più possibili implementazioni.
 
-\subsection{Tipi lineari}
+\subsection{Tipi lineari}\hypertarget{Tipi lineari}
 Un sistema di tipi \textit{lineari} è una caratteristica dei linguaggi di programmazione (specialmente funzionali) molto
 interessante, la quale porta numerosi vantaggi all'utente in termini pratici, tuttavia, non è una \textit{feature}
-largamente adottata nei linguaggi mainstream. Vi è stata una proposta di implementazione in GHC [20] che ha
-successivamente dato vita a un'estensione di Haskell. Questa sezione si ispirerà alla proposta che è stata fatta per GHC:
+largamente adottata nei linguaggi mainstream. Vi è stata una proposta di implementazione in GHC \hyperlink{bibl20}{[20]} che
+ha successivamente dato vita a un'estensione di Haskell. Questa sezione si ispirerà alla proposta che è stata fatta per GHC:
 verranno date alcune definizioni al fine di introdurre la nozione di \textit{tipo lineare} e verrà, a sua volta, proposta una
 bozza di implementazione nel compilatore Fex. Due vantaggi pratici che offre un sistema di tipi lineari sono: l'utilizzo
 e il controllo della mutabilità con interfacce \textit{pure}; maggiore controllo in computazioni che riguardano l'IO.
 In generale, i tipi lineari offrono maggiori garanzie all'utente programmatore.
 
 Innanzitutto, prima di dare qualsiasi definizione, è bene precisare
-come nell'articolo [20] i tipi non vengono divisi in due macro-insiemi (lineari e non-lineari), bensì la linearità viene
+come nell'articolo \hyperlink{bibl20}{[20]} l'approccio utilizzato non sia dividere i tipi in due macro-insiemi (lineari
+e non-lineari), bensì la \textit{linearità} viene
 associata al tipo funzione. Informalmente, una funzione è \textit{lineare} se consuma il suo argomento una e una sola
 volta. Indicheremo con $ \triangleright $ il tipo funzione lineare. Il motivo per il quale la linearità viene definita
 sul tipo funzione e non sulla totalità dei tipi è che questo permette di avere retrocompatibilità su un type-system già
@@ -2328,14 +2379,14 @@ ritardare il più possibile la valutazione delle espressioni.
 Precisiamo cosa si intende con \textit{consumare un valore esattamente una volta}, diamo questa
 definizione proposta anche nell'articolo di riferimento:
 \begin{itemize}
-    \item per consumare un valore atomico (ovvero di un tipo con costruttore di tipo senza argomenti, ad esempio il
-    tipo \texttt{Char}) esattamente una volta, lo si valuti;
+    \item per consumare un valore di tipo atomico (ovvero di un tipo con costruttore di tipo senza argomenti, ad esempio
+    il tipo \texttt{Char}) esattamente una volta, lo si valuti;
     \item per consumare un valore di tipo funzione esattamente una volta, si applichi a esso un argomento e consuma
     il risultato esattamente una volta;
     \item per consumare un valore di un tipo di dato algebrico esattamente una volta, si esegua il pattern matching su
     di esso e si consumi tutte le sue componenti lineari esattamente una volta.
 \end{itemize}
-Con questa definizione possiamo arrivare a una prima conclusione sul tipo dei data-constructors, ovvero quale tipo
+Con questa definizione possiamo rispondere alla seguente domanda sul tipo dei data-constructors: quale tipo
 dovremmo assegnare a un data-constructor? Prendiamo come esempio il costruttore delle coppie \texttt{(,)}:
 \begin{itemize}
     \item $ (,) : \forall \alpha, \beta. \; \alpha \; \triangleright \; \beta \; \triangleright \; (\alpha, \beta) $
@@ -2344,8 +2395,8 @@ dovremmo assegnare a un data-constructor? Prendiamo come esempio il costruttore 
 La prima scelta è quella corretta, infatti, se il risultato dell'espressione \texttt{(,) x y} è consumato esattamente
 una volta, allora, per definizione, \texttt{x} e \texttt{y} vengono consumati esattamente una volta.
 
-Questo sistema di tipi può portare, tuttavia, ad alcuni problemi. Si pensi, come viene mostrato in un esempio in [20],
-alla seguente implementazione della funzione \texttt{map} di Haskell:
+Questo sistema di tipi può portare, tuttavia, ad alcuni problemi. Si pensi, come viene mostrato in un esempio in
+\hyperlink{bibl20}{[20]}, alla seguente implementazione della funzione \texttt{map} di Haskell:
 \begin{lstlisting}
 map _ [] = []
 map f (x : t) = f x : map f t
@@ -2356,7 +2407,7 @@ La funzione \texttt{map} può avere i seguenti due tipi:
     \item $ map : \forall \alpha, \beta. \; (\alpha \mapsto \beta) \mapsto [\alpha] \mapsto [\beta] $
 \end{itemize}
 I due tipi sono incompatibili tra loro. Introduciamo, quindi, un livello di polimorfismo sulla
-\textit{molteplicità} delle freccie (tipi funzione):
+\textit{molteplicità} dei tipi funzione:
 \begin{itemize}
     \item $ map : \forall \alpha, \beta, p. \; (\alpha \mapsto_p \beta) \mapsto [\alpha] \mapsto_p [\beta] $
 \end{itemize}
@@ -2378,15 +2429,16 @@ la seguente affermazione:
 \[ \forall \pi, \mu. \; \pi + \mu = \omega \]
 Tuttavia, se aggiungiamo l'elemento neutro di $ + $, sia esso $ 0 $, allora la precedente affermazione non vale più.
 Dato questo sistema di tipi lineari, è ora necessario aggiornare l'algoritmo di type inference in modo che inferisca
-anche le molteplicità dei vari tipi funzione. Per questo, in [20] viene definito un lambda-calcolo le cui regole
+anche le molteplicità dei vari tipi funzione. Per questo, in \hyperlink{bibl20}{[20]} viene definito un lambda-calcolo
+le cui regole
 d'inferenza inferiscono la molteplicità corretta dei tipi funzione. Non specificheremo di seguito le regole d'inferenza,
 tuttavia, è bene fare alcune precisazioni. Innanzitutto, nelle regole di inferenza, si può pensare ai tipi nell'ambiente
 di tipizzazione come l'input di un giudizio e alle molteplicità come l'output.
 Esistono due regole diverse per quanto riguarda le variabili e i data-constructors e questo è dato dalla diversa
 definizione di linearità per le funzioni e per i data-constructors. Per quanto riguarda, invece, il costrutto di
 lambda-astrazione, visto che deve essere creato un tipo funzione e a priori non si conosce la molteplicità di questo
-tipo, a esso viene associata una variabile di molteplicità (che non esiste già come variabile libera). Per la regola
-di applicazione, è necessario guardare la
+tipo, a esso viene associata una variabile di molteplicità, la quale non deve esistere già come variabile libera. Per la
+regola di applicazione, è necessario guardare la
 molteplicità della freccia (nel tipo dell'espressione che applica) e a seconda della sua molteplcità, le variabili libere
 nell'argomento dell'applicazione dovranno essere utilizzate con la stessa molteplicità.
 
@@ -2414,23 +2466,24 @@ Dopodiché, sarà necessario estendere l'algoritmo di type inference, in partico
     anche le eventuali variabili di molteplicità che non compaiono libere in $ \Pi $.
 \end{itemize}
 
-\subsection{Effetti}
+\subsection{Effetti}\hypertarget{Effetti}
 Gli \textit{effetti algebrici} rappresentano un modo per ottenere più controllo su comportamenti impuri da parte dei
 programmi. Essi si basano sul fatto che tali comportamenti impuri derivano da un insieme di \textit{operazioni} come,
 per esempio, \texttt{read} e \texttt{write} per la lettura e la scrittura su file, \texttt{raise} per le eccezioni o
-\texttt{fork} per la concorrenza.
+\texttt{fork} e \texttt{wait} per la concorrenza.
 L'idea alla base è avere un sistema di tipi che comprende una nuovo insieme di tipi, detti \textit{tipi effetti}, in
 grado di inglobare l'insieme di \textit{operazioni} che portano \textit{side-effects} (di qualsiasi genere). Linguaggi
-come Koka [21] implementano un sistema di tipi che supporta anche gli \textit{effetti}. In questa sezione, verranno
-discusse le principali caratteristiche di un sistema di \textit{effetti}, seguendo l'articolo [22], poi verrà proposta
-un'implementazione nel compilatore Fex, analizzando i cambiamenti da portare e gli eventuali ostacoli.
+come Koka \hyperlink{bibl21}{[21]} implementano un sistema di tipi che supporta anche gli \textit{effetti}. In questa
+sezione, verranno
+discusse le principali caratteristiche di un sistema di \textit{effetti}, seguendo l'articolo \hyperlink{bibl22}{[22]},
+poi verrà proposta un'implementazione nel compilatore Fex, analizzando i cambiamenti da portare e gli eventuali ostacoli.
 
-Nell'articolo [22] viene, innazitutto, fissato un linguaggio. L'approccio utilizzato qui è lo stesso, tuttavia, il
-linguaggio che verrà definito sarà leggermente diverso da quello nell'articolo:
+Nell'articolo \hyperlink{bibl22}{[22]} viene, innazitutto, fissato un linguaggio. L'approccio utilizzato qui è lo stesso,
+tuttavia, il linguaggio che verrà definito sarà leggermente diverso da quello nell'articolo:
 \[ v := e \; | \; fun \; x \mapsto c \; | \; h \]
 \[ h := handler \{ return \; x \mapsto c, \; op_1(x;k) \mapsto c_1, \; ..., \; op_n(x;k) \mapsto c_n \} \]
 \[ c := return \; v \; | \; op(v;y.c) \; | \; do \; x \leftarrow c_1 \; in \; c_2 \; | \; v1 \; v2 \; | \; with \; v \; handle \; c \]
-dove $ e $ sono i costrutti di \textit{System-F}, estesi anche con valori costanti. $ v $ rappresenta i \textit{valori},
+dove $ e $ sono i costrutti di System-F, estesi anche con valori costanti. $ v $ rappresenta i \textit{valori},
 $ h $ rappresenta gli handler e $ c $ le computazioni.
 \`E necessaria una discussione di alcuni costrutti appena definiti:
 \begin{itemize}
@@ -2454,11 +2507,12 @@ un sistema di tipi. Per farlo, estenderemo il sistema di tipi di System-F:
 \[ CT := VT ! \{ op_1, \; ..., \; op_n \} \]
 \`E doveroso fare alcune precisazioni riguardo a queste definizioni. Innanzitutto, $ VT $ è il tipo dei valori, mentre
 $ CT $ è il tipo delle computazioni. Con $ PT $ si intende uno schema di tipo, è indifferente se il suo caso base sia
-un tipo qualificato (cfr. Schemi di tipi) oppure un mono-tipo. Il caso $ CT \Rrightarrow CT $ rappresenta il tipo degli
+un tipo qualificato (cfr. \hyperlink{Schemi di tipi e polimorfismo parametrico}{Schemi di tipi e polimorfismo parametrico})
+oppure un mono-tipo. Il caso $ CT \Rrightarrow CT $ rappresenta il tipo degli
 handler, invece, il caso $ PT \rightsquigarrow CT $ rappresenta il tipo funzione che ha come tipo di "ritorno" un tipo
 di computazione. Le regole di inferenza per il formalismo in questione sono abbastanza intuitive e non verranno riportate
-(esse sono comunque definite in [22]). I tipi delle computazioni racchiudono le possibili operazioni che fanno parte
-dell'effetto. Questo fatto permette di catturare in maniera precisa i side-effects prodotti dalle operazioni.
+(esse sono comunque definite in \hyperlink{bibl22}{[22]}). I tipi delle computazioni racchiudono le possibili operazioni
+che fanno parte dell'effetto. Questo fatto permette di catturare in maniera precisa i side-effects prodotti dalle operazioni.
 
 \subsubsection{Bozza di implementazione in Fex}
 Un sistema di effetti offre un meccanismo generale per gestire le computazioni impure. Fex è un linguaggio
@@ -2478,7 +2532,8 @@ costrutti necessari all'implementazione degli effetti, in particolare bisogna ag
     \item una sintassi che permette di utilizzare gli handler. Nel formalismo presentato, un costrutto del genere è
     rappresentato da $ with \; v \; handle \; c $;
 \end{itemize}
-Dopodiché, è necessario definire un sistema di effetti. Un possibile approccio è quello di Koka [23], il quale, potendo
+Dopodiché, è necessario definire un sistema di effetti. Un possibile approccio è quello di Koka \hyperlink{bibl23}{[23]},
+il quale, potendo
 inferire tutti i side-effects in una computazione, connota il tipo ritorno con gli effetti opportuni. In particolare,
 l'assenza di side-effects è connotata con $ total $, l'effetto per le funzioni matematiche. In ogni caso, si rende
 necessaria un'estensione del sistema di tipi di Fex, infatti, dati i nuovi costrutti del linguaggio, bisogna quanto
@@ -2490,7 +2545,7 @@ gestisce tutte le operazioni utilizzate in una computazione. Tuttavia, se, come 
 ad esempio, anche la divergenza di un programma, non esiste un'operazione specifica associata all'effetto di divergenza.
 In questo caso, è necessario un'analisi statica specifica, infatti, l'unico "costrutto" con cui si ottiene la divergenza
 in Fex è la ricorsione,
-quindi, ogni qual volta vi sono uno o più bindings ricorsivi, il loro tipo può essere l'effetto divergenza.
+quindi, ogni qual volta vi sono uno o più bindings ricorsivi, il loro tipo di ritorno può essere l'effetto divergenza.
 Il fatto che un qualche simbolo $ f $ abbia come tipo l'effetto divergenza non implica che la valutazione di $ f $
 provochi l'effettiva divergenza del programma. Questo perché il problema della fermata non è decidibile.
 
@@ -2505,7 +2560,7 @@ dagli effetti definiti nel linguaggio ai "token" di basso livello del compilator
 modulo delle API di GHC (\texttt{PrimOp}) che espone tutte quelle operazioni che non possono essere definite in un
 sorgente Haskell.
 
-\subsection{Varianti polimorfe}
+\subsection{Varianti polimorfe}\hypertarget{Varianti polimorfe}
 Le \textit{varianti polimorfe} rappresentano un meccanismo di estendibilità dei tipi, in particolare esse risolvono
 il task di, dato un tipo, estenderlo con nuove funzioni e nuovi costruttori. Questo è un problema ricorrente nella
 programmazione e viene risolto anche dai linguaggi orientati agli oggetti tramite meccanismi di sotto-tipaggio e
@@ -2518,8 +2573,8 @@ In questa sezione, verranno brevemente presentati i principali vantaggi delle va
 presentata un'implementazione in Fex, bensì verranno discusse alcune proposte di implementazioni provenienti da
 altre fonti.
 
-Come mostra Garrigue in [24], uno dei vantaggi principali delle varianti polimorfe è quello già citato precedentemente:
-dopo aver fissato un tipo di dato, estendere le API dei costruttori del tipo di dato. Si osservi il
+Come mostra Garrigue in \hyperlink{bibl24}{[24]}, uno dei vantaggi principali delle varianti polimorfe è quello già
+citato precedentemente: dopo aver fissato un tipo di dato, estendere le API dei costruttori del tipo di dato. Si osservi il
 seguente pseudo-codice:
 \begin{lstlisting}
 type HttpCode = Ok200 | Err404 | Err500
@@ -2529,8 +2584,8 @@ solamente al tipo \texttt{HttpCode}. In seguito diremo che, dato un data-constru
 $ dc \in tc $, se $ dc $ è associato a $ tc $ e a nessun'altro construttore di tipo. Poniamo che un utente stia
 sviluppando il codice per un server http e, inizialmente, rappresenti i codici di risposta http con il tipo
 \texttt{HttpCode}. Un metodo per evitare di riscrivere il codice relativo al server ogni volta che è necessario un nuovo
-codice di risposta è definire \texttt{HttpCode} con tutti i possibili codici di risposta http. \`E chiaro che è una
-soluzione parecchio dispendiosa per l'utente, inoltre, molti dei codici potrebbero rimanere inutilizzati. Inoltre,
+codice di risposta è definire a priori \texttt{HttpCode} con tutti i possibili codici di risposta http. \`E chiaro che è una
+soluzione parecchio onerosa per l'utente e molti dei codici potrebbero rimanere inutilizzati. Inoltre,
 alcune funzioni implementate nel codice del server potrebbero gestire insiemi molto ristretti di codici http, ad esempio:
 \begin{lstlisting}
 let handleReq json =
@@ -2581,24 +2636,28 @@ alle librerie di essere indipendenti tra loro.
 In letteratura, vi sono numerose proposte di implementazione delle varianti polimorfe. Di seguito, ne elencheremo alcune,
 analizzando eventuali vantaggi e svantaggi:
 \begin{itemize}
-    \item come propone inizialmente Garrigue [24], una possibile compilazione delle varianti polimorfe può essere effettuata
+    \item come propone inizialmente Garrigue \hyperlink{bibl24}{[24]}, una possibile compilazione delle varianti polimorfe
+    può essere effettuata
     facendo un mapping da varianti a valori numerici interi. Questa soluzione è semplice da implementare e piuttosto
     efficiente, tuttavia, presenta un grosso svantaggio: è necessario conoscere tutte le varianti polimorfe di un programma.
     Il problema nasce se il linguaggio permette la compilazione separata di sorgenti, infatti, a quel punto non è possibile
     conoscere contemporaneamente tutte le varianti polimorfe in un programma;
-    \item sempre Garrigue [24] propone un'implementazione altrettanto efficiente e che risolve il problema della
+    \item sempre Garrigue \hyperlink{bibl24}{[24]} propone un'implementazione altrettanto efficiente e che risolve il
+    problema della
     compilazione separata: un mapping dai nomi delle varianti ai loro valori hash. Sebbene questo metodo sia semplice,
     efficiente e permetta la compilazione separata, presenta anch'esso uno svantaggio: cosa succede se due varianti
     polimorfe diverse hanno lo stesso valore hash? Questo evento è piuttosto raro (se si utilizza una "buona" funzione hash)
     e proprio per questo risulta un ottimo compromesso tra i vantaggi che porta e i casi "sfortunati", tuttavia, è
-    necessario comunque gestire questa eventualità. Garrigue [24] propone di emettere un errore a tempo di compilazione,
+    necessario comunque gestire questa eventualità. Garrigue \hyperlink{bibl24}{[24]} propone di emettere un errore a tempo
+    di compilazione,
     il quale è sempre una scelta migliore di un errore a run-time. \`E chiaro che l'utente dovrà cambiare manualmente
     l'implementazione dei sorgenti. Questo diventa particolarmente sconveniente quando i sorgenti in questione non sono
     stati scritti dall'utente stesso, ma sono esterni;
-    \item Kagawa [25] tratta l'implementazione delle varianti polimorfe in Haskell e propone una soluzione di più
+    \item Kagawa \hyperlink{bibl25}{[25]} tratta l'implementazione delle varianti polimorfe in Haskell e propone una
+    soluzione di più
     "alto livello": un mapping dalle varianti polimorfe alle type-classes di Haskell. Questa soluzione, come vedremo, è
     piuttosto "elegante" in quanto non è necessario estendere il linguaggio, tuttavia, presenta qualche ostacolo.
-    Presentiamo, prima di tutto, la sintassi scelta da Kagawa [25]:
+    Presentiamo, prima di tutto, la sintassi scelta da Kagawa \hyperlink{bibl25}{[25]}:
 \begin{lstlisting}
 variant cs => a in VariantName ts where
     Constr_1 :: ty_11 -> ... -> ty_1n -> a
@@ -2622,12 +2681,14 @@ class cs => VariantName a ts | a -> ts
 \end{lstlisting}
     Come si nota dal codice, sono state utilizzate due estensioni (le quali hanno buon supporto da parte dei compilatori
     Haskell): \texttt{MultiParamTypeClasses} e \texttt{FunctionalDependencies}.
-    Kagawa [25] estende, successivamente, la sintassi Haskell con altri due tipi di
+    Kagawa \hyperlink{bibl25}{[25]} estende, successivamente, la sintassi Haskell con altri due tipi di
     dichiarazioni (i record e le istanze di varianti) e spiega come sia necessario un aggiornamento dell'algoritmo di
     inferenza di tipo. In ogni caso, questo metodo di implementazione ha il vantaggio di essere direttamente traducibile
     (escludendo la modifica all'algoritmo di inferenza di tipo) in codice Haskell, quindi, risulta essere solamente
     zucchero sintattico.
 \end{itemize}
+
+\section{Conclusione}
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
@@ -2707,6 +2768,21 @@ class cs => VariantName a ts | a -> ts
     %[25]
     \item \hypertarget{bibl25} Koji Kagawa - Polymorphic Variants in Haskell - in: Haskell '06: Proceedings of the 2006 ACM SIGPLAN workshop
     on Haskell, 17 Semptember 2006, Pages 37-47
+    %[26]
+    \item \hypertarget{bibl26} Data.Graph - url:
+    \url{https://downloads.haskell.org/ghc/latest/docs/libraries/containers-0.6.6/Data-Graph.html}
+    %[27]
+    \item \hypertarget{bibl27}
+    Hindley, R. (1969). The Principal Type-Scheme of an Object in Combinatory Logic. Transactions of the American
+    Mathematical Society, 146, 29–60. - url: \url{https://doi.org/10.2307/1995158}
+    %[28]
+    \item \hypertarget{bibl28}
+    Robin Milner - A theory of type polymorphism in programming - in: Journal of Computer and System Sciences, Volume 17,
+    Issue 3, December 1978, Pages 348-375
+    %[29]
+    \item \hypertarget{bibl29}
+    Luis Damas, Robin Milner - Principal type-schemes for functional programs - in: POPL'82: Proceedings of the
+    9th ACM SIGPLAN-SIGACT symposium on Principles of programming languages, January 1982, Pages 207-212
 \end{enumerate}
 
 \end{document}
