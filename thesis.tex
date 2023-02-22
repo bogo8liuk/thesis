@@ -531,7 +531,7 @@ sostituzione è fondamentale che valga la condizione sugli alias nel check degli
 Se la sopracitata condizione non fosse vera, non sarebbe possibile effettuare l'unificazione nella kind-inference (cfr.
 kind-inference).
 
-\subsubsection{Eliminazione delle firme di funzioni}\hypertext{Eliminazione delle firme di funzioni}
+\subsubsection{Eliminazione delle firme di funzioni}\hypertarget{Eliminazione delle firme di funzioni}
 Fex espone un costrutto, detto \textit{signature} (in italiano "firma"), che permette di indicare il tipo di un
 binding. Ad esempio:
 
@@ -895,7 +895,7 @@ property Stream s t =
 Si noti che \texttt{Stream} ha 2 argomenti.
 
 \subsubsection{Constraints sulle proprietà}\hypertarget{Constraints sulle proprietà}
-\`E possibile definire in Fex una proprietà della forma:
+In Fex, è possibile definire una proprietà della forma:
 \begin{lstlisting}
 property C1 a Char => C2 a =
     <metodi>
@@ -1168,7 +1168,7 @@ tra loro viene considerato come un'unic definizione (regola \textbf{Rec}) (cfr. 
 Queste regole serviranno come premessa ad alcune fasi nella preparazione della type inference.
 
 \subsubsection{Bindings delle istanze}\hypertarget{Bindings delle istanze}
-\`E bene notare come in Core non esista un costrutto particolare per i bindings delle istanze, inoltre, il
+Vale la pena notare come in Core non esista un costrutto particolare per i bindings delle istanze, inoltre, il
 costrutto di GHC che rappresenta le istanze (\texttt{ClsInst}) non porta con sè informazioni che riguardano i
 bindings \hyperlink{bibl10}{[10]}.
 Perciò, è in un qualche modo necessario gestire i bindings delle istanze. La politica del compilatore è quella di
@@ -1209,7 +1209,7 @@ un programma può essere visto come un grafo orientato $ G $ in cui:
 \end{itemize}
 Il problema di trovare i clusters di definizioni mutualmente ricorsive corrisponde a trovare le \textit{componenti
 fortemente connesse} del grafo $ G $. Il modulo che implementa l'algoritmo è \texttt{Compiler.Types.Prepare.Recursion}
-e utilizza la libreria \texttt{Data.Graph} (\hyperlink{bibl26}[26]).
+e utilizza la libreria \texttt{Data.Graph} (\hyperlink{bibl26}{[26]}).
 
 \subsubsection{Sorting dei bindings}\hypertarget{Sorting dei bindings}
 A questo punto, abbiamo una lista di \texttt{RawBinding}. Possiamo fare la seguente osservazione: i bindings possono
@@ -1447,7 +1447,6 @@ rawUnify monoTy monoTy' isSpecTest =
                 ok @ (Right _) -> ok
 
         <resto del codice>
---$ rm this when building
 \end{lstlisting}
 I commenti nel codice sorgente sono stati rimossi. Come è stato fatto notare in precedenza,
 l'algoritmo prende in input tre argomenti, di cui i primi due sono i mono-tipi sui quali si vuole calcolare l'unificazione.
@@ -1496,7 +1495,6 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     \begin{lstlisting}
 | occursCheck lhty lhty' =
     Left $ OccursCheck lhty lhty'
---$ rm this when building
     \end{lstlisting}
     Nel secondo caso viene effettuato un altro controllo: il cosiddetto \textit{occurs check}. Se uno dei due mono-tipi
     ha la forma di una variabile di tipo e quest'ultima compare nell'altro mono-tipo, allora viene ritornato un errore.
@@ -1506,7 +1504,6 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     if isSpecTest
     then Left $ UnmatchTypes lhty lhty'
     else unification lhty' lhty vvars
---$ rm this when building
     \end{lstlisting}
     Nel terzo caso vi è il primo controllo sulla struttura dei mono-tipi: se \texttt{lhty} ha come testa una variabile
     di tipo e \texttt{lhty'} ha come testa un tipo concreto, allora vi è un'operazione di \textit{swap}, ovvero vi è
@@ -1520,7 +1517,6 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     if headEq lhty lhty'
     then argsUnification lhty lhty' vvars
     else Left $ UnmatchTypes lhty lhty'
---$ rm this when building
     \end{lstlisting}
     Nel quarto caso viene testato se entrambi i mono-tipi hanno tipi concreti come testa; se così fosse, le teste
     devono rappresentare lo stesso tipo concreto, altrimenti viene restituito un errore, in quanto non esisterebbe
@@ -1533,7 +1529,6 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     if isSpecTest
     then Left $ UnmatchTypes lhty lhty'
     else unification lhty' lhty vvars
---$ rm this when building
     \end{lstlisting}
     Nel quinto caso viene controllato se entrambi i mono-tipi hanno variabili di tipo come testa e se il numero di
     argomenti del secondo mono-tipo è strettamente maggiore di quello del primo. In questo caso, vi è un'operazione
