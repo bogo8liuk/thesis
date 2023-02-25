@@ -97,6 +97,27 @@ Corso di Laurea in Nome corso di Laurea }}
 \newpage
 
 \section{Introduzione}
+Il paradigma funzionale nella programmazione non è certamente nuovo in ambito accademico: le sue origini risiedono a
+parecchie decine di anni fa, grazie agli studi Alonzo Church sui formalismi del \textit{lambda-calcolo} negli anni '30.
+Sebbene vi siano numerosi studi a livello accademico, il successo non è stato tale nel mondo industriale. Uno dei primi
+linguaggi funzionali fu Lisp, sviluppato a fine anni '50, il quale è stato, in un certo senso,
+pioniere di alcuni concetti e costrutti come la gestione automatica della memoria, funzioni di ordine superiore, la
+ricorsione, etc.. Successivamente, negli anni '70, citando i più famosi, nacquero Scheme (dialetto dello stesso Lisp) ed ML.
+Negli '80, è la volta di Erlang e Standard ML, nei '90 di OCaml, Haskell e Racket. Nonostante molti di questi linguaggi
+vengano considerati come general-purpose, non avranno inizialmente molto successo come lo hanno avuto, invece, le
+controparti dei linguaggi imperativi e dei linguaggi orientati agli oggetti. Un caso emblematico è quello di
+Erlang, il quale nacque nell'ambito della telefonia come linguaggio proprietario dell'azienda Ericsson. Successivamente,
+è stato adottato per molteplici tipi di applicativi, diventando un linguaggio di più ampio successo, soprattutto in ambiti
+in cui la gestione della concorrenza è molto importante. Negli ultimi anni, infatti, c'è stata una "riscoperta" del
+paradigma funzionale in quanto quest'ultimo permette di scrivere codice in maniera dichiarativa e componibile, fornendo
+una maggiore manutenibilità e garantendo proprietà importanti dei programmi. Oltre al già citato Erlang, utilizzato ad
+esempio nello sviluppo dell'applicativo Whatsapp \hyperlink{bibl30}{[30]}, altri linguaggi funzionali utilizzati
+nell'industria sono Haskell, con cui è stata implementata la famosa blockchain Cardano
+\hyperlink{bibl31}{[31]}, OCaml, largamente utilizzato da Facebook in molti dei suoi software come Hack
+\hyperlink{bibl32}{[32]} e Flow \hyperlink{bibl33}{[33]}, etc.. Inoltre, numerosi linguaggi di programmazione non
+propriamente funzionali ispirano alcuni dei loro costrutti al paradigma funzionale. Esempi ne sono il costrutto di
+pattern matching per Python e Rust, il costrutto di lambda-astrazione per PHP, Python, C# e JavaScript, le funzioni
+come "cittadini di prima classe" per Python, JavaScript e Go, etc..
 
 \subsection{Note}
 Prima di presentare l'articolo, è necessario fare alcune precisazioni utili alla lettura:
@@ -112,7 +133,7 @@ Prima di presentare l'articolo, è necessario fare alcune precisazioni utili all
     isolati e mostrati solamente i punti più interessanti, rimuovendo i commenti e il codice non direttamente inerente
     al contesto. Altre volte, gli algoritmi e i concetti utilizzati nel compilatore vengono mostrati con uno
     pseudo-codice oppure con uno pseudo-linguaggio della logica. Questo per evitare di presentare dettagli implementativi
-    poco utili ai fini delle speigazioni.
+    poco utili ai fini delle spiegazioni.
 \end{itemize}
 
 \subsection{Haskell e System-F come modelli}
@@ -2772,11 +2793,12 @@ class cs => VariantName a ts | a -> ts
     on Haskell, 17 Semptember 2006, Pages 37-47
     %[26]
     \item \hypertarget{bibl26} Data.Graph - url:
-    \url{https://downloads.haskell.org/ghc/latest/docs/libraries/containers-0.6.6/Data-Graph.html}
+    \url{https://downloads.haskell.org/ghc/latest/docs/libraries/containers-0.6.6/Data-Graph.html} -
+    ultima visita: 21/02/23
     %[27]
     \item \hypertarget{bibl27}
     Hindley, R. (1969). The Principal Type-Scheme of an Object in Combinatory Logic. Transactions of the American
-    Mathematical Society, 146, 29–60. - url: \url{https://doi.org/10.2307/1995158}
+    Mathematical Society, 146, 29–60. - url: \url{https://doi.org/10.2307/1995158} - ultima visita: 21/02/23
     %[28]
     \item \hypertarget{bibl28}
     Robin Milner - A theory of type polymorphism in programming - in: Journal of Computer and System Sciences, Volume 17,
@@ -2785,6 +2807,16 @@ class cs => VariantName a ts | a -> ts
     \item \hypertarget{bibl29}
     Luis Damas, Robin Milner - Principal type-schemes for functional programs - in: POPL'82: Proceedings of the
     9th ACM SIGPLAN-SIGACT symposium on Principles of programming languages, January 1982, Pages 207-212
+    %[30]
+    \item hypertarget{bibl30} Inside Erlang, The Rare Programming Language Behind Whatsapp's Success -
+    url: \url{https://www.fastcompany.com/3026758/inside-erlang-the-rare-programming-language-behind-whatsapps-success} -
+    ultima visita: 25/02/23
+    %[31]
+    \item hypertarget{bibl31} Cardano docs - url: \url{https://docs.cardano.org/introduction} - ultima visita: 25/02/23
+    %[32]
+    \item hypertarget{bibl32} Hack - url: \url{https://hacklang.org/} - ultima visita: 25/02/23
+    %[33]
+    \item hypertarget{bibl33} Flow - url: \url{https://flow.org/} - ultima visita: 25/02/23
 \end{enumerate}
 
 \end{document}
