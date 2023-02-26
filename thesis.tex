@@ -136,9 +136,6 @@ devono essere gestite sempre tramite il sistema di tipi: un esempio ne sono gli 
 Tuttavia, gli obiettivi iniziali non sono stati completamente raggiunti, in particolare Fex risulta momentaneamente
 un linguaggio minimale le cui \textit{features} sono riconducibili, per la maggior parte, a quelle di Haskell.
 
-\subsection{Struttura della tesi}
-
-
 \subsection{Note}
 Prima di presentare l'articolo, è necessario fare alcune precisazioni utili alla lettura:
 \begin{itemize}
@@ -153,7 +150,20 @@ Prima di presentare l'articolo, è necessario fare alcune precisazioni utili all
     isolati e mostrati solamente i punti più interessanti, rimuovendo i commenti e il codice non direttamente inerente
     al contesto. Altre volte, gli algoritmi e i concetti utilizzati nel compilatore vengono mostrati con uno
     pseudo-codice oppure con uno pseudo-linguaggio della logica. Questo per evitare di presentare dettagli implementativi
-    poco utili ai fini delle spiegazioni.
+    poco utili ai fini delle spiegazioni;
+    \item per quanto riguarda la struttura della tesi, nella prima parte, vengono presentate le principali caratteristiche di
+    Fex senza entrare in eventuali dettagli implementativi, inoltre, verranno menzionati i formalismi principali a cui Fex
+    si ispira. Dopodiché, verrà presentato il compilatore, il quale si divide in tre fasi principali:
+    \begin{enumerate}
+        \item nella prima fase, vi è la descrizione della costruzione dell'albero di sintassi astratta e di tutti
+        i controlli e le manipolazioni sull'albero stesso necessari per la seconda fase;
+        \item nella seconda fase, appaiono le varie nozioni di tipo di Fex, in particolare vi è la generazione delle
+        symbol-tables che conterranno i token "tipati";
+        \item nella terza e ultima fase, vi è la generazione del codice Core che successivamente viene tradotto dal backend di
+        Haskell in vari target di compilazione.
+    \end{enumerate}
+    Nell'ultima parte, vengono mostrati alcuni possibili sviluppi futuri di Fex, presentando le eventuali nuove caratteristiche
+    e le possibili implementazione nel compilatore Fex.
 \end{itemize}
 
 \subsection{Haskell e System-F come modelli}
