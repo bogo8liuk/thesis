@@ -113,11 +113,31 @@ paradigma funzionale in quanto quest'ultimo permette di scrivere codice in manie
 una maggiore manutenibilità e garantendo proprietà importanti dei programmi. Oltre al già citato Erlang, utilizzato ad
 esempio nello sviluppo dell'applicativo Whatsapp \hyperlink{bibl30}{[30]}, altri linguaggi funzionali utilizzati
 nell'industria sono Haskell, con cui è stata implementata la famosa blockchain Cardano
-\hyperlink{bibl31}{[31]}, OCaml, largamente utilizzato da Facebook in molti dei suoi software come Hack
+\hyperlink{bibl31}{[31]}, OCaml, con cui è stato scritto il primo compilatore Rust ed è largamente utilizzato da Facebook
+in molti dei suoi software come Hack
 \hyperlink{bibl32}{[32]} e Flow \hyperlink{bibl33}{[33]}, etc.. Inoltre, numerosi linguaggi di programmazione non
 propriamente funzionali ispirano alcuni dei loro costrutti al paradigma funzionale. Esempi ne sono il costrutto di
-pattern matching per Python e Rust, il costrutto di lambda-astrazione per PHP, Python, C# e JavaScript, le funzioni
-come "cittadini di prima classe" per Python, JavaScript e Go, etc..
+pattern matching per Python e Rust oppure il costrutto di lambda-astrazione per C# e JavaScript oppure le
+funzioni come "cittadini di prima classe" per Lua e Go, etc..
+
+I linguaggi di programmazione funzionali hanno spesso caratteristiche molto diverse tra loro: linguaggi come Erlang e
+Clojure hanno una tipizzazione dinamica, a differenza di altri linguaggi come Haskell e OCaml che effettuano un'analisi
+statica; Haskell e Elm vengono considerati come linguaggi puri, mentre OCaml, F# e molti altri linguaggi sono
+considerati come impuri; Lisp, Scheme, Closure e Racket sono linguaggi omoiconici che manipolano \textit{S-expressions},
+mentre altri linguaggi permettono la meta-programmazione utilizzando meccanismi differenti dalle \textit{S-expressions}, un
+esempio è Template Haskell \hyperlink{bibl33}{[33]}.
+
+Il progetto di tesi, consiste nello sviluppo di un compilatore per un nuovo linguaggio di programmazione
+funzionale chiamato Fex. L'obiettivo iniziale è la costruzione di un linguaggio che racchiuda le caratteristiche
+più interessanti degli odierni linguaggi di programmazione funzionali. In particolare Fex deve avere
+un type-system statico che possa
+garantire proprietà importanti a tempo di compilazione. Inoltre, caratteristiche che romperebbero la "purità" del linguaggio
+devono essere gestite sempre tramite il sistema di tipi: un esempio ne sono gli effetti (cfr. \hyperlink{Effetti}{Effetti}).
+Tuttavia, gli obiettivi iniziali non sono stati completamente raggiunti, in particolare Fex risulta momentaneamente
+un linguaggio minimale le cui \textit{features} sono riconducibili, per la maggior parte, a quelle di Haskell.
+
+\subsection{Struttura della tesi}
+
 
 \subsection{Note}
 Prima di presentare l'articolo, è necessario fare alcune precisazioni utili alla lettura:
@@ -2712,6 +2732,14 @@ class cs => VariantName a ts | a -> ts
 \end{itemize}
 
 \section{Conclusione}
+Il paradigma funzionale permette, in generale, la scrittura di codice componibile e dichiarativo e ciò comporta una
+maggiore manutenibilità ed espandibilità dei software (talvolta anche a discapito delle prestazioni). Un sistema di tipi
+come HM offre parecchie garanzie e questo previene comportamenti non voluti da parte dei programmi, compresi errori
+a run-time. Linguaggi di programmazione \textit{debolmente} tipati quali Javascript o C forniscono poche garanzie in termini
+di sistema di tipi. Questo porta ad avere un minor controllo sui programmi e da ciò conseguono una serie di problematiche che
+spesso riguardano anche la sicurezza. Altri linguaggi, come Python o Java, che vengono considerati \textit{fortemente} tipati,
+non prevengono comunque una vasta gamma di errori che riguardano i tipi e che vengono identificati soltanto a run-time,
+avendo come effetto negativo che tali errori, se non gestiti, portano a un crash dei programmi.
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
@@ -2817,6 +2845,9 @@ class cs => VariantName a ts | a -> ts
     \item hypertarget{bibl32} Hack - url: \url{https://hacklang.org/} - ultima visita: 25/02/23
     %[33]
     \item hypertarget{bibl33} Flow - url: \url{https://flow.org/} - ultima visita: 25/02/23
+    %[34]
+    \item hypertarget{bibl34} Template Meta-programming for Haskell - in: Haskell '02: Proceedings of the 2002 ACM SIGPLAN
+    workshop on Haskell, 3 October 2002, Pages 1-16
 \end{enumerate}
 
 \end{document}
