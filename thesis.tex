@@ -2749,7 +2749,13 @@ a run-time. Linguaggi di programmazione \textit{debolmente} tipati quali Javascr
 di sistema di tipi. Questo porta ad avere un minor controllo sui programmi e da ciò conseguono una serie di problematiche che
 spesso riguardano anche la sicurezza. Altri linguaggi, come Python o Java, che vengono considerati \textit{fortemente} tipati,
 non prevengono comunque una vasta gamma di errori che riguardano i tipi e che vengono identificati soltanto a run-time,
-avendo come effetto negativo che tali errori, se non gestiti, portano a un crash dei programmi.
+avendo come effetto negativo che tali errori, se non gestiti, portano a un crash dei programmi. Fex si propone come linguaggio
+funzionale puro, inteso come in grado di isolare le computazioni deterministiche. Fex si propone altresì di gestire il
+" mondo impuro" tramite il sistema di tipi con una granularità più fine rispetto a quella di Haskell
+(si ricordi che, per gestire i comportamenti "impuri", Haskell utilizza, in generale, la monade \texttt{IO}), arricchendo il
+sistema di tipi stesso.
+Quest'ultimo obiettivo non è stato raggiunto, in quanto Fex risulta momentaneamente un linguaggio che calcola solamente funzioni
+matematiche.
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
