@@ -136,6 +136,24 @@ devono essere gestite sempre tramite il sistema di tipi: un esempio ne sono gli 
 Tuttavia, gli obiettivi iniziali non sono stati completamente raggiunti, in particolare Fex risulta momentaneamente
 un linguaggio minimale le cui \textit{features} sono riconducibili, per la maggior parte, a quelle di Haskell.
 
+\paragraph{Lavoro iniziale}
+Prima dello sviluppo del compilatore Fex, c'è stata una preparazione in vista del prodotto finale: vi sono stati
+alcuni brevi studi di fattibilità che riguardavano il nuovo linguaggio, in particolare sono stati scelti il target
+di compilazione e il linguaggio con il quale scrivere il software per il compilatore. Inizialmente, come target di
+compilazione è stata scelta la rappresentazione intermedia di Llvm \hyperlink{bibl35}{[35]} (Llvm IR) e OCaml come
+linguaggio per il compilatore. Tuttavia, benché il codice Llvm IR offra portabilità su molte architetture e, al contempo,
+buone prestazioni, questa prima scelta
+sul target di compilazione è stata scartata. Il motivo risiede nel fatto che Fex rappresenta un linguaggio ad altissimo
+livello e l'utilizzo di Llvm IR non renderebbe disponibile un garbage collector e, più in generale, un run-time system.
+Ciò implicherebbe un oneroso lavoro per costruire l'astrazione esatta.
+Successivamente, è stata valutata un'altra opzione: utilizzare una rappresentazione intermedia di un altro linguaggio ad alto
+livello come target di compilazione. La scelta è ricaduta su Core, una rappresentazione intermedia di Haskell.
+Questa scelta ha due grandi vantaggi: avere a disposizione un run-time system (quello di Haskell); Core e Fex hanno costrutti
+molto simili.
+Come conseguenza è cambiato anche il linguaggio con cui sviluppare il compilatore: la scelta è ricaduta su Haskell,
+in quanto GHC (the Glasgow Haskell Compiler) espone delle API scritta in Haskell per costruire e manipolare
+programmi Core.
+
 \subsection{Note}
 Prima di presentare l'articolo, è necessario fare alcune precisazioni utili alla lettura:
 \begin{itemize}
@@ -2864,6 +2882,8 @@ matematiche.
     %[34]
     \item hypertarget{bibl34} Template Meta-programming for Haskell - in: Haskell '02: Proceedings of the 2002 ACM SIGPLAN
     workshop on Haskell, 3 October 2002, Pages 1-16
+    %[35]
+    \item hypertarget{bibl35} The LLVM Compiler Infrastructure - url: \url{https://llvm.org/} - ultima visita: 25/02/23
 \end{enumerate}
 
 \end{document}
