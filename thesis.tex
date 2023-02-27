@@ -109,7 +109,7 @@ controparti dei linguaggi imperativi e dei linguaggi orientati agli oggetti. Un 
 Erlang, il quale nacque nell'ambito della telefonia come linguaggio proprietario dell'azienda Ericsson. Successivamente,
 è stato adottato per molteplici tipi di applicativi, diventando un linguaggio di più ampio successo, soprattutto in ambiti
 in cui la gestione della concorrenza è molto importante. Negli ultimi anni, infatti, c'è stata una "riscoperta" del
-paradigma funzionale in quanto quest'ultimo permette di scrivere codice in maniera dichiarativa e componibile, fornendo
+paradigma funzionale in quanto quest'ultimo permette di scrivere codice in stile dichiarativo e componibile, fornendo
 una maggiore manutenibilità e garantendo proprietà importanti dei programmi. Oltre al già citato Erlang, utilizzato ad
 esempio nello sviluppo dell'applicativo Whatsapp \hyperlink{bibl30}{[30]}, altri linguaggi funzionali utilizzati
 nell'industria sono Haskell, con cui è stata implementata la famosa blockchain Cardano
@@ -152,14 +152,14 @@ livello come target di compilazione. La scelta è ricaduta su Core, una rapprese
 Questa scelta ha due grandi vantaggi: avere a disposizione un run-time system (quello di Haskell); Core e Fex hanno costrutti
 molto simili.
 Come conseguenza è cambiato anche il linguaggio con cui sviluppare il compilatore: la scelta è ricaduta su Haskell,
-in quanto GHC (the Glasgow Haskell Compiler) espone delle API scritta in Haskell per costruire e manipolare
+in quanto GHC (the Glasgow Haskell Compiler) espone delle API scritte in Haskell per costruire e manipolare
 programmi Core.
 
 \subsection{Note}
 Prima di presentare l'articolo, è necessario fare alcune precisazioni utili alla lettura:
 \begin{itemize}
     \item la sintassi degli identificatori di Fex è Haskell-like, quindi, tutto ciò che viene considerato come
-    \textit{variabile} nel linguaggio ha lettera iniziale minuscola, mentre tutto ciò che viene considerato valore
+    \textit{variabile} nel linguaggio ha lettera iniziale minuscola, mentre tutto ciò che viene considerato come
     \textit{valore} ha lettera iniziale maiuscola;
     \item i termini \textit{constraint} e \textit{predicato} sono considerati sinonimi (a meno di contesti particolari).
     Essi vengono intercambiati abbastanza liberamente;
@@ -182,7 +182,7 @@ Prima di presentare l'articolo, è necessario fare alcune precisazioni utili all
         Haskell in vari target di compilazione.
     \end{enumerate}
     Nell'ultima parte, vengono mostrati alcuni possibili sviluppi futuri di Fex, presentando le eventuali nuove caratteristiche
-    e le possibili implementazione nel compilatore Fex.
+    e le possibili implementazioni nel compilatore Fex.
 \end{itemize}
 
 \subsection{Haskell e System-F come modelli}
