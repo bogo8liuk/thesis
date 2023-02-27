@@ -954,7 +954,7 @@ un tipo per il quale vale il predicato \texttt{Eq}.
 Il meccanismo di polimorfismo ad-hoc precedentemente presentato incontra numerose estensioni in Fex, alcune delle
 quali impongono condizioni aggiuntive sul programma.
 
-\hypertarget{Numero arbitrario di argomenti delle proprietà}{\subsubsection{Numero arbitrario di argomenti delle proprietà}}
+\hypertarget{Numero arbitrario di argomenti delle proprieta}{\subsubsection{Numero arbitrario di argomenti delle proprietà}}
 Nell'esempio con \texttt{Eq}, la proprietà possedeva soltanto un argomento, tuttavia, è possibile definire proprietà
 con un numero arbitrario (ma fissato alla definizione) di argomenti ad esempio:
 \begin{lstlisting}
@@ -966,7 +966,7 @@ property Stream s t =
 \end{lstlisting}
 Si noti che \texttt{Stream} ha 2 argomenti.
 
-\hypertarget{Constraints sulle proprietà}{\subsubsection{Constraints sulle proprietà}}
+\hypertarget{Constraints sulle proprieta}{\subsubsection{Constraints sulle proprietà}}
 In Fex, è possibile definire una proprietà della forma:
 \begin{lstlisting}
 property C1 a Char => C2 a =
@@ -1210,7 +1210,7 @@ constraint deve avere almeno una variabile di tipo), infatti l'istanza viene sal
 Le tre tabelle vengono create in un unico modulo per una questione di efficienza (i token delle istanze vengono visitati
 una sola volta). Inoltre, in questo
 modulo viene effettuato il controllo del vincolo sull'esistenza dei predicati delle proprietà (cfr.
-\hyperlink{Constraints sulle proprietà}{Constraints sulle proprietà}). Prima di inserire i bindings delle istanze nella
+\hyperlink{Constraints sulle proprieta}{Constraints sulle proprietà}). Prima di inserire i bindings delle istanze nella
 tabella \texttt{InstsTable}, viene eseguita una fase di desugaring su di essi. Il problema nasce dal fatto che, data
 una proprietà, può esistere un numero arbitrario di istanze e con esse, un numero arbitrario di metodi con lo stesso
 nome, perciò è necessario identificare univocamente i metodi di ogni singoli istanza. Il modulo
