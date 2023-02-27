@@ -1269,7 +1269,7 @@ istanze alla lista dei bindings del programma, cambiando, però, gli identificat
 programma. Per riconoscere i bindings mutualmente ricorsivi è necessaria una funzione che calcoli le dipendenze
 di una definizione. Nelle espressioni, in generale, possono essere menzionati i metodi delle proprietà, ma non possono,
 in alcun modo, essere menzionati i metodi delle istanze. Inoltre, il tipo dei metodi delle proprietà è sempre noto a
-priori e non è possibile, prima della type-inference, inferire le istanze (cfr. \hyperlink{Static dispatch}{Static dispatch})
+priori e non è possibile, prima della type-inference, inferire le istanze (cfr. \hyperlink{Dispatch statico}{Dispatch statico})
 corrette dei metodi.
 Nel calcolo delle dipendenze, i metodi di proprietà possono, quindi, essere esclusi. La funzione \textit{depsOf}, la quale
 prende in input un binding \texttt{b} dell'AST e la tabella \texttt{PropMethodsTable}, calcolerà le dipendenze di
