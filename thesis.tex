@@ -245,36 +245,39 @@ al contesto locale di un'espressione. I costrutti principali sono:
     \item definizioni di: tipi, variabili, proprietà (che corrispondono alle type-classes di Haskell), istanze di
     proprietà, alias di tipi, firme di simboli; le definizioni di simboli hanno le seguenti grammatiche:
     \begin{lstlisting}
-      S :=
-          let Var Args = E
+S :=
+    let Var Args = E         --definizione
 
-     MS :=
-          let Var MPM
+MS :=
+    let Var MPM              --definizione con patterns
+
+Args :=
+    Var ... Var
     \end{lstlisting}
     \item espressioni date dalla seguente grammatica:
     \begin{lstlisting}
-      E :=
-          Var
-          Datacon
-          Literal
-          E E
-          lam args -> E
-          lam MPM
-          S in E
-          MS in E
-          match E with PM
+E :=
+    Var                --variabile
+    Datacon            --data-constructor
+    Literal            --letterale: stringa, numero o carattere
+    E E                --applicazione di espressione
+    lam args -> E      --lambda-astrazione
+    lam MPM            --lambda-astrazione con patterns
+    S in E             --costrutto let..in
+    MS in E            --costrutto let..in con patterns
+    match E with PM    --pattern matching
 
-     PM :=
-          ME -> E | ... | ME -> E
+PM :=
+    ME -> E | ... | ME -> E
 
-    MPM :=
-          | ME ... ME = E | ... | ME ... ME = E
+MPM :=
+    | ME ... ME = E | ... | ME ... ME = E
 
-     ME :=
-          Var
-          _
-          Literal
-          Datacon ME ... ME
+ME :=                  --pattern
+    Var                --variabile
+    _                  --caso default
+    Literal            --letterale: stringa, numero o costante
+    Datacon ME ... ME  --patterns applicati a un data-constructor
     \end{lstlisting}
     \item un costrutto, valutato a compile-time (cfr. \hyperlink{Parsing degli operatori}{Parsing degli operatori}),
     per definire una ``categoria" di
@@ -328,11 +331,15 @@ let map
 
 \paragraph{Tipi higher-kinded}
 Il linguaggio permette la manipolazione di \textit{funzioni di tipi}, introducendo la nozione di
-\textit{kind} (cfr. \hyperlink{Il sistema di tipi}{Il sistema di tipi}). Quindi, data la seguente definizione di tipo:
+\textit{kind} (cfr. \hyperlink{Il sistema di tipi}{Il sistema di tipi}). Prima di mostrare degli esempi, è necessario fare
+una piccola nota sulla notazione che verrà utilizzata nell'articolo: in letteratura, con la terminologia
+\textit{variabile di tipo} si intende un ``placeholder" per un tipo che non necessita argomenti; in questo articolo, con tale
+notazione si indicherà, invece, un ``placeholder" valido anche per tipi che necessitano argomenti.
+Data la seguente definizione di tipo:
 \begin{lstlisting}
 type M a b = DataCon1 a | DataCon2 b | DataCon3 a Char
 \end{lstlisting}
-dove \textit{a} e \textit{b} sono variabili di tipo, è possibile, ad esempio, avere tipi della forma:
+dove \texttt{a} e \texttt{b} sono variabili di tipo, è possibile, ad esempio, avere tipi della forma:
 \begin{lstlisting}
 M Int Char
 M a b
@@ -344,7 +351,7 @@ M
 \begin{lstlisting}
 m Int
 \end{lstlisting}
-dove \textit{m} è una variabile di tipo a cui viene applicata il tipo \textit{Int}.
+dove \texttt{m} è una variabile di tipo a cui viene applicata il tipo \textit{Int}.
 
 \paragraph{Polimorfismo ad-hoc}
 Attraverso il meccanismo delle type-classes (all'interno del linguaggio vengono chiamate
@@ -579,7 +586,7 @@ occupano dell'eliminazione o dell'aggiornamento di alcuni costrutti presenti in 
 successive del compilatore.
 
 \hypertarget{Eliminazione degli alias di tipo}{\subsubsection{Eliminazione degli alias di tipo}}
-Fex offre un costrutto che permette all'utente di definire alias di tipi. Ecco un esempio:
+Fex offre un costrutto che permette all'utente di definire alias di tipo. Ecco un esempio:
 \begin{lstlisting}
 alias CharAnd x = Tuple2 Char x
 \end{lstlisting}
@@ -629,9 +636,14 @@ bindings.
 \hypertarget{Renaming delle variabili di tipo}{\subsubsection{Renaming delle variabili di tipo}}
 Prima di iniziare le fasi di costruzione dei token ``tipati", dato un programma $ P $, esso viene visitato e le occorrenze
 delle variabili di tipo vengono tutte rinominate in modo che:
-\[ \forall v, v' \in tyVars(P). \; v \neq v' \]
-dove $ tyVars $ è la funzione che ritorna tutte le variabili \textit{non legate} di un token, mentre il test di uguaglianza
-tra variabili di tipo è definita come il test di uguaglianza degli identificatori delle variabili.
+\begin{itemize}
+    \item per ogni token $ t, t' \in P $, tali che $ t $ non sia lo stesso token di $ t' $, vale:
+    \[ \forall v \in binders(t). \; \neg \exists v' \in binders(t'). \; v = v' \]
+\end{itemize}
+dove $ binders $ è la funzione che ritorna le variabili di tipo che fungono da binders nel token in questione, mentre il
+test di uguaglianza
+tra variabili di tipo è definito come il test di uguaglianza dei letterali che rappresentano gli identificatori delle
+variabili.
 Chiaramente, le variabili legate vengono cambiate in base a come vengono aggiornati i binders, ad esempio, si consideri
 la seguente definizione:
 \begin{lstlisting}
@@ -688,13 +700,35 @@ data LangSpecConstraint a   --``constraint" o predicato
 data LangQualType a         --mono-tipo qualificato
 data LangTypeScheme a       --poli-tipo o schema di tipo
     \end{lstlisting}
+    La nozione di \textit{kind} serve per aggiungere un'informazione ai tipi; in Fex, non vi è alcun costrutto per
+    esprimere delle espressioni che hanno un kind come informazione aggiuntiva. Un \textit{mono-tipo} è, come vedremo, un
+    tipo in cui possono comparire variabili di tipo, le quali sono tutte quantificati esistenzialmente, ad esempio:
+\[ \exists \alpha, \beta. \; \alpha \rightarrow \beta \]
+    La nozione di \textit{predicato} rappresenta, invece, un'affermazione su un tipo e ciò è utile per restringere
+    l'insieme di tipi adatto ad istanziare un determinato mono-tipo; come vedremo in seguito, i predicati vengono espressi
+    attraverso il meccanismo delle \textit{proprietà}, ad esempio, nel seguente pezzo di codice, il token \texttt{Ord} serve
+    per esprimere predicati:
+    \begin{lstlisting}
+property Ord a =
+    <metodi di proprieta'>
+;;
+    \end{lstlisting}
+    Un \textit{mono-tipo qualificato} è un tipo sul quale vi sono uno o più predicati. Uno \textit{schema di tipo} è un
+    tipo che ammette variabili di tipo quantificate universalmente:
+\[ \forall \alpha, \beta. \; \alpha \rightarrow \beta \]
+    Si faccia riferimento alla sezione sul sistema di tipi per le definizioni formali (cfr.
+    \hyperlink{Il sistema di tipi}{Il sistema di tipi}).
     \item i token tipati che costituiscono un programma:
     \begin{lstlisting}
 data NotedVar a           --variabili
-data NotedVal a           --valori: letterali e data constructor
+data NotedVal a           --valori: letterali e data-constructor
 data NotedMatchExpr a     --espressioni per il pattern match
 data NotedExpr a          --expressioni
     \end{lstlisting}
+    \`E bene fare una precisazione su \texttt{NotedMatchExpr}. Considerando il sotto-costrutto di un \textit{caso} del
+    costrutto di pattern matching, sia esso della forma:
+\[ pattern \rightarrow expr \]
+    il token \texttt{NotedMatchExpr} rappresenta un \textit{pattern}.
     \item operazioni che riguardano la manipolazione dei tipi quali unificazione, test di specificità, specializzazione,
     instanziazione, generalizzazione. Inoltre, vi sono le funzioni e le strutture dati per gestire il dispatch statico.
 \end{enumerate}
@@ -702,9 +736,9 @@ Nonostante la presenza di token tipati, non esiste una corrispondente versione t
 bensì le informazioni che riguardano un programma vengono memorizzate in tabelle (cfr. modulo
 \texttt{Compiler.Types.Tables}):
 \begin{lstlisting}
-newtype TypesTable a          --tabella dei ``modelli" di tipi
-newtype DataConsTable a       --tabella dei data constructor
-newtype ConstraintsTable a    --tabella dei ``modelli" di constraints
+newtype TypesTable a          --tabella dei type-constructor
+newtype DataConsTable a       --tabella dei data-constructor
+newtype ConstraintsTable a    --tabella dei constraint-constructor
 newtype InstsTable a          --tabella dei bindings delle istanze
 newtype PropMethodsTable a    --tabella dei metodi di proprieta'
 newtype ImplTable a           --tabella delle istanze
@@ -712,7 +746,7 @@ data    TypedProgram a        --tabella dei bindings tipati
 \end{lstlisting}
 Vedremo nel dettaglio ogni tabella nelle descrizioni delle varie fasi del compilatore. Tuttavia, è necessaria una nota
 su \texttt{TypesTable} e \texttt{ConstraintsTable}. Come si legge dai commenti, esse sono tabelle per memorizzare dei
-``modelli". Tali modelli sono necessari alla costruzione dei tipi e dei predicati all'interno di un programma. Ad esempio,
+costruttori. Tali costruttori sono necessari alla costruzione dei tipi e dei predicati all'interno di un programma. Ad esempio,
 date le seguenti definizioni in Fex:
 \begin{lstlisting}
 type Box a = Boxing a
@@ -722,11 +756,11 @@ property Stateful m =
 \end{lstlisting}
 Verranno creati dei token (presenti in \texttt{Compiler.Ast.Typed}):
 \begin{lstlisting}
-data LangNewType a            --type constructor
-data LangNewConstraint a      --constraint constructor
+data LangNewType a            --type-constructor
+data LangNewConstraint a      --constraint-constructor
 \end{lstlisting}
 che rappresenteranno rispettivamente il modello per tipi \texttt{Box} e il modello per constraints \texttt{Stateful} e che
-verranno memorizzati nelle suddette tabelle.
+verranno memorizzati nelle suddette tabelle. Mentre, quanto riguarda \texttt{Boxing}, esso rappresenta un data-construcotr.
 
 Sempre nel modulo \texttt{Compiler.Types.Tables}, viene definito anche il cosiddetto ``binding tipato":
 \begin{lstlisting}
@@ -743,7 +777,7 @@ non ricorsivi, mentre il secondo è per i binding che sono mutualmente ricorsivi
 Come è stato detto precedentemente, l'approccio del compilatore è quello di costruire tabelle man mano che le informazioni
 vengono inferite dall'AST. GHC (the Glasgow Haskell Compiler) utilizza un approccio differente, in quanto non utilizza
 alcuna ``symbol table", bensì ogni token tipato (di GHC) nella compilazione di un programma Haskell può
-textit{puntare} ad altri token tipati \hyperlink{bibl5}{[5]}. Si crea così un grafo di strutture dati tipate.
+puntare ad altri token tipati \hyperlink{bibl5}{[5]}. Si crea così un grafo di strutture dati tipate.
 Ad esempio, GHC, per gestire
 le entità di type constructor e data constructor, utilizza rispettivamente i token \texttt{TyCon} e \texttt{DataCon} (si
 ricordi che GHC è scritto in Haskell):
@@ -757,7 +791,10 @@ uno svantaggio di questo approccio è che il grafo è immutabile e quindi, per p
 aggiornare i nodi del grafo è necessario ricostruire il grafo da zero. Tuttavia, questo problema è mitigato, in quanto
 gli aggiornamenti del grafo sono parecchio rari, inoltre, man mano che GHC ottiene informazioni dal programma Haskell,
 accrescerà il grafo senza aggiornare i nodi preesistenti; in questo modo, non vi è alcuna necessità di costruire il
-grafo da zero.
+grafo da zero. La scelta, nel compilatore Fex, è stata quella di un approccio a tabelle proprio per evitare casi di mutua
+ricorsione tra tipi e, quindi, di codice potenzialmente più complesso per l'aggiornamento dei dati che riguardano i token
+del programma. Infatti, sebbene alcune tabelle, una volta costruite, vengano utilizzate in modalità di sola lettura, altre
+tabelle, come \texttt{TypedProgram}, vengono aggiornate più volte durante le varie fasi del compilatore.
 
 \hypertarget{Il sistema di tipi}{\subsection{Il sistema di tipi}}
 In questa sezione, verrà presentato il sistema di tipi di Fex. Come è stato già menzionato in precedenza, il
@@ -768,9 +805,10 @@ maggiore espressività.
 
 \hypertarget{Mono-tipo}{\subsubsection{Mono-tipo}}
 Di seguito, viene definito il concetto di \textit{mono-tipo}:
-\[ MT \; := \; \alpha \; | \; T \; | \; MT \; MT \; | \; MT \mapsto MT \]
-dove $ \alpha $ è una variabile di tipo e $ T $ è un costruttore di tipo. Come si può dedurre dalla definizione stessa,
-non si deve confondere
+\[ MT \; := \; \alpha \; | \; T \; | \; MT \; MT \]
+dove $ \alpha $ è una variabile di tipo e $ T $ è un costruttore di tipo. \`E fondamentale che, dato un programma $ P $,
+l'insieme dei mono-tipi in $ P $ abbia almeno il tipo funzione $ (\rightarrow) $.
+Come si può dedurre dalla definizione stessa, non si deve confondere
 il concetto di mono-tipo con quello di tipo \textit{monomorfo}, infatti i mono-tipi, a differenza dei tipi monomorfi,
 ammettono le variabili di tipo. L'ultimo caso è il tipo \textit{funzione}; nella sezione sull'inferenza di tipo verrà
 mostrato il motivo per il quale è fondamentale garantire la presenza del tipo funzione all'interno del type-system.
@@ -796,21 +834,21 @@ Fex permette all'utente di utilizzare \textit{funzioni di tipo} (o \textit{costr
 viene introdotta la nozione di \textit{kind}, il quale rappresenta un'informazione aggiuntiva per i tipi. Informalmente,
 dato un type-system \textit{TS}, un kind-system \textit{KS} si può vedere come un type-system di livello ``superiore"
 a \textit{TS}. Ora diamo una definizione più precisa di kind:
-\[ K \; := \; \kappa \; | \; * \; | \; K \mapsto K \]
+\[ K \; := \; \kappa \; | \; * \; | \; K \rightarrow K \]
 dove $ \kappa $ è una variabile di kind e $ * $ è la costante primitiva di kind (detta anche ``tipo"), il quale
 rappresenta tutti quei tipi che non hanno bisogno di parametri. Ecco alcuni esempi:
 \begin{itemize}
-    \item $ * \mapsto * $ è il kind delle funzioni di tipo unarie;
-    \item $ (* \mapsto *) \mapsto * \mapsto * $ è il kind delle funzioni di tipo binarie che prendono in input una
-    funzione di tipo unaria e un tipo e ritornano un altro tipo.
-    \item $ \kappa_1 \mapsto \kappa_2 $ è il kind delle funzioni unarie che prendono in input una funzione di tipo
+    \item $ * \rightarrow * $ è il kind delle funzioni di tipo unarie;
+    \item $ (* \rightarrow *) \rightarrow * \rightarrow * $ è il kind delle funzioni di tipo binarie che prendono in input
+    una funzione di tipo unaria e un tipo e ritornano un altro tipo.
+    \item $ \kappa_1 \rightarrow \kappa_2 $ è il kind delle funzioni unarie che prendono in input una funzione di tipo
     di kind $ \kappa_1 $ e ritorna un'altra funzione di tipo di kind $ \kappa_2 $.
 \end{itemize}
 Data la presenza di tipi \textit{higher-kinded} all'interno di Fex, è doveroso fare un'ulteriore precisazione che
 riguarda i mono-tipi: alla definizione di mono-tipo deve essere aggiunta la condizione sulla correttezza dei kind.
 Ad esempio, dato il tipo:
-\[ t_1 \mapsto t_2 \]
-sapendo che il kind del costruttore di tipo funzione è $ * \mapsto * \mapsto * $, è necessario, affinché il suddetto
+\[ t_1 \rightarrow t_2 \]
+sapendo che il kind del costruttore di tipo funzione è $ * \rightarrow * \rightarrow * $, è necessario, affinché il suddetto
 kind venga rispettato, che il kind di $ t_1 $ e $ t_2 $ sia $ * $.
 Nel codice sorgente, la definizione di kind nel compilatore Fex si trova in \texttt{Compiler.Ast.Typed}:
 \begin{lstlisting}
@@ -837,11 +875,11 @@ seguente: se $ S $ è sottotipo di $ T $ (scriviamo $ S \leq T $), allora ogni t
 in maniera \textit{safe} in ogni \textit{contesto} in cui un termine di $ T $ è richiesto, dove le definizioni di
 \textit{safe} e \textit{contesto} sono dipendenti dal formalismo.
 Aggiungiamo una notazione per descrivere questa nozione:
-\[ \alpha \leq T . \; \alpha \]
+\[ \alpha \leq T . \; T' \]
 Possiamo quindi restringere i possibili tipi adatti a ``riempire" il placeholder rappresentato da $ \alpha $. Più in
 generale, possiamo considerare $ \alpha \leq T $ come un predicato $ P $ su $ \alpha $. Utilizzeremo, quindi, la seguente
 notazione:
-\[ P(\alpha) \Rightarrow \alpha \]
+\[ P(\alpha) \Rightarrow T' \]
 Ora abbiamo una sintassi per descrivere \textit{predicati} o \textit{constraint} sulle variabili di tipo. Tale
 comportamento si può estendere a qualsiasi forma di tipo, non solo alle variabili di tipo, ma per farlo è necessario
 prima definire la sintassi dei predicati. In Fex, un predicato o constraint ha la seguente forma:
@@ -874,8 +912,6 @@ variabili di tipo che compaiono in un tipo qualificato sono legate a un quantifi
 trattate come costanti. Si noti come i quantificatori possono apparire solamente alla testa di un tipo, ad esempio, il
 seguente tipo non è accettato in Fex:
 \[ \forall \alpha . \; (\forall \alpha . \; \alpha \mapsto \alpha) \mapsto \alpha \]
-Non si confonda la nozione di poli-tipo (schema di tipo) con quella di tipo polimorfo, infatti, un tipo polimorfo, benché
-in esso possano apparire variabili di tipo, non ammette quantificatori.
 La definizione di schema di tipo in Fex si trova nel modulo \texttt{Compiler.Ast.Typed}:
 \begin{lstlisting}
 data LangTypeScheme a = Forall [LangVarType a] (LangQualType a)
@@ -942,7 +978,7 @@ instance Eq Char =
     <implementazioni>
 ;;
 \end{lstlisting}
-I dettagli implementativi al momento sono omessi. In ogni caso, i metodi di istanza avranno le seguenti firme:
+I dettagli implementativi sono omessi. In ogni caso, i metodi di istanza avranno le seguenti firme:
 \begin{lstlisting}
 val (==) : Char -> Char -> Bool
 val (/=) : Char -> Char -> Bool
@@ -969,11 +1005,11 @@ Si noti che \texttt{Stream} ha 2 argomenti.
 \hypertarget{Constraints sulle proprieta}{\subsubsection{Constraints sulle proprietà}}
 In Fex, è possibile definire una proprietà della forma:
 \begin{lstlisting}
-property C1 a Char => C2 a =
+property C2 a = C1 a Char => 
     <metodi>
 ;;
 \end{lstlisting}
-Questo tipo di definizione consiste nell'aggiungere il predicato \texttt{C1 a} alla proprietà \texttt{C2 a}.
+Questo tipo di definizione consiste nell'aggiungere il predicato \texttt{C1 a Char} alla proprietà \texttt{C2 a}.
 Semanticamente, questo impone la seguente condizione sul programma:
     \[ \forall type . \; \exists inst(C2, type) \Longrightarrow \exists inst(C1, type, Char) \]
 dove $ inst(C, \overline{t}) $ è, banalmente, l'instanza con nome di proprietà $ C $ e tipi $ \overline{t} $. \`E
@@ -1037,7 +1073,7 @@ mostrato quali vincoli (che riguardano i constraints e le istanze) possono esser
 \hypertarget{Constraints sulle istanze}{\subsubsection{Constraints sulle istanze}}
 L'utente ha anche la facoltà di definire istanze con uno o più predicati, ad esempio:
 \begin{lstlisting}
-instance Monad m => Stream m String =
+instance Stream m String = Monad m =>
     <implementazioni>
 ;;
 \end{lstlisting}
@@ -1056,39 +1092,32 @@ vale, come viene mostrato nei paragrafi precedenti, anche per le proprietà e pe
 vincoli sulla forma dei constraint. Come viene mostrato in \hyperlink{bibl8}{[8]} e \hyperlink{bibl9}{[9]}, esistono
 condizioni sufficienti
 affinché l'algoritmo di risoluzione delle istanze di Haskell termini. Prima di presentarle, diamo alcune notazioni:
-\newline Dato un costrutto $ K $ della forma $ C \Rightarrow D $, definiamo
+\newline Dato un costrutto $ K $ della forma $ D \Rightarrow C $, definiamo
 \begin{itemize}
     \item $ C $ come \textit{Contesto} del costrutto $ K $;
     \item $ H $ come \textit{Testa} del costrutto $ K $.
 \end{itemize}
 Ora presentiamo le \textit{condizioni di Paterson}:
 \begin{itemize}
-    \item il contesto \textit{C} di una dichiarazione di type-class può menzionare solamente variabili di tipo e
-    le variabili di tipo sono distinte in ogni singolo constraint in \textit{C};
-    \item Per ogni dichiarazione di istanza $ C \Rightarrow TyCl \; t_1 \; ... \; t_n $, nessuna variabile di tipo ha
+    \item il contesto $ C $ di una dichiarazione di type-class può menzionare solamente variabili di tipo e
+    le variabili di tipo sono distinte in ogni singolo constraint in $ C $;
+    \item Per ogni dichiarazione di istanza $ TyCl \; t_1 \; ... \; t_n \Rightarrow C $, nessuna variabile di tipo ha
     più occorrenze nel contesto $ C $ rispetto alla testa $ TyCl \; t_1 \; ... \; t_n $.
-    \item Per ogni dichiarazione di istanza $ C \Rightarrow TyCl \; t_1 \; ... \; t_n $, ogni constraint nel contesto
+    \item Per ogni dichiarazione di istanza $ TyCl \; t_1 \; ... \; t_n \Rightarrow C $, ogni constraint nel contesto
     $ C $ ha meno costruttori e variabili di tipo (presi insieme e contando le ripetizioni) rispetto alla testa
     $ TyCl \; t_1 ... t_n $.
-    \item Per ogni due dichiarazioni di istanze $ C \Rightarrow TyCl \; t_1 \; ... \; t_n $,
-    $ C' \Rightarrow TyCl \; t_1' \; ... \; t_n' $, non deve esistere una sostituzione $ \varphi $ tale che:
+    \item Per ogni due dichiarazioni di istanze $ TyCl \; t_1 \; ... \; t_n \Rightarrow C $,
+    $ TyCl \; t_1' \; ... \; t_n' \Rightarrow C' $, non deve esistere una sostituzione $ \varphi $ tale che:
     $ \varphi(t_1) = \varphi(t_1') $, ..., $ \varphi(t_n) = \varphi(t_n') $.
 \end{itemize}
 Informalmente, l'obiettivo è avere sempre dei contesti più ``piccoli" rispetto alle teste. La politica di Fex è
 simile e applica i seguenti vincoli:
 \begin{enumerate}
-    \item Per ogni constraint $ c $, $ c $ deve contenere almeno una variabile di tipo, ovvero:
-    \[ \forall \; constraint =: c.\; \exists \; tyvar =: v.\; v \in c \]
-    \item Per ogni istanza $ ctx \Rightarrow h $, il numero di occorrenze di ogni singola variabile $ v $ nel contesto
-    $ ctx $ deve essere minore o uguale rispetto al numero di occorrenze di $ v $ nella testa $ h $, ovvero:
-    \[ \forall \; instance =: (ctx \Rightarrow h).\; \forall \; tyvar =: v.\; v \in instance
-    \Longrightarrow occ(v, ctx) \leq occ(v, h) \]
-    dove $ occ(v, k) $ è la funzione che conta le occorrenze della variabile di tipo $ v $ nel costrutto $ k $;
-    \item Per ogni istanza $ ctx \Rightarrow h $, le variabili di tipo di $ ctx $ devono essere innestate in meno
-    costruttori di tipo rispetto alle variabili di tipo di $ h $ (contando le variabili tutte insieme), ovvero: \newline
-    \[ \forall \; instance =: (ctx \Rightarrow h).\; countWrapVars(ctx) < countWrapVars(h) \]
-    dove $ countWrapVars(k) $ è la funzione che conta in quanti costruttori di tipo nel costrutto $ k $ sono innestate le
-    variabili di tipo (sommando il risultato per tutte le variabili di tipo incontrate).
+    \item Per ogni constraint $ c $, $ c $ deve contenere almeno una variabile di tipo;
+    \item Per ogni istanza $ h \Rightarrow ctx $, il numero di occorrenze di ogni singola variabile $ v $ nel contesto
+    $ ctx $ deve essere minore o uguale rispetto al numero di occorrenze di $ v $ nella testa $ h $;
+    \item Per ogni istanza $ h \Rightarrow ctx $, le variabili di tipo di $ ctx $ devono essere innestate in meno
+    costruttori di tipo rispetto alle variabili di tipo di $ h $ (contando le variabili tutte insieme).
 \end{enumerate}
 Il codice che implementa questi controlli risiede nel modulo \texttt{Compiler.Constraints.Check}.
 
@@ -1179,11 +1208,11 @@ che li genera è \texttt{Compiler.Types.Tables}; esso prende in input i token de
 \texttt{ConstraintsTable}. \`E compito di questo modulo controllare che le classi non formino cicli tra loro, ad
 esempio, il seguente programma viene rifiutato dal compilatore:
 \begin{lstlisting}
-property Bar (M a) Int => Foo a =
+property Foo a = Bar (M a) Int =>
     <metodi>
 ;;
 
-property Foo (K x Char) => Bar x y =
+property Bar x y = Foo (K x Char) =>
     <metodi>
 ;;
 \end{lstlisting}
@@ -1236,16 +1265,15 @@ simboli e tipi associati ai simboli.
 Un'altra regola utile è quella
 sull'inferenza delle definizioni mutualmente ricorsive. In particolare, essa sostiene che, l'inferenza di definizioni
 mutualmente ricorsive avviene in ``gruppo", ovvero un insieme $ {f_1, ..., f_n} $ di simboli mutualmente ricorsivi
-tra loro viene considerato come un'unic definizione (regola \textbf{Rec}) (cfr. \hyperlink{Ricorsione}{Ricorsione}).
+tra loro viene considerato come un'unica definizione (regola \textbf{Rec}) (cfr. \hyperlink{Ricorsione}{Ricorsione}).
 Queste regole serviranno come premessa ad alcune fasi nella preparazione della type inference.
 
-\hypertarget{Bindings delle istanze}{\subsubsection{Bindings delle istanze}}
-Vale la pena notare come in Core non esista un costrutto particolare per i bindings delle istanze, inoltre, il
+\hypertarget{Bindings delle istanze}{\subsubsection{Metodi delle istanze}}
+Vale la pena notare come in Core non esista un costrutto particolare per i metodi delle istanze, infatti, il
 costrutto di GHC che rappresenta le istanze (\texttt{ClsInst}) non porta con sè informazioni che riguardano i
-bindings \hyperlink{bibl10}{[10]}.
-Perciò, è in un qualche modo necessario gestire i bindings delle istanze. La politica del compilatore è quella di
-aggiungerli nell'insieme di bindings da dare in input all'algoritmo di type-inference. La presenza di bindings con lo
-stesso identificatore è stata già risolta (cfr. Costruzione delle istanze e dispatch statico).
+metodi \hyperlink{bibl10}{[10]}, perciò, è in un qualche modo necessario gestirli. La politica del compilatore è quella di
+aggiungerli nell'insieme di bindings del programma e trattarli come qualsiasi altra funzione. La presenza di eventuali
+conflitti tra gli identificatori è stata già risolta (cfr. \hyperlink{Costruzione delle istanze}{Costruzione delle istanze}).
 
 \hypertarget{Simboli innestati univoci}{\subsubsection{Simboli innestati univoci}}
 Prima della type-inference, vengono visitate tutte le espressioni dei bindings e vengono creati nuovi identificatori
@@ -1355,7 +1383,7 @@ come è stato già esposto nella sezione sul type-system
 tipo $ \alpha $ denoterebbe un tipo fissato non ancora conosciuto. L'introduzione di uno schema di tipo rappresenta una
 scelta ``più generale":
 \[ x : \forall \alpha. \; Maybe \; \alpha \]
-In questo caso, $ x $ può avere molteplici tipi.
+In questo caso, le occorrenze di $ x $ nel programma possono avere molteplici tipi.
 
 \hypertarget{Damas-Hindley-Milner}{\subsubsection{Damas-Hindley-Milner}}
 Come è stato già menzionato precedentemente, il sistema di tipi di Fex si basa sul type-system di Damas-Hindley-Milner
@@ -1647,6 +1675,7 @@ Nell'inferenza di questo costrutto, l'argomento $ x $ ha come tipo una nuova var
 successivamente applicata la sostituzione derivante dall'inferenza dell'espressione $ e $. Dalla regola, si rende evidente
 la necessità di un tipo che consista nella ``mappatura" di un tipo verso un altro tipo.
 
+%TODO: cfh
 \hypertarget{Inferenza del costrutto ``let..in"}{\subsubsection{Inferenza del costrutto ``let..in"}}
 Prima di presentare la regola di inferenza, è necessario introdurre la regola di \textit{generalizzazione}:
 \[ \infer[\textbf{Gen}]{\Gamma \vdash_W e : \forall \alpha. \; \tau}{\Gamma \vdash_W e : \tau & \alpha \notin free(\Gamma)} \]
