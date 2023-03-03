@@ -9,10 +9,31 @@
 \usepackage{proof}
 \usepackage{amssymb}
 \usepackage{amsmath}
+\usepackage{xcolor}
 
-\lstset{
+\definecolor{darkgreen}{rgb}{0, 0.43, 0}
+\definecolor{backgrey}{rgb}{0.92, 0.92, 0.92}
+
+\lstdefinestyle{haskell}{
     language=Haskell,
+    backgroundcolor=\color{backgrey},
+    basicstyle={\small\ttfamily},
+    keywordstyle=\color{darkgreen},
+    stringstyle=\color{magenta},
+    numberstyle=\color{red},
+    commentstyle=\color{darkgray},
+    showstringspaces=false
+}
+
+\lstdefinestyle{none}{
     basicstyle={\small\ttfamily}
+}
+
+\lstdefinestyle{fex}{
+    basicstyle={\small\ttfamily},
+    backgroundcolor=\color{backgrey},
+    stringstyle=\color{magenta},
+    numberstyle=\color{red}
 }
 
 \tikzstyle{process} =
@@ -32,7 +53,7 @@
 
 \rule[0.5cm]{15.8cm}{0.6mm}
 {\small {\bf SCUOLA DI SCIENZE\\
-Corso di Laurea in Nome corso di Laurea }}
+Corso di Laurea in Informatica }}
 
 \end{center}
 
@@ -98,7 +119,7 @@ Corso di Laurea in Nome corso di Laurea }}
 
 \section{Introduzione}
 Il paradigma funzionale nella programmazione non è certamente nuovo in ambito accademico: le sue origini risiedono a
-parecchie decine di anni fa, grazie agli studi Alonzo Church sui formalismi del \textit{lambda-calcolo} negli anni '30.
+parecchie decine di anni fa, grazie agli studi di Alonzo Church sui formalismi del \textit{lambda-calcolo} negli anni '30.
 Sebbene vi siano numerosi studi a livello accademico, il successo non è stato tale nel mondo industriale. Uno dei primi
 linguaggi funzionali fu Lisp, sviluppato a fine anni '50, il quale è stato, in un certo senso,
 pioniere di alcuni concetti e costrutti come la gestione automatica della memoria, funzioni di ordine superiore, la
@@ -187,6 +208,7 @@ Prima di presentare l'articolo, è necessario fare alcune precisazioni utili all
     le freccie continue rappresentano una fase del compilatore, mentre le freccie tratteggiate rappresentano una
     dipendenza.
 \end{itemize}
+\newpage
 
 \subsection{Haskell e System-F come modelli}
 Il compilatore è stato sviluppato utilizzando il linguaggio \textit{Haskell}, anch'esso linguaggio di programmazione
@@ -247,7 +269,7 @@ al contesto locale di un'espressione. I costrutti principali sono:
     \begin{enumerate}
     \item definizioni di: tipi, variabili, proprietà (che corrispondono alle type-classes di Haskell), istanze di
     proprietà, alias di tipi, firme di simboli; le definizioni di simboli hanno le seguenti grammatiche:
-    \begin{lstlisting}
+    \begin{lstlisting}[style=none]
 S :=
     let Var Args = E         --definizione
 
@@ -258,7 +280,7 @@ Args :=
     Var ... Var
     \end{lstlisting}
     \item espressioni date dalla seguente grammatica:
-    \begin{lstlisting}
+    \begin{lstlisting}[style=none]
 E :=
     Var                --variabile
     Datacon            --data-constructor
@@ -303,7 +325,7 @@ Fex supporta anche i tipi di dati algebrici (che sono l'unico modo per definire 
 tipi). Con essi, vi è anche la nozione di \textit{data constructor}, ovvero un costrutto dotato di tipo e al quale
 possono essere associati dei dati. Per eseguire operazioni con i tipi di dati algebrici vi è il costrutto del pattern
 matching che permette di destrutturare un data constructor dai suoi dati associati:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type Arith =
       Plus Expr Expr
     | Minus Expr Expr
@@ -324,7 +346,7 @@ Il sistema di tipi del linguaggio si basa fortemente su quello di System-F, il q
 di tipo, inoltre, permette di quantificarle (pur con alcune restrizioni). I quantificatori nei tipi permettono ai token
 ``tipabili" del linguaggio di possedere più tipi nello stesso momento, infatti, questo tipo di polimorfismo permette di avere
 singoli algoritmi per una moltitudine di tipi, ad esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type List' a = Empty | Cons a (List' a)
 
 let map
@@ -339,11 +361,11 @@ una piccola nota sulla notazione che verrà utilizzata nell'articolo: in lettera
 \textit{variabile di tipo} si intende un ``placeholder" per un tipo che non necessita argomenti; in questo articolo, con tale
 notazione si indicherà, invece, un ``placeholder" valido anche per tipi che necessitano argomenti.
 Data la seguente definizione di tipo:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type M a b = DataCon1 a | DataCon2 b | DataCon3 a Char
 \end{lstlisting}
 dove \texttt{a} e \texttt{b} sono variabili di tipo, è possibile, ad esempio, avere tipi della forma:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 M Int Char
 M a b
 M String
@@ -351,7 +373,7 @@ M x
 M
 \end{lstlisting}
 \`E possibile altresì avere un tipo della forma:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 m Int
 \end{lstlisting}
 dove \texttt{m} è una variabile di tipo a cui viene applicata il tipo \textit{Int}.
@@ -361,7 +383,7 @@ Attraverso il meccanismo delle type-classes (all'interno del linguaggio vengono 
 proprietà), è possibile creare funzioni polimorfe che possono essere applicate ad argomenti di tipi differenti e, a
 seconda dei tipi degli argomenti, viene ``selezionata" un'implementazione. Ogni proprietà può avere uno, ma anche
 più tipi associati. Si osservi il seguente esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type SuccessHttpCodes =
       Ok200
     | Moved301
@@ -432,7 +454,7 @@ l'albero di sintassi astratta (AST). Il codice che gestisce i ``token" dell'AST 
 all'interno del modulo \texttt{Compiler.Ast.Tree}; l'entry-point dell'albero è dato dal token \texttt{Program}, il
 quale, come nodi figli, ha delle \texttt{Declaration} che rappresentano i principali costrutti globali del linguaggio.
 
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 newtype Program a = Program [Declaration a]
 
 data Declaration a =
@@ -480,7 +502,7 @@ Fex permette di definire operatori che vengono trattati come simboli di variabil
 il linguaggio espone all'utente un costrutto particolare che permettere di definire le proprietà degli eventuali
 operatori. Questo costrutto viene valutato durante il parsing e definisce una categoria di operatori, ecco un esempio:
 
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 OPERATORS_CATEGORY {#
     name : Application ;
     operators : |>, <|, `applyTo ;
@@ -506,7 +528,7 @@ base alla loro precedenza. Le informazioni sulle categorie vengono estrapolate d
 passate successivamente all'algoritmo di ordinamento delle categorie. Quest'ultimo si può ridurre all'inserimento
 di un elemento in una lista di liste:
 
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 insert(x, ll):
     match ll with
         [] -> [[x]]
@@ -523,6 +545,7 @@ insert(x, ll):
                 else subInsert(x, l) :: lt
             else l :: insert(x, lt)
 \end{lstlisting}
+\newpage
 
 L'algoritmo scorre la lista finché non:
 \begin{enumerate}
@@ -565,7 +588,7 @@ se il nome in input è, rispettivamente, un nome di tipo, un nome di alias, un n
 \textit{args} è la funzione che calcola gli argomenti di un token e il simbolo \textit{\#} è la funzione che calcola
 la cardinalità di un insieme. In tutti e tre i casi, gli argomenti di un simbolo sono una sequenza di variabili di tipo,
 ad esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type Map k v = Entry (Tuple2 k v) | Node (Tuple2 k v) (Map k v) (Map k v)
 
 alias IntMap v = Map Int v
@@ -588,7 +611,7 @@ successive del compilatore.
 
 \hypertarget{Eliminazione degli alias di tipo}{\subsubsection{Eliminazione degli alias di tipo}}
 Fex offre un costrutto che permette all'utente di definire alias di tipo. Ecco un esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 alias CharAnd x = Tuple2 Char x
 \end{lstlisting}
 Questo tipo di costrutto viene completamente valutato in fase di compilazione: ogni occorrenza di nome di alias viene
@@ -597,7 +620,7 @@ Desugaring si occupa di questo task (\texttt{Compiler.Desugar.Alias}).
 Come si nota nell'esempio, gli alias ammettono argomenti (variabili di tipo) che vengono passati alla funzione di tipo.
 Il linguaggio ammette anche alias di alias, tuttavia, ciò può portare a \textit{cicli}, come ad esempio:
 
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 alias A = B
 alias B = C
 alias C = A
@@ -615,7 +638,7 @@ kind-inference).
 Fex espone un costrutto, detto \textit{signature} (in italiano ``firma"), che permette di indicare il tipo di un
 binding. Ad esempio:
 
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 val id : a -> a
 \end{lstlisting}
 
@@ -624,7 +647,7 @@ tipo di costrutto non è nient'altro che ``zucchero sintattico" per il type-hint
 - \texttt{SymbolDeclaration} e \texttt{MultiSymbolDeclaration} - possono possedere delle informazioni sul proprio tipo,
 ad esempio, guardando la definizione di \texttt{MultiSymbolDeclaration}:
 
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 data MultiSymbolDeclaration a =
     MultiSymTok (SymbolName a) (Hint a) (MultiPatternMatch a) a
 \end{lstlisting}
@@ -647,17 +670,18 @@ tra variabili di tipo è definito come il test di uguaglianza dei letterali che 
 variabili.
 Chiaramente, le variabili legate vengono cambiate in base a come vengono aggiornati i binders, ad esempio, si consideri
 la seguente definizione:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type T a b = C1 Int a | C2 a (T a b)
 \end{lstlisting}
 Se viene effettuata la seguente sostituzione:
 \[ \{ a \mapsto a_1, b \mapsto a_2 \} \]
 Allora la nuova definizione di T avrà la seguente forma:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type T a1 a2 = C1 Int a1 | C2 a1 (T a1 a2)
 \end{lstlisting}
 Il motivo di questo renaming verrà descritto in seguito (cfr. \hyperlink{Kind-inference}{Kind-inference}). Il codice
 risiede nel modulo \texttt{Compiler.Desugar.TyVars}.
+\newpage
 
 \section{Generazione dei token ``tipati"}
 Dopo la generazione dell'albero di sintassi astratta e alcune fasi di desugaring, questa seconda componente del
@@ -686,6 +710,7 @@ livello, compare la nozione di tipo del linguaggio.
 \draw [dashed] [arrow] (prep) -- (desugar);
 \draw [dashed] [arrow] (tyinf) -| (desugar);
 \end{tikzpicture}
+\newpage
 
 \hypertarget{Approccio a tabelle}{\subsection{Approccio a tabelle}}
 A differenza della prima componente del compilatore, dove l'unica struttura dati di primo livello era l'AST, in
@@ -693,11 +718,11 @@ questo caso vi sono molteplici strutture dati. Innanzitutto, nel modulo \texttt{
 vi sono le definizioni di tutti i token tipati e le operazioni su di essi; proprio in questo modulo compaiono:
 \begin{enumerate}
     \item le nozioni che riguardano i tipi del linguaggio:
-    \begin{lstlisting}
+    \begin{lstlisting}[style=haskell]
 data LangKind               --kind
 data LangVarType a          --variabile di tipo
 data LangHigherType a       --mono-tipo
-data LangSpecConstraint a   --``constraint" o predicato
+data LangSpecConstraint a   --"constraint" o predicato
 data LangQualType a         --mono-tipo qualificato
 data LangTypeScheme a       --poli-tipo o schema di tipo
     \end{lstlisting}
@@ -709,7 +734,7 @@ data LangTypeScheme a       --poli-tipo o schema di tipo
     l'insieme di tipi adatto ad istanziare un determinato mono-tipo; come vedremo in seguito, i predicati vengono espressi
     attraverso il meccanismo delle \textit{proprietà}, ad esempio, nel seguente pezzo di codice, il token \texttt{Ord} serve
     per esprimere predicati:
-    \begin{lstlisting}
+    \begin{lstlisting}[style=fex]
 property Ord a =
     <metodi di proprieta'>
 ;;
@@ -720,7 +745,7 @@ property Ord a =
     Si faccia riferimento alla sezione sul sistema di tipi per le definizioni formali (cfr.
     \hyperlink{Il sistema di tipi}{Il sistema di tipi}).
     \item i token tipati che costituiscono un programma:
-    \begin{lstlisting}
+    \begin{lstlisting}[style=haskell]
 data NotedVar a           --variabili
 data NotedVal a           --valori: letterali e data-constructor
 data NotedMatchExpr a     --espressioni per il pattern match
@@ -736,7 +761,7 @@ data NotedExpr a          --expressioni
 Nonostante la presenza di token tipati, non esiste una corrispondente versione tipata dell'AST con un unico entry-point,
 bensì le informazioni che riguardano un programma vengono memorizzate in tabelle (cfr. modulo
 \texttt{Compiler.Types.Tables}):
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 newtype TypesTable a          --tabella dei type-constructor
 newtype DataConsTable a       --tabella dei data-constructor
 newtype ConstraintsTable a    --tabella dei constraint-constructor
@@ -749,14 +774,14 @@ Vedremo nel dettaglio ogni tabella nelle descrizioni delle varie fasi del compil
 su \texttt{TypesTable} e \texttt{ConstraintsTable}. Come si legge dai commenti, esse sono tabelle per memorizzare dei
 costruttori. Tali costruttori sono necessari alla costruzione dei tipi e dei predicati all'interno di un programma. Ad esempio,
 date le seguenti definizioni in Fex:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type Box a = Boxing a
 property Stateful m =
     val getState : m a -> a
 ;;
 \end{lstlisting}
 Verranno creati dei token (presenti in \texttt{Compiler.Ast.Typed}):
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 data LangNewType a            --type-constructor
 data LangNewConstraint a      --constraint-constructor
 \end{lstlisting}
@@ -764,7 +789,7 @@ che rappresenteranno rispettivamente il modello per tipi \texttt{Box} e il model
 verranno memorizzati nelle suddette tabelle. Mentre, quanto riguarda \texttt{Boxing}, esso rappresenta un data-construcotr.
 
 Sempre nel modulo \texttt{Compiler.Types.Tables}, viene definito anche il cosiddetto ``binding tipato":
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 type BindingSingleton a = (NotedVar a, [NotedVar a], NotedExpr a)
 data TypedBinding a =
       TyNonRec (BindingSingleton a)
@@ -782,7 +807,7 @@ puntare ad altri token tipati \hyperlink{bibl5}{[5]}. Si crea così un grafo di 
 Ad esempio, GHC, per gestire
 le entità di type constructor e data constructor, utilizza rispettivamente i token \texttt{TyCon} e \texttt{DataCon} (si
 ricordi che GHC è scritto in Haskell):
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 data TyCon
 data DataCon
 \end{lstlisting}
@@ -815,7 +840,7 @@ Come si può dedurre dalla definizione stessa, non si deve confondere
 il concetto di mono-tipo con quello di tipo \textit{monomorfo}, infatti i mono-tipi, a differenza dei tipi monomorfi,
 ammettono le variabili di tipo.
 Nel compilatore, la definizione di mono-tipo si trova nel modulo \texttt{Compiler.Ast.Typed}:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 data LangHigherType a =
       LTy (LangType a)
     | HApp [LangHigherType a] a
@@ -853,7 +878,7 @@ Ad esempio, dato il tipo:
 sapendo che il kind del costruttore di tipo funzione è $ * \rightarrow * \rightarrow * $, è necessario, affinché il suddetto
 kind venga rispettato, che il kind di $ t_1 $ e $ t_2 $ sia $ * $.
 Nel codice sorgente, la definizione di kind nel compilatore Fex si trova in \texttt{Compiler.Ast.Typed}:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 data LangKind =
       LKVar String
     | LKConst
@@ -893,7 +918,7 @@ ammettiamo che su un mono-tipo si possa applicare un numero arbitrario di predic
 \[ QT := MT \; | \; C \Rightarrow QT \]
 Questa appena data è la nozione di \textit{tipo qualificato}. La definizione si trova nel modulo
 \texttt{Compiler.Ast.Typed}:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 data LangQualType a = Qual [LangSpecConstraint a] (LangHigherType a)
 \end{lstlisting}
 
@@ -915,18 +940,19 @@ trattate come costanti. Si noti come i quantificatori possono apparire solamente
 seguente tipo non è accettato in Fex:
 \[ \forall \alpha . \; (\forall \alpha . \; \alpha \rightarrow \alpha) \rightarrow \alpha \]
 La definizione di schema di tipo in Fex si trova nel modulo \texttt{Compiler.Ast.Typed}:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 data LangTypeScheme a = Forall [LangVarType a] (LangQualType a)
 \end{lstlisting}
 La politica sulla sintassi degli schemi di tipi di Fex è omettere il quantificatore $ \forall $ nelle indicazione sul tipo.
 Per questo, ogni qual
 volta vi è un costrutto di type-hinting (firme comprese), il tipo viene considerato come uno schema di tipo in cui tutte
 le variabili di tipo che compaiono vengono legate a un quantificatore universale, ad esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 val map : (a -> b) -> List a -> List b
 \end{lstlisting}
 in questo caso la funzione \texttt{map} avrà il seguente tipo:
 \[ map : \forall \alpha, \beta . \; (\alpha \rightarrow \beta) \rightarrow List \; \alpha \rightarrow List \; \beta \]
+\newpage
 
 \hypertarget{Test di uguaglianza tra tipi}{\subsubsection{Test di uguaglianza tra tipi}}
 Il test di uguaglianza tra tipi si differenzia parecchio tra le diverse nozioni di ``tipo", inoltre, non sempre risulterà
@@ -953,7 +979,7 @@ a nessun'altra operazione.
 \hypertarget{Polimorfismo ad-hoc}{\subsection{Polimorfismo ad-hoc}}
 Fex supporta il polimorfismo ad-hoc esponendo costrutti chiamati \textit{proprietà}, le quali sono concettualmente
 molto simili alle \textit{type classes} di Haskell. Ecco un esempio di definizione di proprietà in Fex:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 property Eq a =
     val (==) : a -> a -> Bool
     val (/=) : a -> a -> Bool
@@ -962,7 +988,7 @@ property Eq a =
 Questo pezzo di codice produce idealmente due token corrispondenti ai metodi \texttt{(==)} e \texttt{(/=)},
 i quali possono essere istanziati attraverso il meccanismo delle istanze che verrà presentato prossimamente. I token
 appena costruiti avranno le seguenti firme:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 val (==) : Eq a => a -> a -> Bool
 val (/=) : Eq a => a -> a -> Bool
 \end{lstlisting}
@@ -975,13 +1001,13 @@ Il polimorfismo ad-hoc viene, dunque, supportato attraverso i predicati, i quali
 sui tipi. L'istanziazione di una proprietà consiste nel dichiarare dei tipi che fungeranno da ``caso specifico" per i
 metodi di proprietà (i ``modelli"), ad esempio, riprendendo la proprietà \texttt{Eq} del precedente pezzo di codice,
 in Fex possiamo definire un'istanza del tipo:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 instance Eq Char =
     <implementazioni>
 ;;
 \end{lstlisting}
 I dettagli implementativi sono omessi. In ogni caso, i metodi di istanza avranno le seguenti firme:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 val (==) : Char -> Char -> Bool
 val (/=) : Char -> Char -> Bool
 \end{lstlisting}
@@ -995,7 +1021,7 @@ quali impongono condizioni aggiuntive sul programma.
 \hypertarget{Numero arbitrario di argomenti delle proprieta}{\subsubsection{Numero arbitrario di argomenti delle proprietà}}
 Nell'esempio con \texttt{Eq}, la proprietà possedeva soltanto un argomento, tuttavia, è possibile definire proprietà
 con un numero arbitrario (ma fissato alla definizione) di argomenti ad esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 property Stream s t =
     val new : t -> s t
     val yield : t -> s t -> s t
@@ -1006,7 +1032,7 @@ Si noti che \texttt{Stream} ha 2 argomenti.
 
 \hypertarget{Constraints sulle proprieta}{\subsubsection{Constraints sulle proprietà}}
 In Fex, è possibile definire una proprietà della forma:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 property C2 a = C1 a Char => 
     <metodi>
 ;;
@@ -1019,7 +1045,7 @@ possibile aggiungere più di un predicato alla stessa proprietà.
 
 \hypertarget{Polimorfismo higher-kinded}{\subsubsection{Polimorfismo higher-kinded}}
 Riprendiamo il precedente esempio con \texttt{Stream}:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 property Stream s t =
     val new : t -> s t
     val yield : t -> s t -> s t
@@ -1035,7 +1061,7 @@ mentre la variabile \textit{t} ha kind:
 
 \hypertarget{Argomenti arbitrari delle istanze}{\subsubsection{Argomenti arbitrari delle istanze}}
 Gli argomenti di un'istanza possono essere tipi di forma arbitraria, ad esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 property C x y =
     <metodi>
 ;;
@@ -1046,7 +1072,7 @@ instance C a (Tuple3 a (T b) (m b)) =
 \end{lstlisting}
 Confrontando il precedente codice Fex con il seguente codice Haskell che può considerarsi quanto meno concettualmente
 equivalente:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 class C x y where
@@ -1057,7 +1083,7 @@ instance C a (a, T b, m b) where
 \end{lstlisting}
 si ha che, compilando questo programma Haskell soltanto con l'estensione all'inizio del codice, si incorrerà nel
 seguente messaggio d'errore da parte del compilatore:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 Illegal instance declaration for 'C a (a, T b, m b)'
 (All instance types must be of the form (T a1 ... an)
 where a1 ... an are *distinct type variables*,
@@ -1074,13 +1100,13 @@ mostrato quali vincoli (che riguardano i constraints e le istanze) possono esser
 
 \hypertarget{Constraints sulle istanze}{\subsubsection{Constraints sulle istanze}}
 L'utente ha anche la facoltà di definire istanze con uno o più predicati, ad esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 instance Stream m String = Monad m =>
     <implementazioni>
 ;;
 \end{lstlisting}
 questo tipo di definizione genererà metodi di istanza con le seguenti firme:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 val new : Monad m => String -> m String
 val yield : Monad m => String -> m String -> m String
 val consume : Monad m => m String -> (m String, String)
@@ -1193,7 +1219,7 @@ dal token \texttt{ADTConstructor} - vengono trasformati nel token \texttt{NotedV
 dove $ dataConRep $ è la rappresentazione sotto forma di stringa del data constructor, mentre $ ty $ è il tipo del
 costruttore. Per quanto riguarda il tipo del costruttore, prendiamo in considerazione il seguente esempio di codice
 Fex:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type Foo x y = Bar Int (M x) y
 \end{lstlisting}
 In questa definizione di tipo di dato algebrico, vi è un solo costruttore: \texttt{Bar}. Il suo tipo è il seguente:
@@ -1209,7 +1235,7 @@ che li genera è \texttt{Compiler.Types.Tables}; esso prende in input i token de
 (\texttt{Interface}) e da essi costruisce i token tipati \texttt{LangNewConstraint} e li inserisce nella tabella
 \texttt{ConstraintsTable}. \`E compito di questo modulo controllare che le classi non formino cicli tra loro, ad
 esempio, il seguente programma viene rifiutato dal compilatore:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 property Foo a = Bar (M a) Int =>
     <metodi>
 ;;
@@ -1230,7 +1256,7 @@ Nel modulo \texttt{Compiler.Types.Builder.Instances} vengono create le seguenti 
     dall'utente;
 \end{itemize}
 Per quanto riguarda l'ultima tabella, data la definizione di un'istanza:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 instance Eq Char =
     <implementazioni>
 ;;
@@ -1287,7 +1313,7 @@ seguito il motivo (cfr. \hyperlink{Type-inference}{Type-inference}).
 \hypertarget{Clusters di definizioni mutualmente ricorsive}{\subsubsection{Clusters di definizioni mutualmente ricorsive}}
 Come è stato già menzionato precedentemente, le definizioni mutualmente ricorsive devono essere considerate come insiemi
 e non singolarmente. Perciò è necessario distinguere due tipi di bindings, quelli mutualmente ricorsivi e i restanti:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 data RawBinding =
       RawNonRec (Raw.SDUnion With.ProgState)
     | RawRec [Raw.SDUnion With.ProgState]
@@ -1335,7 +1361,7 @@ Siano $ b $ e $ b' $ due bindings, si ha che:
 \end{itemize}
 la proprietà di transitività di questa nozione di ordinamento è garantita dall'assenza di cicli all'interno del grafo.
 Di seguito vi è l'algoritmo di sorting di una singola componente del grafo:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 sortComponent(bindings, remaining, component):
     match bindings, remaining with
         [], [] -> component
@@ -1348,7 +1374,7 @@ sortComponent(bindings, remaining, component):
 \end{lstlisting}
 L'algoritmo prende in input i bindings di una componente, i bindings rimanenti e la componente già ordinata. Ora
 presentiamo l'algoritmo di inserzione di un binding in una componente già ordinata:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 tryInsert(binding, component):
     match component with
         [] -> [component]
@@ -1367,12 +1393,13 @@ successiva. Il codice si trova nel modulo \texttt{Compiler.Types.Prepare.Sort}.
 
 Dopo l'ordinamento dei bindings, è garantito che, ogni qual volta verrà inferito un binding, la premessa
 della regola \textbf{Var} sia vera.
+\newpage
 
 \hypertarget{Type-inference}{\subsection{Type-inference}}
 Fex permette all'utente di indicare o non indicare il tipo di una variabile. Nel caso non venga indicato, il
 compilatore dovrà inferire il tipo della variabile definita, quindi dovrà fare una ``scelta". Per farlo, dovrà prima
 inferire il tipo dell'espressione legata alla variabile, ad esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type Maybe a = Nothing | Just a
 let x = Nothing
 \end{lstlisting}
@@ -1476,7 +1503,7 @@ $ S = \{ \alpha_j \mapsto \mu_j \} $, dove $ \alpha_j $ è una variabile di tipo
 \[ \forall i \in \{1, ..., n\}. \; S\tau_i = S\tau_i' \]
 Il codice sorgente che si occupa dell'unificazione si trova nel modulo \texttt{Compiler.Ast.Typed}, in particolare,
 la funzione \texttt{rawUnify} implementa l'algoritmo di unificazione, osserviamo la sua firma:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 rawUnify
     :: LangHigherType a
     -> LangHigherType a
@@ -1484,7 +1511,7 @@ rawUnify
     -> Either (UnificationError a) (Substitution a)
 \end{lstlisting}
 Notiamo subito che vi sono tre argomenti e che il tipo di ritorno è un result-type.
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 data UnificationError a =
       UnmatchTypes (LangHigherType a) (LangHigherType a)
     | TrySwap (LangHigherType a) (LangHigherType a)
@@ -1508,7 +1535,7 @@ Il tipo \texttt{UnificationError} possiede 4 casi d'errore e tutti prendono in i
 \end{itemize}
 Ora passiamo all'algoritmo vero e proprio, il quale sarà presentato mostrando direttamente soltanto una parte di esso
 all'interno del codice sorgente in \texttt{rawUnify}:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 rawUnify monoTy monoTy' isSpecTest =
     case unification monoTy monoTy' empty of
         Left err -> Left err
@@ -1549,7 +1576,6 @@ rawUnify monoTy monoTy' isSpecTest =
                 ok @ (Right _) -> ok
 
         <resto del codice>
---$ rm this when building
 \end{lstlisting}
 I commenti nel codice sorgente sono stati rimossi. Come è stato fatto notare in precedenza,
 l'algoritmo prende in input tre argomenti, di cui i primi due sono i mono-tipi sui quali si vuole calcolare l'unificazione.
@@ -1589,26 +1615,24 @@ Per ottenere un'equazione di quella forma vi sono due operazioni fondamentali:
 Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la quale considera varie casistiche:
 \begin{enumerate}
     \item
-    \begin{lstlisting}
+    \begin{lstlisting}[style=haskell]
 | not $ sameInfrdKindOf lhty lhty' =
     Left $ UnmatchKinds lhty lhty'
     \end{lstlisting}
     Nel primo caso viene effettuato un controllo sui kind dei due mono-tipi. Se sono diversi, viene restituito un errore;
     \item
-    \begin{lstlisting}
+    \begin{lstlisting}[style=haskell]
 | occursCheck lhty lhty' =
     Left $ OccursCheck lhty lhty'
---$ rm this when building
     \end{lstlisting}
     Nel secondo caso viene effettuato un altro controllo: il cosiddetto \textit{occurs check}. Se uno dei due mono-tipi
     ha la forma di una variabile di tipo e quest'ultima compare nell'altro mono-tipo, allora viene ritornato un errore.
     \item
-    \begin{lstlisting}
+    \begin{lstlisting}[style=haskell]
 | tyVarAndConcrete lhty lhty' =
     if isSpecTest
     then Left $ UnmatchTypes lhty lhty'
     else unification lhty' lhty vvars
---$ rm this when building
     \end{lstlisting}
     Nel terzo caso vi è il primo controllo sulla struttura dei mono-tipi: se \texttt{lhty} ha come testa una variabile
     di tipo e \texttt{lhty'} ha come testa un tipo concreto, allora vi è un'operazione di \textit{swap}, ovvero vi è
@@ -1617,12 +1641,11 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     concreto. In questo caso, l'operazione di \textit{swap} non può essere effettuata in quanto verrebbe a meno il vincolo
     secondo il quale le variabili del primo mono-tipo (\texttt{lhty}) non devono essere sostituite.
     \item
-    \begin{lstlisting}
+    \begin{lstlisting}[style=haskell]
 | bothConcrete lhty lhty' =
     if headEq lhty lhty'
     then argsUnification lhty lhty' vvars
     else Left $ UnmatchTypes lhty lhty'
---$ rm this when building
     \end{lstlisting}
     Nel quarto caso viene testato se entrambi i mono-tipi hanno tipi concreti come testa; se così fosse, le teste
     devono rappresentare lo stesso tipo concreto, altrimenti viene restituito un errore, in quanto non esisterebbe
@@ -1630,19 +1653,18 @@ Analizzando il codice, la prima chiamata viene fatta a \texttt{unification}, la 
     viene eseguita un'azione di \textit{decompose}, ovvero vengono effettuate delle chiamate ricorsive sugli argomenti
     dei due mono-tipi. Analizzeremo la funzione \texttt{argsUnification} in seguito.
     \item
-    \begin{lstlisting}
+    \begin{lstlisting}[style=haskell]
 | bothTyVar lhty lhty' && argsOf lhty' > argsOf lhty =
     if isSpecTest
     then Left $ UnmatchTypes lhty lhty'
     else unification lhty' lhty vvars
---$ rm this when building
     \end{lstlisting}
     Nel quinto caso viene controllato se entrambi i mono-tipi hanno variabili di tipo come testa e se il numero di
     argomenti del secondo mono-tipo è strettamente maggiore di quello del primo. In questo caso, vi è un'operazione
     di \textit{swap} e la conseguente chiamata ricorsiva. Come prima, se l'unificazione è \textit{strict},
     l'operazione di \textit{swap} non può essere effettuata e viene restituito un errore.
     \item
-    \begin{lstlisting}
+    \begin{lstlisting}[style=haskell]
 | otherwise =
     argsUnification lhty lhty' vvars
     \end{lstlisting}
@@ -1702,12 +1724,12 @@ tuttavia, molti vengono estesi con sintassi differenti.
 \hypertarget{Lambda-astrazione in Fex}{\paragraph{Lambda-astrazione in Fex}}
 Prendendo come riferimento la definizione del token
 dell'AST che rappresenta il costrutto di lambda-astrazione:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 newtype Lambda a = Lambda ([SymbolName a], Expression a, a)
 \end{lstlisting}
 si può notare come non vi sia un unico argomento, bensì, una lista. Stessa argomentazione vale per l'applicazione
 di espressioni:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 newtype AppExpression a = AppExpr (Expression a, [Expression a], a)
 \end{lstlisting}
 Con le dovute accortezze, l'algoritmo di inferenza considera questi costrutti come l'equivalente di costrutti
@@ -1718,7 +1740,7 @@ concatenati in \textit{System-F}. Ad esempio:
 Un altra nota è necessaria sulle definizioni di simboli in Fex. Infatti, Fex permette la definizione di simboli
 globali e questo ``rompe" la regola di inferenza del costrutto \textit{let..in}. Questo problema viene risolto
 considerando soltanto parte delle premesse del costrutto \textit{let..in}. Si consideri, ad esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 let x = e
 \end{lstlisting}
 come prima azione, viene inferito il tipo di \texttt{e}, sia esso il mono-tipo $ \tau $, poi viene effettuata la
@@ -1729,7 +1751,7 @@ tipizzazione.
 \hypertarget{Costrutto ``let..in" in Fex}{\paragraph{Costrutto ``let..in" in Fex}}
 Il costrutto \textit{let..in} in Fex ha nella sintassi un'altra estensione rispetto al suo omonimo in \textit{System-F},
 ovvero i bindings accettano anche argomenti:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 let f x y = (x, y)
 \end{lstlisting}
 In questo caso, la politica dell'algoritmo di inferenza è trattare gli argomenti \texttt{x} e \texttt{y} come argomenti
@@ -1746,7 +1768,7 @@ deve essere esteso.
 Fex possiede due costrutti diversi per il pattern matching
 (cfr. \hyperlink{Caratteristiche del linguaggio}{Caratteristiche del linguaggio}). Il primo costrutto
 permette di ``ispezionare" il valore di una singola espressione, per esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type Maybe a = Nothing | Just a
 
 val f : List a -> String
@@ -1756,7 +1778,7 @@ let f l =
         | Just _ -> "Ok_200"
 \end{lstlisting}
 Il secondo costrutto, invece, non agisce su un'espressione, ma sugli argomenti di altri costrutti, per esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 val f : Maybe a -> b -> String
 let f
     | Nothing _ -> "Error_404"
@@ -1811,12 +1833,12 @@ Come è stato già menzionato precedentemente, Fex espone due sintassi diverse p
 una delle quali può possedere un numero arbitrario di case-expressions. Tuttavia, il token che rappresenta un
 \textit{caso} del costrutto di pattern matching può avere solamente una \textit{matching expression} (come è stato menzionato
 in precedenza, è una notazione equivalente a una case-expression), la sua definizione si trova in \texttt{Compiler.Ast.Typed}:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 data NotedCase a = NotedCase (NotedMatchExpr a) (NotedExpr a) a
 \end{lstlisting}
 Questo rende necessaria una fase di desugaring che avviene subito dopo l'inferenza di un costrutto di pattern matching,
 quindi durante la fase di type-inference. Si consideri il seguente codice Fex:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type Maybe a = Nothing | Just a
 type Either a b = Left a | Right b
 
@@ -1828,7 +1850,7 @@ let f
 Dopo aver inferito il tipo dell'espressione legata ad \texttt{f}, vengono creati gli argomenti di \texttt{f}, i quali
 sono legati alle case expressions nell'espressione di pattern matching, siano essi \texttt{v1} e \texttt{v2}. Dopodiché,
 vengono utilizzati i costruttori delle tuple per creare le case expressions nel costrutto di pattern matching:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 let f v1 v2 =
     match (v1, v2) with
           (Nothing, _) -> 42
@@ -1862,14 +1884,14 @@ $ \{ \overline{\tau} / \overline{\alpha} \}D $ \textit{è soddisfatto} da uno o 
 soddisfabilità $ CS $.
 Di seguito è riportato in pseudo-codice l'algoritmo di soddisfabilità dei constraints, definito in
 \texttt{Compiler.Ast.Typed}. Esso si basa sull'unificazione \textit{strict}:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 isSatisfied(C => args, C' => args'):
     C == C' and
     areEq(args, args')
 \end{lstlisting}
 dove \texttt{areEq} è l'algoritmo che effettua il test di specializzazione tra i vari tipi di \texttt{args}
 e \texttt{args'}, eseguendo, successivamente, il test di uguaglianza tra mono-tipi:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 areEq(args, args'):
     match moreSpecOneByOne(args, args', []) with
         failure -> false
@@ -1895,13 +1917,13 @@ constraint $ C' $ se vale $ isSatisfied(C', C) $. Inoltre, dato il contesto di s
 diremo che $ C $ \textit{è soddisfatto} se esiste $ C' \in CS $ tale che $ C $ è soddisfatto da $ C' $.
 Si noti come, a causa dell'utilizzo dell'unificazione \textit{strict}, il test soddisfabilità tra constraints non sia
 commutativo. Si osservi il seguente esempio in Fex:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 property Foo a b c =
     <metodi>
 ;;
 \end{lstlisting}
 Supponiamo che esistano le seguenti istanze di \texttt{Foo}:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 Foo Char a b
 Foo Int Int Int
 Foo a String Int
@@ -1938,7 +1960,7 @@ la generalizzazione ed è questa la politica utilizzata da Fex. Rimangono alcune
 \end{enumerate}
 Per rispondere a entrambe le domande, mostriamo come avviene l'inferenza di tipo in Fex in presenza di constraints.
 Osserviamo il seguente esempio di codice Fex:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 property Foo a b c =
     val foo : a -> b -> c -> Char
 ;;
@@ -1976,7 +1998,7 @@ il constraint $ Foo \; a1 \; a2 \; a3 $ può essere aggiunto allo schema di tipo
 \texttt{f} avrà, quindi, il seguente tipo:
 \[ \forall a1, a2, a3. \; Foo \; a1 \; a2 \; a3 \Rightarrow a1 \rightarrow a2 \rightarrow a3 \rightarrow Char \]
 Si osservi ora quest'altro esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 property Bar a b =
     val bar : a -> b -> Char
 ;;
@@ -1998,7 +2020,7 @@ $ Foo \; a1 \; a2 \; b $ deve essere risolto in quanto la variabile di tipo $ b 
 
 \hypertarget{Risoluzione dei constraints}{\paragraph{Risoluzione dei constraints}}
 Per quanto riguarda la risoluzione dei constraints, essa corrisponde alla seguente operazione:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 solve(C, instances):
     any (fun C' -> isSatisfied(C, C')) in instances
 \end{lstlisting}
@@ -2046,7 +2068,7 @@ l'espressione e successivamente ``applicare" il type-hinting. Per quanto riguard
 viene ``scomposto" in più sotto-tipi che vengono utilizzati come type-hinting nell'inferenza dei casi ricorsivi. Tale
 scomposizione è definita sui tipi funzione ed è chiamata, all'interno del codice sorgente, operazione di
 \textit{unfolding}:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 unfoldType(ty):
     match ty with
         (ty1 -> ty2) -> ty1 : unfoldType ty2
@@ -2054,7 +2076,7 @@ unfoldType(ty):
 \end{lstlisting}
 Questa operazione è molto utile, ad esempio, nell'inferenza della lambda astrazione. Si osservi il seguente sorgente
 Fex:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 (lam x -> f x) : Char -> String
 \end{lstlisting}
 Il tipo \texttt{Char -> String} viene scomposto in \texttt{Char} e \texttt{String}. Nell'inferenza dell'argomento
@@ -2105,6 +2127,7 @@ questi mono-tipi possono essere specializzati. In questo modo, si può applicare
 \textbf{Var} ad ogni occorrenza di simbolo ricorsivo. L'istanziazione di un mono-tipo non rappresenta un problema
 in quanto le variabili libere non vengono istanziate. In questo caso, l'algoritmo di istanziazione corrisponde
 alla funzione identità.
+\newpage
 
 \hypertarget{Generazione del codice}{\section{Generazione del codice}}
 L'output dell'algoritmo di type inference è un \texttt{TypedProgram}, una tabella che mantiene i bindings tipati.
@@ -2151,7 +2174,7 @@ cambiando i nomi degli stessi metodi di istanze diverse
 (cfr. \hyperlink{Costruzione delle istanze}{Costruzione delle istanze}). Questa politica ha
 importanti implicazioni: innanzitutto, nelle espressioni del programma, i metodi delle istanze possono essere chiamati,
 ma essi possono essere nominati solamente tramite gli identificatori dei metodi delle proprietà. Ad esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 property Foo a =
     val foo : a -> a
 ;;
@@ -2166,7 +2189,7 @@ Come è stato già esposto in precedenza, il metodo \texttt{foo} dell'istanza \t
 diverso da \texttt{foo}. Tuttavia, \texttt{foo} compare nell'espressione legata a \texttt{f}. \`E necessario,
 quindi, un modo per trasformare, eventualmente, le occorrenze dei metodi di proprietà con i giusti metodi di istanza.
 Si pensi a quest'altro pezzo di codice Fex:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type Box a = Box a
 
 val g : Foo (Box a) => a -> Box a
@@ -2190,7 +2213,7 @@ sul blog di Jeremy Mikkola \hyperlink{bibl12}{[12]}. Si ripensi alla precedente 
 schema di tipo ha con sè dei predicati. In questo caso, durante la fase di type-inference, alla funzione \texttt{g}
 verrà aggiunto un parametro che corrisponderà al predicato \texttt{Foo (Box a)}, ovvero stiamo trattando il tipo di
 \texttt{g} come se fosse:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 val g : Foo (Box a) -> a -> Box a
 \end{lstlisting}
 \`E necessario estendere la definizione di tipo qualificato:
@@ -2209,12 +2232,12 @@ dove $ C $ è un constraint e $ v $ è l'identificatore di una variabile, detta 
 Al momento della generalizzazione,
 dai problemi di constraint non risolti vengono estratte le variabili associate, le quali diventano parte degli
 argomenti del binding. Ad esempio, l'implementazione della funzione \texttt{h} a livello di token tipati sarà:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 let h v1 x = g v1 x
 \end{lstlisting}
 dove \texttt{v1} è una variabile di dispatch. Le espressioni
 che contengono le variabili di dispatch sono definite in \texttt{Compiler.Ast.Typed}:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 data DispatchTok a =
       DispatchVar (NotedVar a) a
     | DispatchVal (OnlyConstraintScheme a) a
@@ -2256,7 +2279,7 @@ quindi l'algoritmo agisce ricorsivamente finché non esistono più implementazio
 
 \hypertarget{Lambda-astrazione}{\subsubsection{Lambda-astrazione}}
 Riportiamo la definizione di binding:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 type BindingSingleton a = (NotedVar a, [NotedVar a], NotedExpr a)
 \end{lstlisting}
 Come si può notare dalla definizione, un binding è una tripla costituita da un identificatore, degli argomenti e
@@ -2268,7 +2291,7 @@ vengono trattati come argomenti di un costrutto di lambda-astrazione
 
 \hypertarget{Rimozione del pattern matching profondo}{\subsubsection{Rimozione del pattern matching profondo}}
 Si consideri il seguente sorgente Fex:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 type Success = Ok200
 type Error = Undefined | Err401 | Err404 | Err500
 type ErrType = ServerError | ClientError
@@ -2285,7 +2308,8 @@ let f x =
         | Just _ -> Just ServerError
 \end{lstlisting}
 Il codice relativo alla funzione \texttt{f} è semanticamente equivalente a:
-\begin{lstlisting}
+\newpage
+\begin{lstlisting}[style=fex]
 let f x =
     match x with
           Nothing -> Just ServerError
@@ -2317,7 +2341,7 @@ entrare nei dettagli di questa fase,
 è necessario definire cosa sono le \textit{variabili di scrutinio} o più semplicemente \textit{scrutini}. Sia
 $ match \; e \; with \; m_1 \rightarrow e_1 \; ... \; m_n \rightarrow e_n $ un'espressione di pattern matching,
 chiameremo \textit{scrutinio} la variabile legata direttamente al valore dell'espressione $ e $. Ad esempio:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 let f x y =
     match g x y with
           Just v -> Just (v + y)
@@ -2327,7 +2351,7 @@ let f x y =
 Nell'espressione legata ad \texttt{f}, le variabili di scrutinio sono \texttt{a} e \texttt{b}, mentre la variabile
 \texttt{v} non lo è. Ciò che avviene nella fase di desugaring è la trasformazione delle case-expressions in modo che
 una sola variabile di scrutinio venga utilizzata, quindi il codice Fex precedentemente mostrato diventerà:
-\begin{lstlisting}
+\begin{lstlisting}[style=fex]
 let f x y =
     match g x y with
           Just v -> Just (v + y)
@@ -2335,6 +2359,7 @@ let f x y =
         | v1 -> v1
 \end{lstlisting}
 Si noti che le variabili delle sotto-espressioni vengono opportunamente aggiornate.
+\newpage
 
 \hypertarget{Generazione del codice Core}{\subsection{Generazione del codice Core}}
 Core è un linguaggio minimale utilizzato da GHC come rappresentazione intermedia di Haskell. La generazione
@@ -2345,7 +2370,7 @@ Fex è costruire dei token tipati e manipolarli in modo che la traduzione dal pr
 Core sia più lineare possibile. GHC espone al cliente delle API che permettono di utilizzare le funzionalità del
 compilatore \hyperlink{bibl14}{[14]}, comprese quelle per creare e manipolare un programma Core. Di seguito vi è il tipo
 di dato algebrico utilizzato nelle API di GHC per rappresentare un'espressione Core:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 data Expr b
   = Var   Id
   | Lit   Literal
@@ -2375,7 +2400,7 @@ rappresenta
 un'espressione Core, mentre l'alias di tipo \texttt{Alt} rappresenta un \textit{caso} del costrutto di pattern matching.
 Il tipo \texttt{Bind}, invece, rappresenta i bindings di Core.
 L'obiettivo finale è costruire un token \texttt{CoreProgram}:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 type CoreProgram = [CoreBind]
 
 type CoreBind = Bind CoreBndr
@@ -2392,12 +2417,12 @@ successivamente trasformati in token Core nel modo più lineare possibile. Alcun
     \hyperlink{Approccio a tabelle}{Approccio a tabelle});
     \item i costrutti di pattern matching, dopo le varie fasi di desugaring, non possiedono costruttori innestati nelle
     case expressions, come si può notare dal costruttore di un \textit{caso} in Core:
-    \begin{lstlisting}
+    \begin{lstlisting}[style=haskell]
 type Alt b = (AltCon, [b], Expr b)
     \end{lstlisting}
     dove la variabile di tipo \texttt{b} rappresenterà una variabile Core (\texttt{CoreBndr});
     \item il costrutto di pattern matching di Core richiede come secondo parametro una variabile di scrutinio:
-    \begin{lstlisting}
+    \begin{lstlisting}[style=haskell]
 | Case  (Expr b) b Type [Alt b]
     \end{lstlisting}
     Il fatto che gli scrutini siano stati tutti unificati
@@ -2431,6 +2456,7 @@ necessario avere a disposizione i data-constructors associati, mentre per costru
 disposizione il costruttore di tipo associato. La conseguenza è la scrittura di codice mutualmente ricorsivo, tuttavia,
 si ricordi che Haskell è un linguaggio con un modello di valutazione delle espressioni \textit{lazy} e questo aiuta a
 prevenire la ricorsione infinita in codice mutualmente ricorsivo.
+\newpage
 
 \hypertarget{Back-end}{\subsection{Back-end}}
 La fase finale di compilazione di un programma Fex consiste nel compilare un programma Core in target differenti.
@@ -2465,6 +2491,7 @@ I tre target principali sono:
     \item Codice Assembly specifico di una macchina;
     \item Codice Llvm, portabile e ottimizzato per molte architetture.
 \end{itemize}
+\newpage
 
 \hypertarget{Sviluppi futuri}{\section{Sviluppi futuri}}
 Fex è un linguaggio sperimentale in evoluzione. Vi sono alcune \textit{features} che arricchiscono il linguaggio che
@@ -2515,7 +2542,7 @@ una volta, allora, per definizione, \texttt{x} e \texttt{y} vengono consumati es
 
 Questo sistema di tipi può portare, tuttavia, ad alcuni problemi. Si pensi, come viene mostrato in un esempio in
 \hyperlink{bibl20}{[20]}, alla seguente implementazione della funzione \texttt{map} di Haskell:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 map _ [] = []
 map f (x : t) = f x : map f t
 \end{lstlisting}
@@ -2690,7 +2717,7 @@ altre fonti.
 Come mostra Garrigue in \hyperlink{bibl24}{[24]}, uno dei vantaggi principali delle varianti polimorfe è quello già
 citato precedentemente: dopo aver fissato un tipo di dato, estendere le API dei costruttori del tipo di dato. Si osservi il
 seguente pseudo-codice:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 type HttpCode = Ok200 | Err404 | Err500
 \end{lstlisting}
 dove \texttt{HttpCode} è un tipo e \texttt{Ok200}, \texttt{Err404} e \texttt{Err500} sono data-constructors associati
@@ -2701,7 +2728,8 @@ sviluppando il codice per un server http e, inizialmente, rappresenti i codici d
 codice di risposta è definire a priori \texttt{HttpCode} con tutti i possibili codici di risposta http. \`E chiaro che è una
 soluzione parecchio onerosa per l'utente e molti dei codici potrebbero rimanere inutilizzati. Inoltre,
 alcune funzioni implementate nel codice del server potrebbero gestire insiemi molto ristretti di codici http, ad esempio:
-\begin{lstlisting}
+\newpage
+\begin{lstlisting}[style=none]
 let handleReq json =
     let res = process(json);
     lookupAndSend res
@@ -2718,7 +2746,7 @@ let server =
 \end{lstlisting}
 Sarebbe veramente tedioso per l'utente fare pattern matching nella funzione \texttt{lookupAndSend} su tutti i codici
 http esistenti. Utlizzando le varianti polimorfe, possiamo isolare i casi da gestire per \texttt{lookupAndSend}:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 val lookupAndSend : ({< `Ok200, `Err404, `Err500}, String) -> HttpAction ()
 let lookupAndSend res =
     match res with
@@ -2728,13 +2756,13 @@ let lookupAndSend res =
 \end{lstlisting}
 Utilizziamo la sintassi \texttt{\{< `Ok200, `Err404, `Err500\}} per indicare che il tipo è polimorfo (anche in assenza
 di variabili di tipo) e che può essere ristretto in seguito. Supponiamo di avere poi il seguente pezzo di codice:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 val possibleRes : List {> `Ok200, `Err404, `Err500}
 let possibleRes = [`Ok200, `Err404, `Err500]
 \end{lstlisting}
 Anche in questo caso, il tipo \texttt{\{> `Ok200, `Err404, `Err500\}} è polimorfo, ma, a differenza di prima, questo
 tipo può essere esteso con altri varianti polimorfe. Successivamente, l'utente potrebbe aggiungere il seguente codice:
-\begin{lstlisting}
+\begin{lstlisting}[style=none]
 val defaultRes : List {> `Err400, `Tmp307, `Ok200, `Err404, `Err500}
 let defaultRes = [`Err400, `Tmp307] ++ possibleRes
 \end{lstlisting}
@@ -2772,7 +2800,7 @@ analizzando eventuali vantaggi e svantaggi:
     ``alto livello": un mapping dalle varianti polimorfe alle type-classes di Haskell. Questa soluzione, come vedremo, è
     piuttosto ``elegante" in quanto non è necessario estendere il linguaggio, tuttavia, presenta qualche ostacolo.
     Presentiamo, prima di tutto, la sintassi scelta da Kagawa \hyperlink{bibl25}{[25]}:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 variant cs => a in VariantName ts where
     Constr_1 :: ty_11 -> ... -> ty_1n -> a
     ...
@@ -2786,11 +2814,11 @@ variant cs => a in VariantName ts where
     Il costrutto per definire una variante subisce la seguente trasformazione:
     \newline
     prima:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 variant cs => a in VariantName ts
 \end{lstlisting}
     dopo:
-\begin{lstlisting}
+\begin{lstlisting}[style=haskell]
 class cs => VariantName a ts | a -> ts
 \end{lstlisting}
     Come si nota dal codice, sono state utilizzate due estensioni (le quali hanno buon supporto da parte dei compilatori
@@ -2801,6 +2829,7 @@ class cs => VariantName a ts | a -> ts
     (escludendo la modifica all'algoritmo di inferenza di tipo) in codice Haskell, quindi, risulta essere solamente
     zucchero sintattico.
 \end{itemize}
+\newpage
 
 \section{Conclusione}
 Il paradigma funzionale permette, in generale, la scrittura di codice componibile e dichiarativo e ciò comporta una
@@ -2817,6 +2846,7 @@ funzionale puro, inteso come in grado di isolare le computazioni deterministiche
 sistema di tipi stesso.
 Quest'ultimo obiettivo non è stato raggiunto, in quanto il sistema di tipi risulta, al momento, meno espressivo rispetto a
 quello di Haskell.
+\newpage
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
@@ -2852,7 +2882,7 @@ quello di Haskell.
     \item \hypertarget{bibl10} Definizione di ClsInst in GHC, version 8.10.7 - url:
     \url{https://hackage.haskell.org/package/ghc-8.10.7/docs/InstEnv.html#t:ClsInst} - ultima visita: 21/02/2023
     %[11]
-    \item \hypertarget{bibl11} Monomorphization - url:
+    \item \hypertarget{bibl11} Monomorphization - \newline url:
     \url{https://doc.rust-lang.org/book/ch10-01-syntax.html#performance-of-code-using-generics} - ultima visita: 21/02/2023
     %[12]
     \item \hypertarget{bibl12} Type inference for Haskell, part 15 - url:
@@ -2877,7 +2907,7 @@ quello di Haskell.
     \item \hypertarget{bibl18} DataCon, version 8.10.7 - url: \url{https://hackage.haskell.org/package/ghc-8.10.7/docs/DataCon.html} -
     ultima visita: 21/02/2023
     %[19]
-    \item \hypertarget{bibl19} GHC Commentary: The Compiler - url: \url{https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/compiler/} -
+    \item \hypertarget{bibl19} GHC Commentary: The Compiler - \newline url: \url{https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/compiler/} -
     ultima visita: 21/02/2023
     %[20]
     \item \hypertarget{bibl20} Jean-Philippe Bernardy, Mathieu Boespflug, Ryan R. Newton, Simon Peyton Jones, Arnaud Spiwack - Linear Haskell -
