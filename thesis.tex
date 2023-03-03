@@ -182,7 +182,10 @@ Prima di presentare l'articolo, è necessario fare alcune precisazioni utili all
         Haskell in vari target di compilazione.
     \end{enumerate}
     Nell'ultima parte, vengono mostrati alcuni possibili sviluppi futuri di Fex, presentando le eventuali nuove caratteristiche
-    e le possibili implementazioni nel compilatore Fex.
+    e le possibili implementazioni nel compilatore Fex;
+    \item nel corso dell'articolo, verranno mostrati degli schemi che raffigurano la struttura del compilatore. In generale,
+    le freccie continue rappresentano una fase del compilatore, mentre le freccie tratteggiate rappresentano una
+    dipendenza.
 \end{itemize}
 
 \subsection{Haskell e System-F come modelli}
@@ -388,29 +391,27 @@ instance Show ErrorHttpCodes =
 
 \subsection{Il compilatore}
 \begin{tikzpicture}[node distance=2cm]
-\node (src) [object] {Codice sorgente};
-\node (parser) [process, below of=src] {Parser};
-\draw [arrow] (src) -- (parser);
-\node (checker) [process, below of=parser] {Checker della correttezza};
-\draw [arrow] (parser) -- (checker);
-\node (typedBuilder) [process, below of=checker] {Costruzione dei token tipati};
-\draw [arrow] (checker) -- (typedBuilder);
-\node (prepare) [process, below of=typedBuilder] {Preparazione alla type inference};
-\draw [arrow] (typedBuilder) -- (prepare);
-\node (typeInf) [process, below of=prepare] {Type inference - type checking};
-\draw [arrow] (prepare) -- (typeInf);
-\node (CoreGen) [process, below of=typeInf] {Generazione codice Core};
-\draw [arrow] (typeInf) -- (CoreGen);
-\node (backend) [process, below of=CoreGen] {Back-end};
-\draw [arrow] (CoreGen) -- (backend);
-\node (exe) [process, below of=backend] {Eseguibile};
-\draw [arrow] (backend) -- (exe);
+\node (src) [process] {Codice sorgente};
+\node (ast) [process, below of=src] {Albero di sintassi astratta};
+\draw [arrow] (src) --node[anchor=east] {Parser} (ast);
+\node (desast) [process, below of=ast] {Albero di sintassi astratta};
+\draw [arrow] (ast) -- node[anchor=east] {Checker della correttezza} coordinate[pos=0.5] (correct) (desast);
+\node (tables) [process, below of=desast] {Tabelle dei simboli};
+\draw [arrow] (desast) --node[anchor=east] {Costruzione dei token tipati} coordinate[pos=0.5] (tytok) (tables);
+\node (preptables) [process, below of=tables] {Tabelle dei simboli};
+\draw [arrow] (tables) --node[anchor=east] {Preparazione alla type-inference} coordinate[pos=0.5] (prepare) (preptables);
+\node (tyinftables) [process, below of=preptables] {Programma tipato - Tabelle dei simboli};
+\draw [arrow] (preptables) --node[anchor=east] {Type-inference} coordinate[pos=0.5] (tyinf) (tyinftables);
+\node (Core) [process, below of=tyinftables] {Programma Core};
+\draw [arrow] (tyinftables) --node[anchor=east] {Generazione codice Core} coordinate[pos=0.5] (gen) (Core);
+\node (final) [process, below of=Core] {Codice di basso livello};
+\draw [arrow] (Core) --node[anchor=east] {Backend} (final);
 \node (desugar) [process, right of=prepare, xshift=7cm] {Desugaring};
-\draw [arrow] (desugar) -- (checker);
-\draw [arrow] (desugar) -- (typedBuilder);
-\draw [arrow] (desugar) -- (prepare);
-\draw [arrow] (desugar) -- (typeInf);
-\draw [arrow] (desugar) -- (CoreGen);
+\draw [dashed] [arrow] (correct) -| (desugar);
+\draw [dashed] [arrow] (tytok) -- (desugar);
+\draw [dashed] [arrow] (prepare) -- (desugar);
+\draw [dashed] [arrow] (tyinf) -- (desugar);
+\draw [dashed] [arrow] (gen) -| (desugar);
 \end{tikzpicture}
 \newline
 
@@ -449,17 +450,17 @@ Di seguito vi è lo schema della prima parte del compilatore: \newline
 \begin{tikzpicture}[node distance=2cm]
 \node (src) [object] {Codice sorgente};
 \node (rawast) [object, below of=src] {Albero di sintassi astratta};
-\draw [arrow] (src) -- node[anchor=west] {Parser} (rawast);
+\draw [arrow] (src) -- node[anchor=east] {Parser} (rawast);
 \node (rawastBuiltin) [object, below of=rawast] {Albero di sintassi astratta};
-\draw [arrow] (rawast) -- node[anchor=west] {Aggiunta token built-in} (rawastBuiltin);
+\draw [arrow] (rawast) -- node[anchor=east] {Aggiunta token built-in} (rawastBuiltin);
 \node (rawastNames) [object, below of=rawastBuiltin] {Albero di sintassi astratta};
-\draw [arrow] (rawastBuiltin) -- node[anchor=west] {Check esistenza dei nomi} (rawastNames);
+\draw [arrow] (rawastBuiltin) -- node[anchor=east] {Check esistenza dei nomi} (rawastNames);
 \node (rawastArgs) [object, below of=rawastNames] {Albero di sintassi astratta};
-\draw [arrow] (rawastNames) -- node[anchor=west] {Check numero degli argomenti} (rawastArgs);
+\draw [arrow] (rawastNames) -- node[anchor=east] {Check numero degli argomenti} (rawastArgs);
 \node (rawastAlias) [object, below of=rawastArgs] {Albero di sintassi astratta};
-\draw [arrow] (rawastArgs) -- node[anchor=west] {Sostituzione degli alias di tipo} (rawastAlias);
-\node (desugar) [object, right of=rawastAlias, xshift=7cm] {Desugaring};
-\draw [arrow] (desugar) -- (rawastAlias);
+\draw [arrow] (rawastArgs) -- node[anchor=east] {Sostituzione degli alias di tipo} coordinate[pos=0.5] (aliasSubst) (rawastAlias);
+\node (desugar) [object, right of=aliasSubst, xshift=6cm] {Desugaring};
+\draw [dashed] [arrow] (aliasSubst) -- (desugar);
 \end{tikzpicture}
 
 \hypertarget{Il parser}{\subsection{Il parser}}
@@ -675,15 +676,15 @@ livello, compare la nozione di tipo del linguaggio.
 \node (contsTable) [object, below of=consTable] {Tabella dei constraints o predicati};
 \draw [arrow] (consTable) -- node[anchor=east] {Costruzione dei constraints} (contsTable);
 \node (instances) [object, below of=contsTable] {Tabelle di: metodi di proprietà; metodi di istanza; istanze};
-\draw [arrow] (contsTable) -- node[anchor=east] {Valutazione delle istanze di proprietà} (instances);
+\draw [arrow] (contsTable) -- node[anchor=east] {Valutazione delle istanze di proprietà} coordinate[pos=0.5] (insteval) (instances);
 \node (bindings) [object, below of=instances] {Bindings dell'AST pronti per la type-inference};
-\draw [arrow] (instances) -- node[anchor=east] {``Preparazione" alla type-inference} (bindings);
+\draw [arrow] (instances) -- node[anchor=east] {``Preparazione" alla type-inference} coordinate[pos=0.5] (prep) (bindings);
 \node (tyBindings) [object, below of=bindings] {Bindings tipati};
-\draw [arrow] (bindings) -- node[anchor=east] {type-inference} (tyBindings);
-\node (desugar) [object, right of=bindings, xshift=6cm] {Desugaring};
-\draw [arrow] (desugar) -- (instances);
-\draw [arrow] (desugar) -- (bindings);
-\draw [arrow] (desugar) -- (tyBindings);
+\draw [arrow] (bindings) -- node[anchor=east] {type-inference} coordinate[pos=0.5] (tyinf) (tyBindings);
+\node (desugar) [object, right of=prep, xshift=6cm] {Desugaring};
+\draw [dashed] [arrow] (insteval) -| (desugar);
+\draw [dashed] [arrow] (prep) -- (desugar);
+\draw [dashed] [arrow] (tyinf) -| (desugar);
 \end{tikzpicture}
 
 \hypertarget{Approccio a tabelle}{\subsection{Approccio a tabelle}}
@@ -1675,7 +1676,6 @@ Nell'inferenza di questo costrutto, l'argomento $ x $ ha come tipo una nuova var
 successivamente applicata la sostituzione derivante dall'inferenza dell'espressione $ e $. Dalla regola, si rende evidente
 la necessità di un tipo che consista nella ``mappatura" di un tipo verso un altro tipo.
 
-%TODO: cfh
 \hypertarget{Inferenza del costrutto ``let..in"}{\subsubsection{Inferenza del costrutto ``let..in"}}
 Prima di presentare la regola di inferenza, è necessario introdurre la regola di \textit{generalizzazione}:
 \[ \infer[\textbf{Gen}]{\Gamma \vdash_W e : \forall \alpha. \; \tau}{\Gamma \vdash_W e : \tau & \alpha \notin free(\Gamma)} \]
@@ -1762,12 +1762,18 @@ let f
     | (Just _) _ -> "Ok_200"
 \end{lstlisting}
 In qualsiasi caso, vi sono sempre uno o più valori da ispezionare e uno o più casi, i quali sono costituiti da una o più
-\textit{case expressions} a sinistra della freccia (nel codice, spesso vengono nominate come \textit{matching expressions})
+\textit{case expressions} (o \textit{pattern}) a sinistra della freccia (nel codice, spesso vengono nominate come
+\textit{matching expressions})
 e un'espressione di ritorno a destra della freccia. Quindi abbiamo un costrutto della forma:
 \[ match \; val_1 \; ... \; val_n \; with \; case_1 \; ... \; case_m \]
 dove $ val_i $ è un token che definiamo come \textit{token top-level} o \textit{token di scrutinio} e
 $ case_j $, che chiameremo semplicemente \textit{caso}, ha la forma:
-\[ me_{1j}, \; ... \; me_{nj} \rightarrow e_j \]
+\[ me_{1j} \; ... \; me_{nj} \rightarrow e_j \]
+Prima di presentare l'algoritmo di inferenza, è necessario introdurre la nozione di tipo di un caso. Il costrutto del
+caso si divide in due parti: i pattern e l'espressione a destra della freccia. Dato che i pattern sono legati ai token di
+scrutinio, si ha che il costrutto del caso ha
+due componenti che devono essere tipate indipendentemente l'una dall'altra:
+\[ me_{1j} : ty_{1j} \; ... \; me_{nj} : ty_{nj} \rightarrow e_j : tyExpr_j \]
 L'algoritmo di inferenza di tale costrutto è il seguente:
 \begin{itemize}
     \item inferisci $ val_i $, applica le sostituzioni all'ambiente di tipizzazione e poi fai lo stesso con $ val_{i+1} $,
@@ -1775,30 +1781,33 @@ L'algoritmo di inferenza di tale costrutto è il seguente:
     \item nell'inferenza dei casi, dovrà valere:
         \[ \forall j. \; typeOf(val_i) \sqsubseteq typeOf(me_{ij}) \]
     ovvero le case expressions non potranno avere un tipo più generale dei corrispondenti token di scrutinio;
-    \item nell'inferenza dei casi, è necessario tener traccia dei tipi dei casi già inferiti in precedenza, in
-    quanto non sempre dai casi precedenti si inferisce il tipo più specializzato tra tutti i casi $ case_j $, quindi,
-    i casi già inferiti verrano mantenuti;
+    \item nell'inferenza dei casi, è necessario tener traccia dei tipi dei casi già inferiti in precedenza per due motivi:
+    \begin{enumerate}
+        \item per quanto riguarda i pattern, deve valere la condizione al punto (2);
+        \item per quanto riguarda le espressioni $ e_j $, non sempre nei casi precedenti si riesce ad inferire il tipo più
+        specializzato tra tutte le espressioni $ e_j $;
+    \end{enumerate}
     \item inferisci $ case_j $, applica le sostituzioni all'ambiente di tipizzazione e ai casi precedenti, poi passa
-    a $ case_{j+1} $;
+    a $ case_{j+1} $:
     \begin{itemize}
         \item nell'inferenza del caso j-esimo, il quale avrà la forma $ me_{1j} \; ... \; me_{nj} \rightarrow e_j $,
         verranno inferite, una alla volta, le case expressions $ me_{ij} $;
         \item inferisci come se fosse un argomento di una lambda astrazione $ me_{ij} $ la quale avrà mono-tipo $ \tau $,
-        trova il tipo dell'i-esima case expression nei casi precedenti, sia esso $ \tau' $, poi effettua
-        l'unificazione tra $ \tau $ e $ \tau' $ e applica le sostituzioni
+        trova il tipo dell'i-esima case-expression nei casi precedenti, sia esso $ \tau' $, poi effettua
+        l'unificazione tra $ \tau $ e $ \tau' $. Applica le sostituzioni
         all'ambiente di tipizzazione e ai casi precedenti, poi continua con $ me_{i+1j} $ finché non termina la lista di
-        case expressions;
+        case-expressions;
         \item inferisci $ e_j $, la quale avrà mono-tipo $ \tau $, trova il tipo delle espressioni dei casi, sia esso
         $ \tau' $, effettua l'unificazione tra $ \tau $ e $ \tau' $ e applica le sostituzioni all'ambiente di tipizzazione
         e ai casi precedenti.
     \end{itemize}
 \end{itemize}
 
-\hypertarget{Eliminazione del pattern matching ``in larghezza"}{\paragraph{Eliminazione del pattern matching ``in larghezza"}}
+\hypertarget{Eliminazione degli scrutini multipli}{\paragraph{Eliminazione degli scrutini multipli}}
 Come è stato già menzionato precedentemente, Fex espone due sintassi diverse per effettuare il pattern matching,
 una delle quali può possedere un numero arbitrario di case-expressions. Tuttavia, il token che rappresenta un
-\textit{caso} del costrutto di pattern matching può avere solamente una \textit{matching expression} (equivalente
-a una case expression), la sua definizione si trova in \texttt{Compiler.Ast.Typed}:
+\textit{caso} del costrutto di pattern matching può avere solamente una \textit{matching expression} (come è stato menzionato
+in precedenza, è una notazione equivalente a una case-expression), la sua definizione si trova in \texttt{Compiler.Ast.Typed}:
 \begin{lstlisting}
 data NotedCase a = NotedCase (NotedMatchExpr a) (NotedExpr a) a
 \end{lstlisting}
@@ -1823,7 +1832,8 @@ let f v1 v2 =
         | (Just x, Left y) -> x + y
         | (_, Right y) -> y
 \end{lstlisting}
-Questo metodo ha una limitazione, ovvero non può superare il numero di argomenti massimo di un costruttore di una tupla
+Questo metodo ha una limitazione, ovvero il numero di pattern non può superare il numero di argomenti massimo di un
+costruttore di una tupla
 di Haskell, quindi è dipendente da esso. Di solito il costruttore di tuple ``più grande" in Haskell ha 62 argomenti, quindi
 questa limitazione viene accettata, in quanto difficilmente l'utente definisce funzioni con più di 62 argomenti, tuttavia,
 non è escluso che in futuro questa implementazione venga migliorata. \`E bene menzionare che vi è questa dipendenza da
@@ -1913,15 +1923,15 @@ viene utilizzato. Lo indicheremo con $ \Omega $.
 
 Indipendentemente dalle regole \textbf{Inst} e \textbf{Gen} ridefinite, è necessario fissare un comportamento che
 riguarda le altre regole di inferenza. In particolare, è necessario decidere il momento in cui viene eseguito l'algoritmo
-di soddisfabilità dei constraints presenti in $ \Omega $. Questa azione è detta anche \textit{normalizzazione}.
-In \hyperlink{bibl2}{[2]}, vi è la proposta di nuove regole di inferenza in cui la normalizzazione viene effettuata alla
-fine delle premesse di ogni regola di inferenza, eccetto quella della lambda-astrazione, in cui la normalizzazione non viene
+di soddisfabilità dei constraints presenti in $ \Omega $. Questa azione è detta anche \textit{risoluzione dei constraints}.
+In \hyperlink{bibl2}{[2]}, vi è la proposta di nuove regole di inferenza in cui la risoluzione viene effettuata alla
+fine delle premesse di ogni regola di inferenza, eccetto quella della lambda-astrazione, in cui la risoluzione non viene
 effettuata affatto. Tuttavia, sempre nell'articolo,
-vi è un'ulteriore proposta nella quale la normalizzazione viene effettuata in maniera \textit{lazy}, ovvero appena dopo
-la generalizzazione ed è questa la politica utilizzata da Fex. Rimangono alcune questione aperte:
+vi è un'ulteriore proposta nella quale la risoluzione viene effettuata in maniera \textit{lazy}, ovvero appena dopo
+la generalizzazione ed è questa la politica utilizzata da Fex. Rimangono alcune questioni aperte:
 \begin{enumerate}
     \item quand'è che un predicato viene aggiunto a $ \Omega $?
-    \item quali sono i constraints (se esistono) da normalizzare dopo che è stata effettuata la generalizzazione?
+    \item quali sono i constraints (se esistono) da risolvere dopo che è stata effettuata la generalizzazione?
 \end{enumerate}
 Per rispondere a entrambe le domande, mostriamo come avviene l'inferenza di tipo in Fex in presenza di constraints.
 Osserviamo il seguente esempio di codice Fex:
@@ -1935,9 +1945,10 @@ let f x y z = foo x y z
 Andando a inferire l'espressione legata ad \texttt{f}, un token che viene incontrato è \texttt{foo}. Il suo schema di
 tipo associato è $ \forall a, b, c. \; Foo \; a \; b \; c \Rightarrow a \mapsto b \mapsto c \mapsto Char $. A questo
 punto, si può applicare la regola \textbf{Var}, che, a sua volta, applica la regola
-\textbf{Inst}. Si ricordi che la politica di Fex sulla normalizzazione è \textit{lazy}, perciò
-il constraint $ Foo \; a \; b \; c $ non viene normalizzato immediatamente, bensì viene aggiunto all'ambiente dei
-problemi di constraints. $ \Omega $ si rende quindi necessario proprio a questo fine, ovvero ritardare la normalizzazione.
+\textbf{Inst}. Si ricordi che la politica di Fex sulla risoluzione dei constraints è \textit{lazy}, perciò
+il constraint $ Foo \; a \; b \; c $ non viene risolto immediatamente, bensì viene aggiunto all'ambiente dei
+problemi di constraints. $ \Omega $ si rende quindi necessario proprio a questo fine, ovvero ritardare la risoluzione dei
+constraints.
 \`E bene notare che esso non compare nelle regole di inferenza; questo è possibile in quanto la politica \textit{lazy}
 può essere considerata come \textit{side-effect} che non cambia la semantica della valutazione dei constraints.
 Quindi la conclusione della regola \textbf{Var} in questo caso sarà semplicemente:
@@ -1951,13 +1962,13 @@ ambiente di tipizzazione:
 Applicando la regola \textbf{Let}, si applica anche la regola \textbf{Gen}; in questo caso, l'unico constraint
 nel contesto è $ Foo \; a1 \; a2 \; a3 $ e il mono-tipo da generalizzare associato a \texttt{f} è
 $ \tau = a1 \mapsto a2 \mapsto a3 \mapsto Char $. Rimane da decidere quando un constraint deve essere aggiunto allo
-schema e quando, eventualmente, deve essere normalizzato. Innanzitutto, è necessario osservare le variabili libere
+schema e quando, eventualmente, deve essere risolto. Innanzitutto, è necessario osservare le variabili libere
 del mono-tipo $ \tau $, siano esse $ \overline{\alpha} = free(\tau) $. Un constraint $ C $ viene aggiunto allo schema
 di tipo se:
 \[ free(C) \subseteq \overline{\alpha} \wedge free(C) \neq \emptyset \]
 La prima condizione richiede che tutte le variabili libere nel constraint siano presenti anche nel mono-tipo, mentre
 la seconda condizione previene l'occorrenza di constraints senza variabili di tipo. Nel caso in cui la condizione non
-venga rispettata, il constraint $ C $ deve essere normalizzato. Tornando all'esempio precedente, si ha che
+venga rispettata, il constraint $ C $ deve essere risolto. Tornando all'esempio precedente, si ha che
 il constraint $ Foo \; a1 \; a2 \; a3 $ può essere aggiunto allo schema di tipo che verrà generato.
 \texttt{f} avrà, quindi, il seguente tipo:
 \[ \forall a1, a2, a3. \; Foo \; a1 \; a2 \; a3 \Rightarrow a1 \mapsto a2 \mapsto a3 \mapsto Char \]
@@ -1980,12 +1991,12 @@ e al mono-tipo da generalizzare:
 Al momento della generalizzazione, si ha che:
 \[ free(Foo \; a1 \; a2 \; b) \not\subseteq free(\tau) \wedge free(Bar \; a1 \; a2) \subseteq free(\tau) \]
 Di conseguenza, il constraint $ Bar \; a1 \; a2 $ può essere aggiunto allo schema di tipo, mentre
-$ Foo \; a1 \; a2 \; b $ deve essere normalizzato in quanto la variabile di tipo $ b $ non compare nel mono-tipo $ \tau $.
+$ Foo \; a1 \; a2 \; b $ deve essere risolto in quanto la variabile di tipo $ b $ non compare nel mono-tipo $ \tau $.
 
-\hypertarget{Normalizzazione}{\paragraph{Normalizzazione}}
-Per quanto riguarda la normalizzazione, essa corrisponde alla seguente operazione:
+\hypertarget{Risoluzione dei constraints}{\paragraph{Risoluzione dei constraints}}
+Per quanto riguarda la risoluzione dei constraints, essa corrisponde alla seguente operazione:
 \begin{lstlisting}
-normalize(C, instances):
+solve(C, instances):
     any (fun C' -> isSatisfied(C, C')) in instances
 \end{lstlisting}
 Tuttavia, è necessario perfezionare l'implementazione, in quanto, al momento, non è possibile selezionare l'istanza
@@ -2003,7 +2014,7 @@ siano $ C $ e $ C' $ due constraints:
     \item se $ \neg(isSatisfied(C, C')) \wedge \neg(isSatisfied(C', C)) $, allora la relazione d'ordine è indefinita.
 \end{itemize}
 dove l'operatore $ \neg $ è la naturale negazione booleana. Di seguito, vi è definito l'algoritmo di selezione dell'istanza
-ispirato da [13]:
+ispirato da \hyperlink{bibl13}{[13]}:
 \begin{enumerate}
     \item l'input è una sequenza $ cs $ di constraints;
     \item scarta da $ cs $ tutti quei constraints $ c $ tali che esiste $ c' \in cs $ che non sia $ c $ e tale che
@@ -2080,6 +2091,9 @@ che riguarda i bindings ricorsivi:
 dove:
 \[ \Gamma' = v_1 : \tau_1, ..., v_n : \tau_n \]
 \[ \Gamma'' = v_1 : \overline{\Gamma}(\tau_1), ..., v_n : \overline{\Gamma}(\tau_n) \]
+La notazione $ \overline{\Gamma}(\tau) $ è stata definita nella sezione
+\hyperlink{Inferenza del costrutto ``let..in"}{Inferenza del costrutto ``let..in"} e indica la generalizzazione del
+mono-tipo $ \tau $, tenendo conto delle variabili libere presenti in $ \Gamma $.
 La regola inferisce prima tutte le espressioni $ e_i $ e poi applica la regola di generalizzazione \textbf{Gen} soltanto
 alla fine. Nell'algoritmo di inferenza di Fex, prima di inferire un cluster di bindings ricorsivi, vengono creati
 nuovi mono-tipi della forma di singole variabili di tipo, i quali vengono assegnati ai bindings del cluster.
@@ -2103,22 +2117,22 @@ Di seguito, lo schema delle fasi finali del compilatore:
 \begin{tikzpicture}[node distance=2cm]
 \node (typedProg) [object] {Bindings tipati};
 \node (staticDispatch) [object, below of=typedProg] {Bindings tipati};
-\draw [arrow] (typedProg) -- node[anchor=east] {Dispatch statico} (staticDispatch);
+\draw [arrow] (typedProg) -- node[anchor=east] {Dispatch statico} coordinate[pos=0.5] (dispatch) (staticDispatch);
 \node (lambdas) [object, below of=staticDispatch] {Bindings tipati};
-\draw [arrow] (staticDispatch) -- node[anchor=east] {Lambda-astrazione} (lambdas);
+\draw [arrow] (staticDispatch) -- node[anchor=east] {Lambda-astrazione} coordinate[pos=0.5] (abs) (lambdas);
 \node (deepPm) [object, below of=lambdas] {Bindings tipati};
-\draw [arrow] (lambdas) -- node[anchor=east] {Rimozione del pattern matching ``profondo"} (deepPm);
+\draw [arrow] (lambdas) -- node[anchor=east] {Rimozione del pattern matching ``profondo"} coordinate[pos=0.5] (rmpm) (deepPm);
 \node (scrutinee) [object, below of=deepPm] {Bindings tipati};
-\draw [arrow] (deepPm) -- node[anchor=east] {Unificazione degli scrutini} (scrutinee);
+\draw [arrow] (deepPm) -- node[anchor=east] {Unificazione degli scrutini} coordinate[pos=0.5] (unify) (scrutinee);
 \node (coreGen) [object, below of=scrutinee] {Sintassi Core};
 \draw [arrow] (scrutinee) -- node[anchor=east] {Generazione della sintassi Core} (coreGen);
 \node (backend) [object, below of=coreGen] {Codice finale};
 \draw [arrow] (coreGen) -- node[anchor=east] {Back-end Haskell} (backend);
 \node (desugar) [object, right of=lambdas, xshift=4cm] {Desugaring};
-\draw [arrow] (desugar) -- (staticDispatch);
-\draw [arrow] (desugar) -- (lambdas);
-\draw [arrow] (desugar) -- (deepPm);
-\draw [arrow] (desugar) -- (scrutinee);
+\draw [dashed] [arrow] (dispatch) -| (desugar);
+\draw [dashed] [arrow] (abs) -- (desugar);
+\draw [dashed] [arrow] (rmpm) -- (desugar);
+\draw [dashed] [arrow] (unify) -| (desugar);
 \end{tikzpicture}
 
 \hypertarget{Fasi di desugaring}{\subsection{Fasi di desugaring}}
@@ -2190,7 +2204,7 @@ $ \Omega $ hanno, in realtà, la seguente forma:
 \[ \rangle C, v \langle \]
 dove $ C $ è un constraint e $ v $ è l'identificatore di una variabile, detta anche \textit{variabile di dispatch}.
 Al momento della generalizzazione,
-dai problemi di constraint non normalizzati vengono estratte le variabili associate, le quali diventano parte degli
+dai problemi di constraint non risolti vengono estratte le variabili associate, le quali diventano parte degli
 argomenti del binding. Ad esempio, l'implementazione della funzione \texttt{h} a livello di token tipati sarà:
 \begin{lstlisting}
 let h v1 x = g v1 x
@@ -2482,7 +2496,7 @@ definizione proposta anche nell'articolo di riferimento:
 \begin{itemize}
     \item per consumare un valore di tipo atomico (ovvero di un tipo con costruttore di tipo senza argomenti, ad esempio
     il tipo \texttt{Char}) esattamente una volta, lo si valuti;
-    \item per consumare un valore di tipo funzione esattamente una volta, si applichi a esso un argomento e consuma
+    \item per consumare un valore di tipo funzione esattamente una volta, si applichi a esso un argomento e si consumi
     il risultato esattamente una volta;
     \item per consumare un valore di un tipo di dato algebrico esattamente una volta, si esegua il pattern matching su
     di esso e si consumi tutte le sue componenti lineari esattamente una volta.
@@ -2516,8 +2530,7 @@ Con la notazione appena mostrata, stiamo asserendo che \texttt{map} accetta come
 illimitata (ovvero non-lineare) e una lista con molteplicità $ p $, inoltre, la funzione in input accetta un argomento
 di molteplicità $ p $. Definiamo formalmente la molteplicità:
 \[ \pi := 1 \; | \; \omega \; | \; p \; | \; \pi + \pi \; | \; \pi * \pi \]
-dove $ \omega $ è la molteplicità illimitata e $ p $ è una variabile di molteplicità. Inoltre, valgono le seguenti
-relazioni affermazioni:
+dove $ \omega $ è la molteplicità illimitata e $ p $ è una variabile di molteplicità. Inoltre, valgono i seguenti assiomi:
 \begin{itemize}
     \item $ + $ e $ * $ sono associativi e commutativi;
     \item $ * $ ha precedenza maggiore di $ + $;
@@ -2527,7 +2540,8 @@ relazioni affermazioni:
 \end{itemize}
 Consideriamo $ \mapsto \; \equiv \; \mapsto_{\omega} $ e $ \triangleright \; \equiv \; \mapsto_1 $. Si noti come valga
 la seguente affermazione:
-\[ \forall \pi, \mu. \; \pi + \mu = \omega \]
+\[ \forall \pi, \mu. \; vars(\pi) = \emptyset \wedge vars(\mu) = \emptyset \Longrightarrow \pi + \mu = \omega \]
+dove $ vars $ è la funzione che calcola l'insieme delle variabili che compaiono in una molteplicità.
 Tuttavia, se aggiungiamo l'elemento neutro di $ + $, sia esso $ 0 $, allora la precedente affermazione non vale più.
 Dato questo sistema di tipi lineari, è ora necessario aggiornare l'algoritmo di type inference in modo che inferisca
 anche le molteplicità dei vari tipi funzione. Per questo, in \hyperlink{bibl20}{[20]} viene definito un lambda-calcolo
@@ -2546,15 +2560,10 @@ nell'argomento dell'applicazione dovranno essere utilizzate con la stessa moltep
 \subsubsection{Bozza di implementazione in Fex}
 Ora che è stato presentato un sistema di tipi lineari, si può delineare una bozza di implementazione in Fex.
 Il sistema di tipi lineari da aggiungere a quello già esistente di Fex si ispira a quello appena presentato,
-riutilizzando le varie nozioni incontrate. Ma prima di aggiornare il sistema di tipi di Fex, è doveroso definire
-la politica di valutazione delle espressioni in Fex (al momento indefinita e dipendente dall'implementazione).
-Una scelta che può essere coerente con il sistema di tipi lineari da aggiungere è quella di una politica \textit{lazy}
-come quella di Haskell. Questo comporta che la traduzione dei token tipati in codice Core sia tale che le espressioni
-di Fex legate alle variabili non vengano valutate al momento della definizione delle variabili, bensì, la loro
-valutazione venga ritardata fin quando ci sarà una computazione all'interno del programma che necessiterà il loro
-valore. Fatta questa importante premessa, ora è possibile discutere l'estensione del sistema di tipi di Fex.
-Un primo aggiornamento che può essere effettuato è alla nozione di mono-tipo:
-\[ MT \; := \; \alpha \; | \; T \; | \; MT \; MT \; | \; MT \mapsto_{\pi} MT \]
+riutilizzando le varie nozioni incontrate.
+Un primo aggiornamento che può essere effettuato è alla nozione di mono-tipo, in particolare al tipo funzione, il quale
+ora si presenterà:
+\[ MT \mapsto_{\pi} MT \]
 Dove $ \pi $ è la nozione di molteplicità fornita in precedenza (anch'essa da aggiungere al sistema di tipi).
 Dopodiché, sarà necessario estendere l'algoritmo di type inference, in particolare:
 \begin{itemize}
@@ -2566,6 +2575,8 @@ Dopodiché, sarà necessario estendere l'algoritmo di type inference, in partico
     \item per quanto riguarda le regole di inferenza, al momento della generalizzazione, sarà necessario generalizzare
     anche le eventuali variabili di molteplicità che non compaiono libere in $ \Pi $.
 \end{itemize}
+Dopodiché, le occorrenze del tipo funzione, per qualunque molteplicità, possono essere tradotte in Core come
+il classico tipo funzione senza la nozione di molteplicità.
 
 \hypertarget{Effetti}{\subsection{Effetti}}
 Gli \textit{effetti algebrici} rappresentano un modo per ottenere più controllo su comportamenti impuri da parte dei
@@ -2663,13 +2674,13 @@ sorgente Haskell.
 
 \hypertarget{Varianti polimorfe}{\subsection{Varianti polimorfe}}
 Le \textit{varianti polimorfe} rappresentano un meccanismo di estendibilità dei tipi, in particolare esse risolvono
-il task di, dato un tipo, estenderlo con nuove funzioni e nuovi costruttori. Questo è un problema ricorrente nella
-programmazione e viene risolto anche dai linguaggi orientati agli oggetti tramite meccanismi di sotto-tipaggio e
+il task di, dato un tipo, estenderlo nuovi costruttori. Questo è un problema ricorrente nella
+programmazione e viene risolto anche dai linguaggi orientati agli oggetti tramite meccanismi di sotto-tipaggio ed
 ereditarietà, tuttavia, le varianti polimorfe costituiscono un modo più conciso ed elegante di estendere i tipi.
 Esse sono state implementate in OCaml, ma non sono diffuse in molti altri linguaggi di programmazione. Esse rompono
 il vincolo informale secondo il quale un data-constructor appartiene a uno e un solo type-constructor; si ricordi che
 tale vincolo è valido in Fex e Haskell. L'implementazione OCaml offre anche una nuova sintassi per contraddistinguere
-le varianti polimorfe (il loro identificatore è preceduto dal carattere backtick \`).
+le varianti polimorfe (il loro identificatore è preceduto dal carattere \` ).
 In questa sezione, verranno brevemente presentati i principali vantaggi delle varianti polimorfe, dopodiché, non verrà
 presentata un'implementazione in Fex, bensì verranno discusse alcune proposte di implementazioni provenienti da
 altre fonti.
@@ -2765,9 +2776,9 @@ variant cs => a in VariantName ts where
     ...
     Constr_m :: ty_m1 -> ... -> ty_mn -> a
 \end{lstlisting}
-    Le varianti polimorfe sono rappresentate dai simboli con suffisso \texttt{Constr}, i quali hanno degli identificatori
+    Le varianti polimorfe sono rappresentate dai simboli dopo la keyword \texttt{where}, i quali hanno degli identificatori
     che iniziano con una lettera maiuscola. Si può notare come la dichiarazione di una variante sia molto simile a quella
-    di un type-class. Tuttavia, vi è una restrizione, ovvero che la variabile di tipo \texttt{a} deve apparire come tipo
+    di una type-class. Tuttavia, vi è una restrizione, ovvero che la variabile di tipo \texttt{a} deve apparire come tipo
     di ritorno di ogni variante polimorfa. Il contesto \texttt{cs} specifica le superclassi, che, a loro volta, dovranno
     essere delle varianti. \texttt{ts} è una sequenza di argomenti (variabili di tipo) come per le type-classes.
     Il costrutto per definire una variante subisce la seguente trasformazione:
@@ -2802,8 +2813,8 @@ funzionale puro, inteso come in grado di isolare le computazioni deterministiche
 ``mondo impuro" tramite il sistema di tipi con una granularità più fine rispetto a quella di Haskell
 (si ricordi che, per gestire i comportamenti ``impuri", Haskell utilizza, in generale, la monade \texttt{IO}), arricchendo il
 sistema di tipi stesso.
-Quest'ultimo obiettivo non è stato raggiunto, in quanto Fex risulta momentaneamente un linguaggio che calcola solamente funzioni
-matematiche.
+Quest'ultimo obiettivo non è stato raggiunto, in quanto il sistema di tipi risulta, al momento, meno espressivo rispetto a
+quello di Haskell.
 
 \section*{Bibliografia}
 \begin{enumerate}[label={[\arabic*]}]
