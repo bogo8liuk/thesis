@@ -619,7 +619,7 @@ binding. Ad esempio:
 val id : a -> a
 \end{lstlisting}
 
-L'esempio appena mostrato indica che la variabile \textit{id} ha tipo $ \forall \alpha. \alpha \mapsto \alpha $. Questo
+L'esempio appena mostrato indica che la variabile \textit{id} ha tipo $ \forall \alpha. \alpha \rightarrow \alpha $. Questo
 tipo di costrutto non è nient'altro che ``zucchero sintattico" per il type-hinting dei binding. I token dei binding
 - \texttt{SymbolDeclaration} e \texttt{MultiSymbolDeclaration} - possono possedere delle informazioni sul proprio tipo,
 ad esempio, guardando la definizione di \texttt{MultiSymbolDeclaration}:
@@ -740,7 +740,7 @@ bensì le informazioni che riguardano un programma vengono memorizzate in tabell
 newtype TypesTable a          --tabella dei type-constructor
 newtype DataConsTable a       --tabella dei data-constructor
 newtype ConstraintsTable a    --tabella dei constraint-constructor
-newtype InstsTable a          --tabella dei bindings delle istanze
+newtype InstsTable a          --tabella dei metodi delle istanze
 newtype PropMethodsTable a    --tabella dei metodi di proprieta'
 newtype ImplTable a           --tabella delle istanze
 data    TypedProgram a        --tabella dei bindings tipati
@@ -807,12 +807,13 @@ maggiore espressività.
 \hypertarget{Mono-tipo}{\subsubsection{Mono-tipo}}
 Di seguito, viene definito il concetto di \textit{mono-tipo}:
 \[ MT \; := \; \alpha \; | \; T \; | \; MT \; MT \]
-dove $ \alpha $ è una variabile di tipo e $ T $ è un costruttore di tipo. \`E fondamentale che, dato un programma $ P $,
-l'insieme dei mono-tipi in $ P $ abbia almeno il tipo funzione $ (\rightarrow) $.
+dove $ \alpha $ è una variabile di tipo e $ T $ è un costruttore di tipo. Una condizione fondamentale sui mono-tipi è
+l'esistenza del tipo funzione $ (\rightarrow) $ nel sistema di tipi. Nella sezione sull'inferenza di tipo (cfr.
+\hyperlink{Inferenza di lambda astrazione}{Inferenza di lambda astrazione}) verrà
+mostrato il motivo per il quale è fondamentale garantire la presenza del tipo funzione.
 Come si può dedurre dalla definizione stessa, non si deve confondere
 il concetto di mono-tipo con quello di tipo \textit{monomorfo}, infatti i mono-tipi, a differenza dei tipi monomorfi,
-ammettono le variabili di tipo. L'ultimo caso è il tipo \textit{funzione}; nella sezione sull'inferenza di tipo verrà
-mostrato il motivo per il quale è fondamentale garantire la presenza del tipo funzione all'interno del type-system.
+ammettono le variabili di tipo.
 Nel compilatore, la definizione di mono-tipo si trova nel modulo \texttt{Compiler.Ast.Typed}:
 \begin{lstlisting}
 data LangHigherType a =
@@ -899,12 +900,12 @@ data LangQualType a = Qual [LangSpecConstraint a] (LangHigherType a)
 \hypertarget{Schemi di tipo e polimorfismo parametrico}{\subsubsection{Schemi di tipo e polimorfismo parametrico}}
 Finora abbiamo trattato mono-tipi e tipi qualificati, tuttavia, la sola presenza delle variabili di tipo non è sufficiente
 a costruire \textit{schemi di tipi}. Si consideri il seguente esempio:
-\[ map : (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
+\[ map : (\alpha \rightarrow \beta) \rightarrow List \; \alpha \rightarrow List \; \beta \]
 In questo caso, il tipo della funzione $ map $ non è uno \textit{schema di tipo}, in quanto le variabili di tipo
 $ \alpha $ e $ \beta $
 rappresentano un tipo fissato non ancora conosciuto. Per ottenere il polimorfismo parametrico, è necessario introdurre
 dei quantificatori, ad esempio, possiamo rifinire il tipo di $ map $ nel modo seguente:
-\[ map : \forall \alpha, \beta . \; (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
+\[ map : \forall \alpha, \beta . \; (\alpha \rightarrow \beta) \rightarrow List \; \alpha \rightarrow List \; \beta \]
 A differenza di prima, in cui $ map $ aveva un tipo prefissato, qui può avere molteplici tipi. Ora diamo la definizione
 di \textit{schema di tipo} o \textit{poli-tipo} in Fex:
 \[ PT := QT \; | \; \forall \alpha. \; PT \]
@@ -912,7 +913,7 @@ Questa definizione lascia spazio alla presenza di \textit{variabili libere}, in 
 variabili di tipo che compaiono in un tipo qualificato sono legate a un quantificatore. Le variabili libere vengono
 trattate come costanti. Si noti come i quantificatori possono apparire solamente alla testa di un tipo, ad esempio, il
 seguente tipo non è accettato in Fex:
-\[ \forall \alpha . \; (\forall \alpha . \; \alpha \mapsto \alpha) \mapsto \alpha \]
+\[ \forall \alpha . \; (\forall \alpha . \; \alpha \rightarrow \alpha) \rightarrow \alpha \]
 La definizione di schema di tipo in Fex si trova nel modulo \texttt{Compiler.Ast.Typed}:
 \begin{lstlisting}
 data LangTypeScheme a = Forall [LangVarType a] (LangQualType a)
@@ -920,12 +921,12 @@ data LangTypeScheme a = Forall [LangVarType a] (LangQualType a)
 La politica sulla sintassi degli schemi di tipi di Fex è omettere il quantificatore $ \forall $ nelle indicazione sul tipo.
 Per questo, ogni qual
 volta vi è un costrutto di type-hinting (firme comprese), il tipo viene considerato come uno schema di tipo in cui tutte
-le variabili di tipo che compaiono vengono legate a un quantificatore, ad esempio:
+le variabili di tipo che compaiono vengono legate a un quantificatore universale, ad esempio:
 \begin{lstlisting}
 val map : (a -> b) -> List a -> List b
 \end{lstlisting}
 in questo caso la funzione \texttt{map} avrà il seguente tipo:
-\[ map : \forall \alpha, \beta . \; (\alpha \mapsto \beta) \mapsto List \; \alpha \mapsto List \; \beta \]
+\[ map : \forall \alpha, \beta . \; (\alpha \rightarrow \beta) \rightarrow List \; \alpha \rightarrow List \; \beta \]
 
 \hypertarget{Test di uguaglianza tra tipi}{\subsubsection{Test di uguaglianza tra tipi}}
 Il test di uguaglianza tra tipi si differenzia parecchio tra le diverse nozioni di ``tipo", inoltre, non sempre risulterà
@@ -1028,7 +1029,7 @@ property Stream s t =
 Gli argomenti di una proprietà sono sempre variabili di tipo. Come è già stato menzionato in precedenza, Fex supporta
 tipi di kind arbitrari; gli argomenti delle proprietà non fanno eccezione da questo punto di vista, infatti, nell'esempio
 si può notare come la variabile \textit{s} abbia kind:
-\[ * \mapsto * \]
+\[ * \rightarrow * \]
 mentre la variabile \textit{t} ha kind:
 \[ * \]
 
@@ -1132,13 +1133,13 @@ infatti, la nozione di mono-tipo viene successivamente estesa con la nozione di 
 il polimorfismo parametrico.
 
 L'ipotesi fondamentale (che connoteremo con HK) su cui si basa la kind-inference è sul kind del tipo \textit{funzione}:
-\[ (\mapsto) : * \mapsto * \mapsto * \]
+\[ (\rightarrow) : * \rightarrow * \rightarrow * \]
 In generale, l'inferenza di kind avviene ``osservando" le definizioni dei tipi di dati algebrici, in particolare,
 guardando le definizioni dei data-constructors. La definizione di un data-constructor ha la seguente forma:
 \[ C \; ty_1 \; ... \; ty_n \]
 Supponendo che il data-constructor $ C $ \textit{costruisca} il tipo $ T \; \alpha_1 \; ... \; \alpha_m $, allora
 $ C $ avrà tipo (cfr. \hyperlink{Data-constructors}{Data-constructors}):
-\[ ty_1 \mapsto ... \mapsto ty_n \mapsto T \; \alpha_1 \; ... \; \alpha_m \]
+\[ ty_1 \rightarrow ... \rightarrow ty_n \rightarrow T \; \alpha_1 \; ... \; \alpha_m \]
 Come conseguenza dell'ipotesi HK si ha che:
 \[ \forall i \in \{ 1, ..., n \}. \; ty_i : * \]
 e:
@@ -1167,7 +1168,7 @@ In generale, vengono visitate tutte le definizioni di data-constructors nelle de
     deve valere che $ ty_i : * $;
     \item se un tipo $ ty_i $ ha come testa un tipo concreto $ T' $ che non esiste in $ \Delta $, allora si inferiscono
     i kind degli argomenti di $ ty_i $, senza effettuare la fase di kind-check. Infine, $ T' $ viene inserito in
-    $ \Delta $ con kind $ K_1 \mapsto ... \mapsto K_r $, dove $ K_1, ..., K_r $ sono i kind degli argomenti applicati a
+    $ \Delta $ con kind $ K_1 \rightarrow ... \rightarrow K_r $, dove $ K_1, ..., K_r $ sono i kind degli argomenti applicati a
     $ T' $;
     \item se un tipo $ ty_i $ ha come testa una variabile di tipo $ m $, deve valere che $ m $ non compare come suo
     argomento diretto. Nel caso non valga la condizione, il programma viene respinto con un errore. Poi l'inferenza
@@ -1196,7 +1197,7 @@ Fex:
 type Foo x y = Bar Int (M x) y
 \end{lstlisting}
 In questa definizione di tipo di dato algebrico, vi è un solo costruttore: \texttt{Bar}. Il suo tipo è il seguente:
-\[ \forall x, y. \; Int \mapsto M \; x \mapsto y \mapsto Foo \; x \; y \]
+\[ \forall x, y. \; Int \rightarrow M \; x \rightarrow y \rightarrow Foo \; x \; y \]
 Il tipo di ritorno è sempre dato dalla definizione del tipo. Il modulo che si occupa di trasformare i token
 \texttt{ADTConstructor} in \texttt{NotedVal} e aggiungerli nella tabella \texttt{DataConsTable} è
 \texttt{Compiler.Types.Builder.Cons}.
@@ -1240,7 +1241,7 @@ constraint deve avere almeno una variabile di tipo), infatti l'istanza viene sal
 Le tre tabelle vengono create in un unico modulo per una questione di efficienza (i token delle istanze vengono visitati
 una sola volta). Inoltre, in questo
 modulo viene effettuato il controllo del vincolo sull'esistenza dei predicati delle proprietà (cfr.
-\hyperlink{Constraints sulle proprieta}{Constraints sulle proprietà}). Prima di inserire i bindings delle istanze nella
+\hyperlink{Constraints sulle proprieta}{Constraints sulle proprietà}). Prima di inserire i metodi delle istanze nella
 tabella \texttt{InstsTable}, viene eseguita una fase di desugaring su di essi. Il problema nasce dal fatto che, data
 una proprietà, può esistere un numero arbitrario di istanze e con esse, un numero arbitrario di metodi con lo stesso
 nome, perciò è necessario identificare univocamente i metodi di ogni singoli istanza. Il modulo
@@ -1269,7 +1270,7 @@ mutualmente ricorsive avviene in ``gruppo", ovvero un insieme $ {f_1, ..., f_n} 
 tra loro viene considerato come un'unica definizione (regola \textbf{Rec}) (cfr. \hyperlink{Ricorsione}{Ricorsione}).
 Queste regole serviranno come premessa ad alcune fasi nella preparazione della type inference.
 
-\hypertarget{Bindings delle istanze}{\subsubsection{Metodi delle istanze}}
+\hypertarget{Metodi delle istanze}{\subsubsection{Metodi delle istanze}}
 Vale la pena notare come in Core non esista un costrutto particolare per i metodi delle istanze, infatti, il
 costrutto di GHC che rappresenta le istanze (\texttt{ClsInst}) non porta con sè informazioni che riguardano i
 metodi \hyperlink{bibl10}{[10]}, perciò, è in un qualche modo necessario gestirli. La politica del compilatore è quella di
@@ -1442,7 +1443,7 @@ ovvero le eventuali sostituzioni generate dall'inferenza dei costrutti coinvolti
 
 \hypertarget{Inferenza di applicazione}{\subsubsection{Inferenza di applicazione}}
 La prossima regola serve per inferire l'applicazione di due espressioni:
-\[ \infer[\textbf{App}]{\Gamma \vdash_W e_0 \; e_1 : S_2\tau', \; S_2S_1S_0}{\Gamma \vdash_W e_0 : \tau_0, \; S_0 & S_0\Gamma \vdash_W e_1 : \tau_1, \; S_1 & \tau' = newvar & S_2 = mgu(S_1\tau_0, \tau1 \mapsto \tau')} \]
+\[ \infer[\textbf{App}]{\Gamma \vdash_W e_0 \; e_1 : S_2\tau', \; S_2S_1S_0}{\Gamma \vdash_W e_0 : \tau_0, \; S_0 & S_0\Gamma \vdash_W e_1 : \tau_1, \; S_1 & \tau' = newvar & S_2 = mgu(S_1\tau_0, \tau1 \rightarrow \tau')} \]
 Vi sono due nuovi operatori:
 \begin{itemize}
     \item $ newvar $, il quale ritorna una nuova variabile di tipo $ \alpha $ tale che $ \alpha \notin free(\Gamma) $;
@@ -1459,7 +1460,7 @@ Si noti che, a differenza di \textbf{Var}, in questa regola vi sono tre sostituz
 \end{itemize}
 Nell'inferenza di $ e_1 $, l'ambiente di tipizzazione di riferimento è $ \Gamma $ a cui viene applicata la sostituzione
 $ S_0 $. Una possibile ottimizzazione è la seguente:
-\[ \infer[\textbf{App}]{S_0\Gamma \vdash_W e_0 \; e_1 : S_2\tau', \; S_2S_1}{\Gamma \vdash_W e_0 : \tau_0, \; S_0 & S_0\Gamma \vdash_W e_1 : \tau_1, \; S_1 & \tau' = newvar & S_2 = mgu(S_1\tau_0, \tau1 \mapsto \tau')} \]
+\[ \infer[\textbf{App}]{S_0\Gamma \vdash_W e_0 \; e_1 : S_2\tau', \; S_2S_1}{\Gamma \vdash_W e_0 : \tau_0, \; S_0 & S_0\Gamma \vdash_W e_1 : \tau_1, \; S_1 & \tau' = newvar & S_2 = mgu(S_1\tau_0, \tau1 \rightarrow \tau')} \]
 La sostituzione $ S_0 $ viene, quindi, spostata dall'output direttamente all'ambiente di tipizzazione. Questo per evitare
 di applicare la sostituzione all'ambiente di tipizzazione due volte: una prima di inferire $ e_1 $, una dopo il risultato
 di output (si presume che le sostituzioni vengano tutte applicate).
@@ -1671,7 +1672,7 @@ in quanto vi è prima un'azione di \textit{swap} che dovrebbe essere eseguita.
 
 \hypertarget{Inferenza di lambda astrazione}{\subsubsection{Inferenza di lambda astrazione}}
 La seguente regola inferisce il tipo del costrutto di lambda-astrazione:
-\[ \infer[\textbf{Abs}]{\Gamma \vdash_W \lambda x. e : S\tau \mapsto \tau', S}{\tau = newvar & \Gamma, \; x : \tau \vdash_W e : \tau', \; S} \]
+\[ \infer[\textbf{Abs}]{\Gamma \vdash_W \lambda x. e : S\tau \rightarrow \tau', S}{\tau = newvar & \Gamma, \; x : \tau \vdash_W e : \tau', \; S} \]
 Nell'inferenza di questo costrutto, l'argomento $ x $ ha come tipo una nuova variabile di tipo, alla quale viene
 successivamente applicata la sostituzione derivante dall'inferenza dell'espressione $ e $. Dalla regola, si rende evidente
 la necessità di un tipo che consista nella ``mappatura" di un tipo verso un altro tipo.
@@ -1784,22 +1785,24 @@ L'algoritmo di inferenza di tale costrutto è il seguente:
     \item nell'inferenza dei casi, è necessario tener traccia dei tipi dei casi già inferiti in precedenza per due motivi:
     \begin{enumerate}
         \item per quanto riguarda i pattern, deve valere la condizione al punto (2);
-        \item per quanto riguarda le espressioni $ e_j $, non sempre nei casi precedenti si riesce ad inferire il tipo più
-        specializzato tra tutte le espressioni $ e_j $;
+        \item per quanto riguarda le espressioni $ e_j $, non sempre nel caso j-esimo si riesce ad inferire il tipo più
+        specializzato tra tutte le espressioni $ e_j, \; \forall j $;
     \end{enumerate}
     \item inferisci $ case_j $, applica le sostituzioni all'ambiente di tipizzazione e ai casi precedenti, poi passa
     a $ case_{j+1} $:
     \begin{itemize}
         \item nell'inferenza del caso j-esimo, il quale avrà la forma $ me_{1j} \; ... \; me_{nj} \rightarrow e_j $,
         verranno inferite, una alla volta, le case expressions $ me_{ij} $;
-        \item inferisci come se fosse un argomento di una lambda astrazione $ me_{ij} $ la quale avrà mono-tipo $ \tau $,
-        trova il tipo dell'i-esima case-expression nei casi precedenti, sia esso $ \tau' $, poi effettua
+        \item inferisci come se fosse un argomento di una lambda astrazione $ me_{ij} $ la quale avrà mono-tipo $ \tau $
+        (esso avrà la forma di una variabile di tipo singoletto),
+        trova il tipo dell'i-esimo valore di scrutinio, sia esso $ \tau' $, poi effettua
         l'unificazione tra $ \tau $ e $ \tau' $. Applica le sostituzioni
         all'ambiente di tipizzazione e ai casi precedenti, poi continua con $ me_{i+1j} $ finché non termina la lista di
         case-expressions;
-        \item inferisci $ e_j $, la quale avrà mono-tipo $ \tau $, trova il tipo delle espressioni dei casi, sia esso
+        \item inferisci $ e_j $, la quale avrà mono-tipo $ \tau $, trova il tipo delle espressioni dei casi (basta prendere
+        il tipo dell'espressione del caso precedente), sia esso
         $ \tau' $, effettua l'unificazione tra $ \tau $ e $ \tau' $ e applica le sostituzioni all'ambiente di tipizzazione
-        e ai casi precedenti.
+        e ai casi precedenti, in modo che le espressioni dei casi abbiano tutte lo stesso tipo.
     \end{itemize}
 \end{itemize}
 
@@ -1943,7 +1946,7 @@ property Foo a b c =
 let f x y z = foo x y z
 \end{lstlisting}
 Andando a inferire l'espressione legata ad \texttt{f}, un token che viene incontrato è \texttt{foo}. Il suo schema di
-tipo associato è $ \forall a, b, c. \; Foo \; a \; b \; c \Rightarrow a \mapsto b \mapsto c \mapsto Char $. A questo
+tipo associato è $ \forall a, b, c. \; Foo \; a \; b \; c \Rightarrow a \rightarrow b \rightarrow c \rightarrow Char $. A questo
 punto, si può applicare la regola \textbf{Var}, che, a sua volta, applica la regola
 \textbf{Inst}. Si ricordi che la politica di Fex sulla risoluzione dei constraints è \textit{lazy}, perciò
 il constraint $ Foo \; a \; b \; c $ non viene risolto immediatamente, bensì viene aggiunto all'ambiente dei
@@ -1952,7 +1955,7 @@ constraints.
 \`E bene notare che esso non compare nelle regole di inferenza; questo è possibile in quanto la politica \textit{lazy}
 può essere considerata come \textit{side-effect} che non cambia la semantica della valutazione dei constraints.
 Quindi la conclusione della regola \textbf{Var} in questo caso sarà semplicemente:
-\[ CS, \Gamma \vdash_W foo : a1 \mapsto a2 \mapsto a3 \mapsto Char \]
+\[ CS, \Gamma \vdash_W foo : a1 \rightarrow a2 \rightarrow a3 \rightarrow Char \]
 dove $ a1 $, $ a2 $ e $ a3 $ sono variabili nuove. Continuando ad applicare le regole di inferenza \textbf{App} e
 \textbf{Var} si arriverà ad avere, prima di applicare \textbf{Let} per generalizzare \texttt{f}, il seguente
 ambiente di tipizzazione:
@@ -1961,7 +1964,7 @@ ambiente di tipizzazione:
 \[ CS = \emptyset \]
 Applicando la regola \textbf{Let}, si applica anche la regola \textbf{Gen}; in questo caso, l'unico constraint
 nel contesto è $ Foo \; a1 \; a2 \; a3 $ e il mono-tipo da generalizzare associato a \texttt{f} è
-$ \tau = a1 \mapsto a2 \mapsto a3 \mapsto Char $. Rimane da decidere quando un constraint deve essere aggiunto allo
+$ \tau = a1 \rightarrow a2 \rightarrow a3 \rightarrow Char $. Rimane da decidere quando un constraint deve essere aggiunto allo
 schema e quando, eventualmente, deve essere risolto. Innanzitutto, è necessario osservare le variabili libere
 del mono-tipo $ \tau $, siano esse $ \overline{\alpha} = free(\tau) $. Un constraint $ C $ viene aggiunto allo schema
 di tipo se:
@@ -1971,7 +1974,7 @@ la seconda condizione previene l'occorrenza di constraints senza variabili di ti
 venga rispettata, il constraint $ C $ deve essere risolto. Tornando all'esempio precedente, si ha che
 il constraint $ Foo \; a1 \; a2 \; a3 $ può essere aggiunto allo schema di tipo che verrà generato.
 \texttt{f} avrà, quindi, il seguente tipo:
-\[ \forall a1, a2, a3. \; Foo \; a1 \; a2 \; a3 \Rightarrow a1 \mapsto a2 \mapsto a3 \mapsto Char \]
+\[ \forall a1, a2, a3. \; Foo \; a1 \; a2 \; a3 \Rightarrow a1 \rightarrow a2 \rightarrow a3 \rightarrow Char \]
 Si osservi ora quest'altro esempio:
 \begin{lstlisting}
 property Bar a b =
@@ -1987,7 +1990,7 @@ Nell'applicazione delle regole di inferenza, si ottiene che l'espressione legata
 constraints siffatto:
 \[ \Omega = \{ Foo \; a1 \; a2 \; b, Bar \; a1 \; a2 \} \]
 e al mono-tipo da generalizzare:
-\[ \tau = a1 \mapsto a2 \mapsto Char \]
+\[ \tau = a1 \rightarrow a2 \rightarrow Char \]
 Al momento della generalizzazione, si ha che:
 \[ free(Foo \; a1 \; a2 \; b) \not\subseteq free(\tau) \wedge free(Bar \; a1 \; a2) \subseteq free(\tau) \]
 Di conseguenza, il constraint $ Bar \; a1 \; a2 $ può essere aggiunto allo schema di tipo, mentre
@@ -2142,8 +2145,8 @@ per l'utente.
 
 \hypertarget{Dispatch statico}{\subsubsection{Dispatch statico}}
 Il polimorfismo ad-hoc viene implementato attraverso il meccanismo delle type-classes.
-La sintassi Core non possiede, però, costrutti per i metodi delle type-classes e per i bindings delle istanze.
-La politica del compilatore Fex è quella di aggiungere i bindings delle istanze ai bindings del programma,
+La sintassi Core non possiede, però, costrutti per i metodi delle type-classes e per i metodi delle istanze.
+La politica del compilatore Fex è quella di aggiungere i metodi delle istanze ai bindings del programma,
 cambiando i nomi degli stessi metodi di istanze diverse
 (cfr. \hyperlink{Costruzione delle istanze}{Costruzione delle istanze}). Questa politica ha
 importanti implicazioni: innanzitutto, nelle espressioni del programma, i metodi delle istanze possono essere chiamati,
@@ -2201,7 +2204,7 @@ alla normale applicazione della regola di inferenza \textbf{Var} e alla generazi
 una variabile, verrà generata e applicata a \texttt{g} un'ulteriore variabile. Quest'ultima viene associata al
 relativo problema di constraint e viene salvata nell'ambiente di tipizzazione $ \Omega $. Quindi, gli elementi in
 $ \Omega $ hanno, in realtà, la seguente forma:
-\[ \rangle C, v \langle \]
+\[ \langle C, v \rangle \]
 dove $ C $ è un constraint e $ v $ è l'identificatore di una variabile, detta anche \textit{variabile di dispatch}.
 Al momento della generalizzazione,
 dai problemi di constraint non risolti vengono estratte le variabili associate, le quali diventano parte degli
@@ -2505,7 +2508,7 @@ Con questa definizione possiamo rispondere alla seguente domanda sul tipo dei da
 dovremmo assegnare a un data-constructor? Prendiamo come esempio il costruttore delle coppie \texttt{(,)}:
 \begin{itemize}
     \item $ (,) : \forall \alpha, \beta. \; \alpha \; \triangleright \; \beta \; \triangleright \; (\alpha, \beta) $
-    \item $ (,) : \forall \alpha, \beta. \; \alpha \mapsto \beta \mapsto (\alpha, \beta) $
+    \item $ (,) : \forall \alpha, \beta. \; \alpha \rightarrow \beta \rightarrow (\alpha, \beta) $
 \end{itemize}
 La prima scelta è quella corretta, infatti, se il risultato dell'espressione \texttt{(,) x y} è consumato esattamente
 una volta, allora, per definizione, \texttt{x} e \texttt{y} vengono consumati esattamente una volta.
@@ -2518,13 +2521,13 @@ map f (x : t) = f x : map f t
 \end{lstlisting}
 La funzione \texttt{map} può avere i seguenti due tipi:
 \begin{itemize}
-    \item $ map : \forall \alpha, \beta. \; (\alpha \; \triangleright \; \beta) \mapsto [\alpha] \; \triangleright \; [\beta] $
-    \item $ map : \forall \alpha, \beta. \; (\alpha \mapsto \beta) \mapsto [\alpha] \mapsto [\beta] $
+    \item $ map : \forall \alpha, \beta. \; (\alpha \; \triangleright \; \beta) \rightarrow [\alpha] \; \triangleright \; [\beta] $
+    \item $ map : \forall \alpha, \beta. \; (\alpha \rightarrow \beta) \rightarrow [\alpha] \rightarrow [\beta] $
 \end{itemize}
 I due tipi sono incompatibili tra loro. Introduciamo, quindi, un livello di polimorfismo sulla
 \textit{molteplicità} dei tipi funzione:
 \begin{itemize}
-    \item $ map : \forall \alpha, \beta, p. \; (\alpha \mapsto_p \beta) \mapsto [\alpha] \mapsto_p [\beta] $
+    \item $ map : \forall \alpha, \beta, p. \; (\alpha \rightarrow_p \beta) \rightarrow [\alpha] \rightarrow_p [\beta] $
 \end{itemize}
 Con la notazione appena mostrata, stiamo asserendo che \texttt{map} accetta come argomenti una funzione con molteplicità
 illimitata (ovvero non-lineare) e una lista con molteplicità $ p $, inoltre, la funzione in input accetta un argomento
@@ -2538,9 +2541,9 @@ dove $ \omega $ è la molteplicità illimitata e $ p $ è una variabile di molte
     \item $ \omega * \omega = \omega $;
     \item $ 1 + 1 = 1 + \omega = \omega + \omega = \omega $.
 \end{itemize}
-Consideriamo $ \mapsto \; \equiv \; \mapsto_{\omega} $ e $ \triangleright \; \equiv \; \mapsto_1 $. Si noti come valga
+Consideriamo $ \rightarrow \; \equiv \; \rightarrow_{\omega} $ e $ \triangleright \; \equiv \; \rightarrow_1 $. Si noti come valga
 la seguente affermazione:
-\[ \forall \pi, \mu. \; vars(\pi) = \emptyset \wedge vars(\mu) = \emptyset \Longrightarrow \pi + \mu = \omega \]
+\[ \forall \pi, \mu. \; (vars(\pi) = \emptyset \wedge vars(\mu) = \emptyset) \Longrightarrow \pi + \mu = \omega \]
 dove $ vars $ è la funzione che calcola l'insieme delle variabili che compaiono in una molteplicità.
 Tuttavia, se aggiungiamo l'elemento neutro di $ + $, sia esso $ 0 $, allora la precedente affermazione non vale più.
 Dato questo sistema di tipi lineari, è ora necessario aggiornare l'algoritmo di type inference in modo che inferisca
@@ -2563,7 +2566,7 @@ Il sistema di tipi lineari da aggiungere a quello già esistente di Fex si ispir
 riutilizzando le varie nozioni incontrate.
 Un primo aggiornamento che può essere effettuato è alla nozione di mono-tipo, in particolare al tipo funzione, il quale
 ora si presenterà:
-\[ MT \mapsto_{\pi} MT \]
+\[ MT \rightarrow_{\pi} MT \]
 Dove $ \pi $ è la nozione di molteplicità fornita in precedenza (anch'essa da aggiungere al sistema di tipi).
 Dopodiché, sarà necessario estendere l'algoritmo di type inference, in particolare:
 \begin{itemize}
@@ -2592,8 +2595,8 @@ poi verrà proposta un'implementazione nel compilatore Fex, analizzando i cambia
 
 Nell'articolo \hyperlink{bibl22}{[22]} viene, innazitutto, fissato un linguaggio. L'approccio utilizzato qui è lo stesso,
 tuttavia, il linguaggio che verrà definito sarà leggermente diverso da quello nell'articolo:
-\[ v := e \; | \; fun \; x \mapsto c \; | \; h \]
-\[ h := handler \{ return \; x \mapsto c, \; op_1(x;k) \mapsto c_1, \; ..., \; op_n(x;k) \mapsto c_n \} \]
+\[ v := e \; | \; fun \; x \rightarrow c \; | \; h \]
+\[ h := handler \{ return \; x \rightarrow c, \; op_1(x;k) \rightarrow c_1, \; ..., \; op_n(x;k) \rightarrow c_n \} \]
 \[ c := return \; v \; | \; op(v;y.c) \; | \; do \; x \leftarrow c_1 \; in \; c_2 \; | \; v1 \; v2 \; | \; with \; v \; handle \; c \]
 dove $ e $ sono i costrutti di System-F, estesi anche con valori costanti. $ v $ rappresenta i \textit{valori},
 $ h $ rappresenta gli handler e $ c $ le computazioni.
@@ -2679,8 +2682,7 @@ programmazione e viene risolto anche dai linguaggi orientati agli oggetti tramit
 ereditarietà, tuttavia, le varianti polimorfe costituiscono un modo più conciso ed elegante di estendere i tipi.
 Esse sono state implementate in OCaml, ma non sono diffuse in molti altri linguaggi di programmazione. Esse rompono
 il vincolo informale secondo il quale un data-constructor appartiene a uno e un solo type-constructor; si ricordi che
-tale vincolo è valido in Fex e Haskell. L'implementazione OCaml offre anche una nuova sintassi per contraddistinguere
-le varianti polimorfe (il loro identificatore è preceduto dal carattere \` ).
+tale vincolo è valido in Fex e Haskell.
 In questa sezione, verranno brevemente presentati i principali vantaggi delle varianti polimorfe, dopodiché, non verrà
 presentata un'implementazione in Fex, bensì verranno discusse alcune proposte di implementazioni provenienti da
 altre fonti.
